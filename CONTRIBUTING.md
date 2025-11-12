@@ -17,7 +17,7 @@ There are many ways to contribute to INGenious:
 ### 1. Fork and Clone the Repository
 First, fork the repository and then clone it to your local machine:
 ```bash
-git clone https://github.com/ing-bank/INGenious.git
+git clone https://github.com/<forked_repo>/INGenious.git
 ```
 
 Navigate to the project directory:
@@ -64,7 +64,7 @@ git push origin your-branch-name
 
 
 ### 7. Open a Pull Request
-Go to the original repository on GitHub and open a Pull Request (PR) against the main branch. Please provide the following details:
+Go to the original repository on GitHub and open a Pull Request (PR) against the latest release branch. Please provide the following details:
 
 - *Title:* A clear and descriptive title.
 - *Description:* Explain what changes you’ve made, why they’re necessary, and any relevant details.
