@@ -69,6 +69,12 @@ Go to the original repository on GitHub and open a Pull Request (PR) against the
 - *Title:* A clear and descriptive title.
 - *Description:* Explain what changes you’ve made, why they’re necessary, and any relevant details.
 
+Include detailed information in the Pull Request description:
+
+- Sample usage
+- Sample project used
+- Test cases and results
+
 
 ## Contribution Guidelines
 
