@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.ing.engine.support.methodInf.ObjectType;
+
 /**
  * Utility class for managing and querying object types at runtime.
  */
@@ -11,6 +13,10 @@ public final class ObjectTypeUtil {
     private static final Set<String> objectTypes = new HashSet<>();
 
     private ObjectTypeUtil() {}
+
+    static {
+        objectTypes.addAll(ObjectType.initialObjectTypes);
+    }
 
     /**
      * Registers a new object type.
