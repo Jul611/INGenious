@@ -11,7 +11,7 @@ public @interface Action {
 
     InputType input() default InputType.NO;
 
-    String object() default "";
+    String object() default ObjectType.ANY;
 
     InputType secondObject() default InputType.NO;
 
