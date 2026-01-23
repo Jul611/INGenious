@@ -89,6 +89,8 @@ public class Command {
     static public Map<String, Long> duration = new HashMap<>();
     public String key;
     static public String basicAuthorization;
+    static public HashMap<String, String> headerMap = new HashMap<>();
+    static public Map<String, HashMap<String,String>> headerKeyValueMap = new HashMap<>();
     /**
      * ************************
      */
