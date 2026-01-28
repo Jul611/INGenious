@@ -3,7 +3,6 @@ package com.ing.ide.main.mainui;
 
 import com.ing.engine.support.methodInf.MethodInfoManager;
 import com.ing.exceptions.DuplicateMethodException;
-import com.ing.ide.main.Main;
 import com.ing.ide.main.bdd.BddParser;
 import com.ing.ide.main.explorer.ExplorerBar;
 import com.ing.ide.main.help.Help;
