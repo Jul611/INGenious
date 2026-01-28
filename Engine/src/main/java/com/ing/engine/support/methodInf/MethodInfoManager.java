@@ -91,7 +91,7 @@ public class MethodInfoManager {
             Method method = getClass(className).getMethod(methodName);
             Action mInfo = method.getAnnotation(Action.class);
             ObjectTypeUtil.registerObjectTypefromPlugin(mInfo.object());
-            if (isMethodRegisteredToObjectType(methodName, mInfo.object())) {
+            if (isDuplicateMethodForObjectType(methodName, mInfo.object())) {
                 String originalObject = methodInfoMap.get(methodName).object();
                 String currentLocation = getPluginFolderName(method);
 
@@ -229,7 +229,7 @@ public class MethodInfoManager {
     }
 
     /**
-     * Checks if a method name is already registered to the specified object type.
+     * Checks if a method is already registered for the specified object type (duplicate detection).
      * <p>
      * This method is used for duplicate detection to ensure that each method name
      * is unique within its object type context.
@@ -237,9 +237,9 @@ public class MethodInfoManager {
      *
      * @param methodName the name of the method to check
      * @param objectType the object type to check against
-     * @return {@code true} if the method is already registered to the object type, {@code false} otherwise
+     * @return {@code true} if the method is already registered for this object type (duplicate), {@code false} otherwise
      */
-    private static boolean isMethodRegisteredToObjectType(String methodName, String objectType) {
+    private static boolean isDuplicateMethodForObjectType(String methodName, String objectType) {
         return objectTypeMethodMap.containsKey(objectType) &&
                objectTypeMethodMap.get(objectType).contains(methodName);
     }
