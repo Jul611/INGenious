@@ -5,6 +5,7 @@ import com.ing.datalib.testdata.TestDataFactory;
 import com.ing.engine.cli.LookUp;
 import com.ing.engine.constants.SystemDefaults;
 import com.ing.engine.support.methodInf.MethodInfoManager;
+import com.ing.exceptions.DuplicateMethodException;
 import com.ing.ide.main.cli.UICli;
 import com.ing.ide.main.mainui.AppMainFrame;
 import com.ing.ide.main.mainui.Splash;
@@ -104,8 +105,14 @@ public class Main {
 
     private static void initDependencies() {
         initCommonDependencies();
-        MethodInfoManager.load();
-        //ByObjectProp.load();
+       try {
+           MethodInfoManager.load();
+           //ByObjectProp.load();
+       } catch (DuplicateMethodException ex) {
+           
+           System.getLogger(Main.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+           System.exit(1);
+       }
     }
 
     private static void setUpUI(String ui) {

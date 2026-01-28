@@ -3,6 +3,7 @@ package com.ing.ide.main.mainui.components.testdesign.testcase.validation;
 import com.ing.datalib.component.Scenario;
 import com.ing.datalib.component.TestStep;
 import com.ing.datalib.or.common.ORPageInf;
+import com.ing.engine.support.ObjectTypeUtil;
 import com.ing.engine.support.methodInf.MethodInfoManager;
 import com.ing.engine.support.methodInf.ObjectType;
 import java.awt.Color;
@@ -125,7 +126,9 @@ public class ActionRenderer extends AbstractRenderer {
                         .contains(action);
                 break;   
             default:
-                if (isWebObject(step)) {
+                if (ObjectTypeUtil.isKnownType(objectName)){
+                    return MethodInfoManager.getMethodListFor(objectName).contains(action);
+                } else if (isWebObject(step)) {
                     valid = MethodInfoManager.getMethodListFor(ObjectType.PLAYWRIGHT, ObjectType.WEB).contains(action);
                 } else if (isMobileObject(step)) {
                     valid = MethodInfoManager.getMethodListFor(ObjectType.APP).contains(action);

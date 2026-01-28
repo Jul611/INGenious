@@ -1,11 +1,14 @@
 
 package com.ing.engine.support.methodInf;
 
+
 import com.ing.datalib.component.TestStep;
 import com.ing.engine.constants.FilePath;
 import com.ing.engine.support.AnnontationUtil;
 import com.ing.engine.support.reflect.Discovery;
 import com.ing.engine.support.reflect.MethodExecutor;
+import com.ing.engine.support.ObjectTypeUtil;
+import com.ing.exceptions.DuplicateMethodException;
 import eu.infomas.annotation.AnnotationDetector;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -15,6 +18,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +37,8 @@ public class MethodInfoManager {
      * Map of method names to their associated {@link Action} annotation metadata.
      */
     public static Map<String, Action> methodInfoMap = new HashMap<>();
+    private static boolean isDuplicateMethodDetected = false;
+    private static Map<String, Set<String>> objectTypeMethodMap = new HashMap<>();
     
     private static final AnnotationDetector.MethodReporter METHOD_REPORTER = new AnnotationDetector.MethodReporter() {
         
@@ -44,7 +51,7 @@ public class MethodInfoManager {
         @Override
         public void reportMethodAnnotation(Class<? extends Annotation> annotation,
                 String className, String methodName) {
-            loadMethod(className, methodName);
+            loadMethodAndRegisterType(className, methodName);
         }
         
     };
@@ -57,7 +64,7 @@ public class MethodInfoManager {
      * This method clears the current method info map, initializes method executors, and scans
      * both the action packages and all plugin JARs for annotated methods.
      */
-    public static void load() {
+    public static void load() throws DuplicateMethodException {
         MethodExecutor.init();
         methodInfoMap.clear();
         AnnontationUtil.detect(ANNOTATION_DETECTOR, "com.ing.engine.commands");
@@ -65,19 +72,37 @@ public class MethodInfoManager {
         File basePluginDir = new File(FilePath.getAppRoot() + "/plugins");
         String[] jarPaths = getPluginJarPaths(basePluginDir);
         AnnontationUtil.detectFromPluginPaths(ANNOTATION_DETECTOR, jarPaths);
+
+        if(isDuplicateMethodDetected){
+            System.out.println("Duplicate method names detected in the loaded actions. Please resolve the conflicts.");
+            throw new DuplicateMethodException("Duplicate method names detected in the loaded actions. Please resolve the conflicts.");
+        }
     }
     
     /**
-     * Loads the method with the given class and method name, and stores its {@link Action} annotation in the map.
+     * Loads the method with the given class and method name, stores its {@link Action} annotation in the map,
+     * and registers the object type in {@link ObjectTypeUtil}.
      *
      * @param className the fully qualified class name
      * @param methodName the method name to load
      */
-    private static void loadMethod(String className, String methodName) {
+    private static void loadMethodAndRegisterType(String className, String methodName) {
         try {
             Method method = getClass(className).getMethod(methodName);
             Action mInfo = method.getAnnotation(Action.class);
+            ObjectTypeUtil.registerObjectTypefromPlugin(mInfo.object());
+            if (isMethodRegisteredToObjectType(methodName, mInfo.object())) {
+                String originalObject = methodInfoMap.get(methodName).object();
+                String currentLocation = getPluginFolderName(method);
+
+                System.out.println("Duplicate action '" + methodName + "' for object type '" + mInfo.object() + "' detected:\n" +
+                   "  - Duplicate found in: " + currentLocation + "\n" +
+                   "  - Class: " + className);
+                isDuplicateMethodDetected = true; // Set flag and return early
+                return; // Don't register the duplicate
+            }
             methodInfoMap.put(methodName, mInfo);
+            registerMethodToObjectType(methodName, mInfo.object());
         } catch (NoSuchMethodException | SecurityException ex) {
             Logger.getLogger(MethodInfoManager.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -121,7 +146,7 @@ public class MethodInfoManager {
      * @param others additional {@link ObjectType}s to include in the filter (optional)
      * @return a sorted {@link List} of method names matching the specified object types
      */
-    public static List<String> getMethodListFor(ObjectType type, ObjectType... others) {
+    public static List<String> getMethodListFor(String type, String... others) {
         List<String> methodList = new ArrayList<>();
         for (Map.Entry<String, Action> entry : methodInfoMap.entrySet()) {
             String methodName = entry.getKey();
@@ -185,6 +210,72 @@ public class MethodInfoManager {
             ))
             .map(File::getAbsolutePath)    // Map each File to its absolute path
             .toArray(String[]::new);       // Collect results into a String array
+    }
+    
+    /**
+     * Registers a method name to its associated object type.
+     * <p>
+     * This method maintains a mapping of object types to their registered method names,
+     * allowing efficient lookup and duplicate detection.
+     * </p>
+     *
+     * @param methodName the name of the method to register
+     * @param objectType the object type associated with the method
+     */
+    private static void registerMethodToObjectType(String methodName, String objectType) {
+        objectTypeMethodMap
+            .computeIfAbsent(objectType, k -> new HashSet<>())
+            .add(methodName);
+    }
+
+    /**
+     * Checks if a method name is already registered to the specified object type.
+     * <p>
+     * This method is used for duplicate detection to ensure that each method name
+     * is unique within its object type context.
+     * </p>
+     *
+     * @param methodName the name of the method to check
+     * @param objectType the object type to check against
+     * @return {@code true} if the method is already registered to the object type, {@code false} otherwise
+     */
+    private static boolean isMethodRegisteredToObjectType(String methodName, String objectType) {
+        return objectTypeMethodMap.containsKey(objectType) &&
+               objectTypeMethodMap.get(objectType).contains(methodName);
+    }
+
+    /**
+     * Extracts the plugin folder name from the method's class location.
+     * <p>
+     * For plugin classes, returns the name of the folder containing the plugin JAR.
+     * For core application classes, returns "core".
+     * </p>
+     *
+     * @param method the method to get the plugin folder for
+     * @return the plugin folder name or "core" for application classes
+     */
+    private static String getPluginFolderName(Method method) {
+        try {
+            java.net.URL location = method.getDeclaringClass()
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation();
+            if (location != null) {
+                String path = location.getPath();
+                // Extract plugin folder name from path like: /path/to/plugins/plugin-name/plugin.jar
+                if (path.contains("/plugins/")) {
+                    int pluginsIndex = path.indexOf("/plugins/");
+                    String afterPlugins = path.substring(pluginsIndex + "/plugins/".length());
+                    int nextSlash = afterPlugins.indexOf("/");
+                    if (nextSlash > 0) {
+                        return afterPlugins.substring(0, nextSlash);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Ignore and return default
+        }
+        return "core";
     }
     
 }

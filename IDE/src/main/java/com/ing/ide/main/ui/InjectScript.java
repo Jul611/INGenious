@@ -2,6 +2,7 @@
 package com.ing.ide.main.ui;
 
 import com.ing.engine.support.methodInf.MethodInfoManager;
+import com.ing.exceptions.DuplicateMethodException;
 import com.ing.ide.main.help.Help;
 import com.ing.ide.main.utils.Utils;
 import com.ing.ide.util.Canvas;
@@ -265,8 +266,12 @@ public class InjectScript extends javax.swing.JFrame {
 
     private void injectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_injectActionPerformed
         if (injectScript()) {
-            MethodInfoManager.load();
-            this.dispose();
+            try {
+                MethodInfoManager.load();
+                this.dispose();
+            } catch (DuplicateMethodException ex) {
+                System.getLogger(InjectScript.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
         }
     }//GEN-LAST:event_injectActionPerformed
 

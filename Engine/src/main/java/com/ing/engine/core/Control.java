@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 
 import com.ing.engine.drivers.WebDriverCreation;
 import com.ing.engine.drivers.WebDriverFactory;
+import com.ing.exceptions.DuplicateMethodException;
 
 public class Control {
 
@@ -211,7 +212,11 @@ public class Control {
 
     private static void initDeps() {
         TestDataFactory.load();
-        MethodInfoManager.load();
+        try {
+            MethodInfoManager.load();
+        } catch (DuplicateMethodException ex) {
+            System.getLogger(Control.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
         Encryption.getInstance();
     }
 

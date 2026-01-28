@@ -14,6 +14,7 @@ import static com.ing.datalib.component.TestStep.HEADERS.Reference;
 import com.ing.datalib.or.common.ORPageInf;
 import com.ing.datalib.testdata.model.Record;
 import com.ing.datalib.testdata.model.TestDataModel;
+import com.ing.engine.support.ObjectTypeUtil;
 import com.ing.engine.support.methodInf.MethodInfoManager;
 import com.ing.engine.support.methodInf.ObjectType;
 import com.ing.engine.util.data.fx.FParser;
@@ -119,18 +120,7 @@ public class TestCaseAutoSuggest {
     }
 
     private List<String> getObjectList() {
-        List<String> objectList = new ArrayList<>();
-        objectList.add("Browser");
-        objectList.add("Mobile");
-        objectList.add("Webservice");
-        objectList.add("Database");
-        objectList.add("Kafka");
-        objectList.add("Queue");
-        objectList.add("Synthetic Data");
-        objectList.add("File");
-        objectList.add("General");
-        objectList.add("Execute");
-        objectList.add("String Operations");
+        List<String> objectList = new ArrayList<>(ObjectTypeUtil.getAllTypesForIDE());
         return objectList;
     }
 
@@ -329,11 +319,13 @@ public class TestCaseAutoSuggest {
                 case "String Operations":
                     return MethodInfoManager.getMethodListFor(ObjectType.STRINGOPERATIONS, ObjectType.STRINGOPERATIONS);  
                 default:
-                     if (isWebObject(objectName, pageName)) {
+                    if (ObjectTypeUtil.isKnownType(objectName)){
+                        return MethodInfoManager.getMethodListFor(objectName);
+                    } else if (isWebObject(objectName, pageName)) {
                         return MethodInfoManager.getMethodListFor(ObjectType.PLAYWRIGHT, ObjectType.WEB, ObjectType.ANY);
                     } else if (isMobileObject(objectName, pageName)) {
                         return MethodInfoManager.getMethodListFor(ObjectType.APP);
-                    }
+                    } 
             }
             return new ArrayList<>();
         }

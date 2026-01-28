@@ -2,6 +2,8 @@
 package com.ing.ide.main.mainui.components.testdesign.testcase.validation;
 
 import com.ing.datalib.component.TestStep;
+import com.ing.engine.support.ObjectTypeUtil;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.util.Objects;
@@ -58,8 +60,12 @@ public class ReferenceRenderer extends AbstractRenderer {
         }
     }
 
+    // private Boolean isOptional(TestStep step) {
+    //     return step.getObject().matches("Execute|Mobile|Browser|Database|Webservice|Kafka|Synthetic Data|Queue|File|General|String Operations");
+    // }
+    // 
     private Boolean isOptional(TestStep step) {
-        return step.getObject().matches("Execute|Mobile|Browser|Database|Webservice|Kafka|Synthetic Data|Queue|File|General|String Operations");
+        return ObjectTypeUtil.isKnownType(step.getObject());
     }
 
     private Boolean isObjectPresent(TestStep step) {

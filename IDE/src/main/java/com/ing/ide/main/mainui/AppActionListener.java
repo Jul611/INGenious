@@ -2,6 +2,8 @@
 package com.ing.ide.main.mainui;
 
 import com.ing.engine.support.methodInf.MethodInfoManager;
+import com.ing.exceptions.DuplicateMethodException;
+import com.ing.ide.main.Main;
 import com.ing.ide.main.bdd.BddParser;
 import com.ing.ide.main.explorer.ExplorerBar;
 import com.ing.ide.main.help.Help;
@@ -318,7 +320,12 @@ public class AppActionListener implements ActionListener {
     }
 
     private void doRefresh() {
-        MethodInfoManager.load();
+        try {
+            MethodInfoManager.load();
+        } catch (DuplicateMethodException ex) {
+            System.getLogger(AppActionListener.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            System.exit(1);
+        }
     }
 
 }

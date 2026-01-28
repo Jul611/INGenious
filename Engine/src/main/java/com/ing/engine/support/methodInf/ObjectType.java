@@ -5,22 +5,22 @@ import java.util.Set;
 import java.util.HashSet;
 
 public class ObjectType {
-    public static final String BROWSER = "BROWSER";
-    public static final String WEB = "WEB";
-    public static final String MOBILE = "MOBILE";
-    public static final String IMAGE = "IMAGE";
-    public static final String PLAYWRIGHT = "PLAYWRIGHT";
-    public static final String APP = "APP";
-    public static final String DATABASE = "DATABASE";
-    public static final String PROTRACTORJS = "PROTRACTORJS";
-    public static final String ANY = "ANY";
-    public static final String WEBSERVICE = "WEBSERVICE";
-    public static final String FILE = "FILE";
-    public static final String KAFKA = "KAFKA";
-    public static final String QUEUE = "QUEUE";
-    public static final String DATA = "DATA";
-    public static final String GENERAL = "GENERAL";
-    public static final String STRINGOPERATIONS = "STRINGOPERATIONS";
+    public static final String BROWSER = "Browser";
+    public static final String WEB = "Web";
+    public static final String MOBILE = "Mobile";
+    public static final String IMAGE = "Image";
+    public static final String PLAYWRIGHT = "Playwright";
+    public static final String APP = "App";
+    public static final String DATABASE = "Database";
+    public static final String PROTRACTORJS = "ProtractorJS";
+    public static final String ANY = "Any";
+    public static final String WEBSERVICE = "Webservice";
+    public static final String FILE = "File";
+    public static final String KAFKA = "Kafka";
+    public static final String QUEUE = "Queue";
+    public static final String DATA = "Data";
+    public static final String GENERAL = "General";
+    public static final String STRINGOPERATIONS = "String Operations";
 
     public static final Set<String> initialObjectTypes = new HashSet<String>() {{
         add(BROWSER);
