@@ -12,28 +12,22 @@ import com.ing.engine.support.methodInf.ObjectType;
  * Utility class for managing and querying object types at runtime.
  */
 public final class ObjectTypeUtil {
-    // private static final Set<String> objectTypes = new HashSet<>();
     private static final Set<String> pluginObjectTypes = new HashSet<>();
-    private static final List<String> objectTypesforIDE = new ArrayList<>();
+    private static final List<String> objectTypesforIDEDropdown = new ArrayList<>();
 
     private ObjectTypeUtil() {}
 
-    // static {
-    //     objectTypes.addAll(ObjectType.initialObjectTypes);
-    // }
-
     /**
-     * Registers a new object type.
+     * Registers a custom object type from a plugin.
+     * <p>
+     * This method allows plugins to register their own object types that will be available
+     * in the IDE alongside standard framework types. The type is only registered if it is
+     * not null, not empty, and not already present in the initial object types.
+     * </p>
      *
-     * @param type the object type to register
+     * @param type the custom object type name to register (e.g., "CustomAPI", "MyService")
+     * @see #getAllTypesForIDE()
      */
-    // public static void registerType(String type) {
-    //     if (type != null && !type.isEmpty()) {
-    //         objectTypes.add(type);
-    //         pluginObjectTypes.add(type);
-    //         System.out.println("Registered new object type: " + type);
-    //     }
-    // }
     public static void registerObjectTypefromPlugin(String type) {
         if (type != null && !type.isEmpty() && !ObjectType.initialObjectTypes.contains(type)) {
             pluginObjectTypes.add(type);
@@ -42,38 +36,62 @@ public final class ObjectTypeUtil {
     }
 
     /**
-     * Checks if the given type is registered.
+     * Checks if the given type is registered (case-insensitive).
+     * <p>
+     * This method performs a case-insensitive comparison to allow flexibility
+     * in object type naming (e.g., "Browser", "browser", "BROWSER" are all valid).
+     * </p>
      *
      * @param type the object type to check
-     * @return true if registered, false otherwise
+     * @return true if registered (ignoring case), false otherwise
      */
     public static boolean isKnownType(String type) {
-        return objectTypesforIDE.contains(type);
+        if (type == null) {
+            return false;
+        }
+        return objectTypesforIDEDropdown.stream()
+                .anyMatch(t -> t.equalsIgnoreCase(type));
     }
 
     // /**
-    //  * Returns an unmodifiable set of all registered object types.
+    //  * Returns an unmodifiable set of all registered object types meant .
     //  *
     //  * @return set of object types
     //  */
     // public static Set<String> getAllTypes() {
     //     return Collections.unmodifiableSet(objectTypes);
     // }
-
+    
+    /**
+     * Returns a list of all object types available for display in the IDE.
+     * <p>
+     * This method aggregates all standard framework object types (Browser, Mobile, Database, etc.)
+     * along with any custom object types registered by plugins. The list is used to populate
+     * object type dropdowns and auto-suggest components in the IDE.
+     * </p>
+     * <p>
+     * <b>Note:</b> This method modifies the internal list on each call by appending types.
+     * Consider refactoring to avoid duplicate entries on multiple invocations.
+     * </p>
+     *
+     * @return an unmodifiable list of all available object type names for IDE components
+     * @see #registerObjectTypefromPlugin(String)
+     * @see #isKnownType(String)
+     */
     public static List<String> getAllTypesForIDE() {
-        // objectTypesforIDE.clear();
-        objectTypesforIDE.add(ObjectType.BROWSER);
-        objectTypesforIDE.add(ObjectType.MOBILE);
-        objectTypesforIDE.add(ObjectType.WEBSERVICE);
-        objectTypesforIDE.add(ObjectType.DATABASE);
-        objectTypesforIDE.add(ObjectType.KAFKA);
-        objectTypesforIDE.add(ObjectType.QUEUE);
-        objectTypesforIDE.add("Synthetic Data");
-        objectTypesforIDE.add(ObjectType.FILE);
-        objectTypesforIDE.add(ObjectType.GENERAL);
-        objectTypesforIDE.add("EXECUTE");
-        objectTypesforIDE.add(ObjectType.STRINGOPERATIONS);
-        objectTypesforIDE.addAll(pluginObjectTypes);
-        return Collections.unmodifiableList(objectTypesforIDE);
+        objectTypesforIDEDropdown.clear();
+        objectTypesforIDEDropdown.add(ObjectType.BROWSER);
+        objectTypesforIDEDropdown.add(ObjectType.MOBILE);
+        objectTypesforIDEDropdown.add(ObjectType.WEBSERVICE);
+        objectTypesforIDEDropdown.add(ObjectType.DATABASE);
+        objectTypesforIDEDropdown.add(ObjectType.KAFKA);
+        objectTypesforIDEDropdown.add(ObjectType.QUEUE);
+        objectTypesforIDEDropdown.add("Synthetic Data");
+        objectTypesforIDEDropdown.add(ObjectType.FILE);
+        objectTypesforIDEDropdown.add(ObjectType.GENERAL);
+        objectTypesforIDEDropdown.add("EXECUTE");
+        objectTypesforIDEDropdown.add(ObjectType.STRINGOPERATIONS);
+        objectTypesforIDEDropdown.addAll(pluginObjectTypes);
+        return Collections.unmodifiableList(objectTypesforIDEDropdown);
     }
 }
