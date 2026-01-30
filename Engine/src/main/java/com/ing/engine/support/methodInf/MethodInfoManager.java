@@ -59,10 +59,22 @@ public class MethodInfoManager {
     private static final AnnotationDetector ANNOTATION_DETECTOR = new AnnotationDetector(METHOD_REPORTER);
     
     /**
-     * Loads all methods annotated with {@link Action} from the main application and plugin JARs.
+     * Loads all methods annotated with {@link Action} from the application and plugins.
      * <p>
-     * This method clears the current method info map, initializes method executors, and scans
-     * both the action packages and all plugin JARs for annotated methods.
+     * This method performs a complete scan and initialization of the action framework:
+     * <ul>
+     *   <li>Initializes method executors</li>
+     *   <li>Clears any previously loaded method information</li>
+     *   <li>Scans the main application package (com.ing.engine.commands) for @Action methods</li>
+     *   <li>Scans all plugin JARs in the plugins directory for @Action methods</li>
+     *   <li>Detects and reports duplicate method names for the same object type</li>
+     * </ul>
+     * This method must be called during application startup before any action execution.
+     * </p>
+     *
+     * @throws DuplicateMethodException if duplicate action methods are detected across plugins or core
+     * @see Action
+     * @see #loadMethodAndRegisterType(String, String)
      */
     public static void load() throws DuplicateMethodException {
         MethodExecutor.init();
@@ -74,17 +86,27 @@ public class MethodInfoManager {
         AnnontationUtil.detectFromPluginPaths(ANNOTATION_DETECTOR, jarPaths);
 
         if(isDuplicateMethodDetected){
-            System.out.println("Duplicate method names detected in the loaded actions. Please resolve the conflicts.");
+            System.out.println("\u001B[31mDuplicate method names detected in the loaded actions. Please resolve the conflicts.\u001B[0m");
             throw new DuplicateMethodException("Duplicate method names detected in the loaded actions. Please resolve the conflicts.");
         }
     }
-    
+
     /**
-     * Loads the method with the given class and method name, stores its {@link Action} annotation in the map,
-     * and registers the object type in {@link ObjectTypeUtil}.
+     * Loads a method's {@link Action} annotation and registers its object type.
+     * <p>
+     * This method performs the following operations:
+     * <ul>
+     *   <li>Retrieves the method from the specified class</li>
+     *   <li>Extracts the {@link Action} annotation metadata</li>
+     *   <li>Registers the object type from the annotation with {@link ObjectTypeUtil}</li>
+     *   <li>Checks for duplicate method names within the same object type</li>
+     *   <li>Stores the method info in the map if no duplicate is detected</li>
+     * </ul>
+     * If a duplicate is detected, the method is not registered and the duplicate flag is set.
+     * </p>
      *
-     * @param className the fully qualified class name
-     * @param methodName the method name to load
+     * @param className the fully qualified class name containing the method
+     * @param methodName the name of the method to load (must be a no-arg method)
      */
     private static void loadMethodAndRegisterType(String className, String methodName) {
         try {
@@ -95,9 +117,9 @@ public class MethodInfoManager {
                 String originalObject = methodInfoMap.get(methodName).object();
                 String currentLocation = getPluginFolderName(method);
 
-                System.out.println("Duplicate action '" + methodName + "' for object type '" + mInfo.object() + "' detected:\n" +
+                System.out.println("\u001B[31m" + "Duplicate action '" + methodName + "' for object type '" + mInfo.object() + "' detected:\n" +
                    "  - Duplicate found in: " + currentLocation + "\n" +
-                   "  - Class: " + className);
+                   "  - Class: " + className + "\u001B[0m");
                 isDuplicateMethodDetected = true; // Set flag and return early
                 return; // Don't register the duplicate
             }

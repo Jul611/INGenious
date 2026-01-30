@@ -119,8 +119,18 @@ public class TestCaseAutoSuggest {
         table.getColumnModel().getColumn(Input.getIndex()).setCellEditor(new InputAutoSuggestCellEditor(inputAutoSuggest));
     }
 
+    /**
+     * Retrieves a list of all object types available in the IDE.
+     * <p>
+     * The object types are sourced from {@link ObjectTypeUtil#getAllTypesForIDE()}
+     * and are used to populate the ObjectName dropdown in test case design.
+     * </p>
+     *
+     * @return a List of String containing all object type names available in the IDE
+     * @see ObjectTypeUtil#getAllTypesForIDE()
+     */
     private List<String> getObjectList() {
-        List<String> objectList = new ArrayList<>(ObjectTypeUtil.getAllTypesForIDE());
+        List<String> objectList = new ArrayList<>(ObjectTypeUtil.getAllTypesForIDE()); // arraylist to allow ordered list
         return objectList;
     }
 
@@ -287,6 +297,18 @@ public class TestCaseAutoSuggest {
 
     class ActionAutoSuggest extends AutoSuggest {
 
+        /**
+         * Retrieves available actions for the currently selected object in the test design table.
+         * <p>
+         * Returns action methods appropriate for the object type (Browser, Database, Webservice, etc.)
+         * or reusable components for Execute objects. For unrecognized object names, attempts to
+         * resolve them as custom types, web objects, or mobile objects from the object repository.
+         * </p>
+         *
+         * @return list of action method names for the selected object, or an empty list if unrecognized
+         * @see MethodInfoManager#getMethodListFor(String...)
+         * @see ObjectTypeUtil#isKnownType(String)
+         */
         private List<String> getActionBasedOnObject() {
             String objectName = Objects.toString(table.getValueAt(
                     table.getSelectedRow(), ObjectName.getIndex()), "");

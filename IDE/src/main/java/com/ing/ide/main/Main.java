@@ -103,13 +103,19 @@ public class Main {
 
     }
 
+    /**
+     * Initializes all dependencies required for the application.
+     * This includes common dependencies and method or actions from INGenious command package or plugins.
+     * 
+     * @throws DuplicateMethodException if duplicate methods are detected during loading,
+     *         which will cause the application to exit with error code 1
+     */
     private static void initDependencies() {
         initCommonDependencies();
        try {
            MethodInfoManager.load();
            //ByObjectProp.load();
        } catch (DuplicateMethodException ex) {
-           
            System.getLogger(Main.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
            System.exit(1);
        }

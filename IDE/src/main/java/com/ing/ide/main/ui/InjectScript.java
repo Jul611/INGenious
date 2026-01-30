@@ -264,6 +264,22 @@ public class InjectScript extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Handles the action event when the inject button is performed.
+     * <p>
+     * This method attempts to inject a script by calling {@link #injectScript()}.
+     * If the injection is successful, it reloads the method information using
+     * {@link MethodInfoManager#load()} and disposes of the current window.
+     * </p>
+     * <p>
+     * If a {@link DuplicateMethodException} occurs during the loading process,
+     * it logs the error using the system logger at ERROR level.
+     * </p>
+     *
+     * @param evt the action event triggered by the inject action
+     * @see #injectScript()
+     * @see MethodInfoManager#load()
+     */
     private void injectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_injectActionPerformed
         if (injectScript()) {
             try {

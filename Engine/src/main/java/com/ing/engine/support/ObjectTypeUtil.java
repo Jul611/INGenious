@@ -22,14 +22,17 @@ public final class ObjectTypeUtil {
      * <p>
      * This method allows plugins to register their own object types that will be available
      * in the IDE alongside standard framework types. The type is only registered if it is
-     * not null, not empty, and not already present in the initial object types.
+     * not null, not empty, not already present in the initial object types, and not already
+     * registered by another plugin.
      * </p>
      *
      * @param type the custom object type name to register (e.g., "CustomAPI", "MyService")
      * @see #getAllTypesForIDE()
      */
     public static void registerObjectTypefromPlugin(String type) {
-        if (type != null && !type.isEmpty() && !ObjectType.initialObjectTypes.contains(type)) {
+        if (type != null && !type.isEmpty() 
+                && !ObjectType.initialObjectTypes.contains(type)
+                && !pluginObjectTypes.contains(type)) {
             pluginObjectTypes.add(type);
             System.out.println("Registered new object type: " + type);
         }
@@ -52,15 +55,6 @@ public final class ObjectTypeUtil {
         return objectTypesforIDEDropdown.stream()
                 .anyMatch(t -> t.equalsIgnoreCase(type));
     }
-
-    // /**
-    //  * Returns an unmodifiable set of all registered object types meant .
-    //  *
-    //  * @return set of object types
-    //  */
-    // public static Set<String> getAllTypes() {
-    //     return Collections.unmodifiableSet(objectTypes);
-    // }
     
     /**
      * Returns a list of all object types available for display in the IDE.
@@ -68,10 +62,6 @@ public final class ObjectTypeUtil {
      * This method aggregates all standard framework object types (Browser, Mobile, Database, etc.)
      * along with any custom object types registered by plugins. The list is used to populate
      * object type dropdowns and auto-suggest components in the IDE.
-     * </p>
-     * <p>
-     * <b>Note:</b> This method modifies the internal list on each call by appending types.
-     * Consider refactoring to avoid duplicate entries on multiple invocations.
      * </p>
      *
      * @return an unmodifiable list of all available object type names for IDE components

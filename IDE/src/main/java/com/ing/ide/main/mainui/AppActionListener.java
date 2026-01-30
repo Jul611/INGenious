@@ -318,6 +318,17 @@ public class AppActionListener implements ActionListener {
         tmSettings.load();
     }
 
+    /**
+     * Refreshes the method information by reloading it from the MethodInfoManager.
+     * <p>
+     * This method attempts to reload all method information. If a duplicate method
+     * is detected during the loading process, an error is logged and the application
+     * terminates with exit code 1.
+     * </p>
+     *
+     * @throws DuplicateMethodException if duplicate methods are found during reload
+     *                                   (caught and handled internally by logging and exiting)
+     */
     private void doRefresh() {
         try {
             MethodInfoManager.load();

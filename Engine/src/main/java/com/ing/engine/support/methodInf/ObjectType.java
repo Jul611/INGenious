@@ -49,5 +49,43 @@ public class ObjectType {
     /** String manipulation operations object type */
     public static final String STRINGOPERATIONS = "String Operations";
 
+    /**
+     * An unmodifiable set containing all standard framework object types.
+     * <p>
+     * This set is initialized with all predefined object type constants and is used
+     * to distinguish between built-in types and custom plugin-registered types.
+     * </p>
+     */
+    public static final Set<String> initialObjectTypes = new HashSet<String>() {{
+        add(BROWSER);
+        add(WEB);
+        add(MOBILE);
+        add(IMAGE);
+        add(PLAYWRIGHT);
+        add(APP);
+        add(DATABASE);
+        add(PROTRACTORJS);
+        add(ANY);
+        add(WEBSERVICE);
+        add(FILE);
+        add(KAFKA);
+        add(QUEUE);
+        add(DATA);
+        add(GENERAL);
+        add(STRINGOPERATIONS);
+        }};
+
+    /**
+     * Returns a copy of all initial object types supported by the framework.
+     * <p>
+     * This method returns a new HashSet containing all standard object types,
+     * protecting the internal set from modification.
+     * </p>
+     *
+     * @return a new set containing all initial object type names
+     */
+    public static Set<String> getObjectTypes() {
+        return new HashSet<>(initialObjectTypes);
+    }
     
 }

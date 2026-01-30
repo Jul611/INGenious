@@ -18,6 +18,9 @@ pom.xml.next
 /Dist/release
 /Dist/release/**
 
+#Plugins
+/Resources/Plugins/**
+
 # IDE Generated Files
 nbproject
 nbactions*.xml
