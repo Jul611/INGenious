@@ -315,40 +315,26 @@ public class TestCaseAutoSuggest {
             String pageName = Objects.toString(table.getValueAt(
                     table.getSelectedRow(), Reference.getIndex()), "");
 
-            switch (objectName) {
-                case "Execute":
-                    return getReusables();
-                case "Browser":
-                    return MethodInfoManager.getMethodListFor(ObjectType.BROWSER, ObjectType.ANY);
-                case "Mobile":
-                    return MethodInfoManager.getMethodListFor(ObjectType.MOBILE, ObjectType.MOBILE);
-                case "Database":
-                    return MethodInfoManager.getMethodListFor(ObjectType.DATABASE, ObjectType.DATABASE);
-                case "ProtractorJS":
-                    return MethodInfoManager.getMethodListFor(ObjectType.PROTRACTORJS, ObjectType.PROTRACTORJS);
-                case "Webservice":
-                    return MethodInfoManager.getMethodListFor(ObjectType.WEBSERVICE, ObjectType.WEBSERVICE);
-                case "Synthetic Data":
-                     return MethodInfoManager.getMethodListFor(ObjectType.DATA, ObjectType.DATA);
-                case "Queue":
-                     return MethodInfoManager.getMethodListFor(ObjectType.QUEUE, ObjectType.QUEUE);
-                case "Kafka":
-                     return MethodInfoManager.getMethodListFor(ObjectType.KAFKA, ObjectType.KAFKA);    
-                case "File":
-                    return MethodInfoManager.getMethodListFor(ObjectType.FILE, ObjectType.FILE);
-                case "General":
-                    return MethodInfoManager.getMethodListFor(ObjectType.GENERAL, ObjectType.GENERAL);    
-                case "String Operations":
-                    return MethodInfoManager.getMethodListFor(ObjectType.STRINGOPERATIONS, ObjectType.STRINGOPERATIONS);  
-                default:
-                    if (ObjectTypeUtil.isKnownType(objectName)){
-                        return MethodInfoManager.getMethodListFor(objectName);
-                    } else if (isWebObject(objectName, pageName)) {
-                        return MethodInfoManager.getMethodListFor(ObjectType.PLAYWRIGHT, ObjectType.WEB, ObjectType.ANY);
-                    } else if (isMobileObject(objectName, pageName)) {
-                        return MethodInfoManager.getMethodListFor(ObjectType.APP);
-                    } 
+            if ("Execute".equals(objectName)) {
+                return getReusables();
             }
+
+            if ("Browser".equals(objectName)) {
+                return MethodInfoManager.getMethodListFor(ObjectType.BROWSER, ObjectType.ANY);
+            }
+
+            if (ObjectTypeUtil.isKnownType(objectName)) {
+                return MethodInfoManager.getMethodListFor(objectName);
+            }
+
+            if (isWebObject(objectName, pageName)) {
+                return MethodInfoManager.getMethodListFor(ObjectType.PLAYWRIGHT, ObjectType.WEB, ObjectType.ANY);
+            }
+
+            if (isMobileObject(objectName, pageName)) {
+                return MethodInfoManager.getMethodListFor(ObjectType.APP);
+            }
+
             return new ArrayList<>();
         }
 
