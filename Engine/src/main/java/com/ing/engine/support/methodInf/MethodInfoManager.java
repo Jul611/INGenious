@@ -34,9 +34,42 @@ import java.util.logging.Logger;
 public class MethodInfoManager {
     
     /**
-     * Map of method names to their associated {@link Action} annotation metadata.
+     * Wrapper class to store Action annotation, class name, method name, and plugin location.
      */
-    public static Map<String, Action> methodInfoMap = new HashMap<>();
+    private static class MethodInfo {
+        private final Action action;
+        private final String className;
+        private final String methodName;
+        private final String pluginLocation;
+        
+        public MethodInfo(Action action, String className, String methodName, String pluginLocation) {
+            this.action = action;
+            this.className = className;
+            this.methodName = methodName;
+            this.pluginLocation = pluginLocation;
+        }
+        
+        public Action getAction() {
+            return action;
+        }
+        
+        public String getClassName() {
+            return className;
+        }
+        
+        public String getMethodName() {
+            return methodName;
+        }
+        
+        public String getPluginLocation() {
+            return pluginLocation;
+        }
+    }
+    
+    /**
+     * Map of method names to their associated {@link MethodInfo} containing Action annotation and location metadata.
+     */
+    public static Map<String, MethodInfo> methodInfoMap = new HashMap<>();
     private static boolean isDuplicateMethodDetected = false;
     private static Map<String, Set<String>> objectTypeMethodMap = new HashMap<>();
     
@@ -112,18 +145,20 @@ public class MethodInfoManager {
         try {
             Method method = getClass(className).getMethod(methodName);
             Action mInfo = method.getAnnotation(Action.class);
+            String currentLocation = getPluginFolderName(method);
             ObjectTypeUtil.registerObjectTypefromPlugin(mInfo.object());
             if (isDuplicateMethodForObjectType(methodName, mInfo.object())) {
-                String originalObject = methodInfoMap.get(methodName).object();
-                String currentLocation = getPluginFolderName(method);
+                MethodInfo originalMethodInfo = methodInfoMap.get(methodName);
+                String originalClassName = originalMethodInfo.getClassName();
+                String originalLocation = originalMethodInfo.getPluginLocation();
 
                 System.out.println("\u001B[31m" + "Duplicate action '" + methodName + "' for object type '" + mInfo.object() + "' detected:\n" +
-                   "  - Duplicate found in: " + currentLocation + "\n" +
-                   "  - Class: " + className + "\u001B[0m");
+                   "  - Original found in: " + originalLocation + " (class: " + originalClassName + ")\n" +
+                   "  - Duplicate found in: " + currentLocation + " (class: " + className + ")\u001B[0m");
                 isDuplicateMethodDetected = true; // Set flag and return early
                 return; // Don't register the duplicate
             }
-            methodInfoMap.put(methodName, mInfo);
+            methodInfoMap.put(methodName, new MethodInfo(mInfo, className, methodName, currentLocation));
             registerMethodToObjectType(methodName, mInfo.object());
         } catch (NoSuchMethodException | SecurityException ex) {
             Logger.getLogger(MethodInfoManager.class.getName()).log(Level.SEVERE, null, ex);
@@ -170,9 +205,9 @@ public class MethodInfoManager {
      */
     public static List<String> getMethodListFor(String type, String... others) {
         List<String> methodList = new ArrayList<>();
-        for (Map.Entry<String, Action> entry : methodInfoMap.entrySet()) {
+        for (Map.Entry<String, MethodInfo> entry : methodInfoMap.entrySet()) {
             String methodName = entry.getKey();
-            Action mInfo = entry.getValue();
+            Action mInfo = entry.getValue().getAction();
             if (mInfo.object().equals(type)
                     || (others != null
                     && Arrays.asList(others).contains(mInfo.object()))) {
@@ -191,9 +226,40 @@ public class MethodInfoManager {
      */
     public static String getDescriptionFor(String action) {
         if (methodInfoMap.containsKey(action)) {
-            return methodInfoMap.get(action).desc();
+            return methodInfoMap.get(action).getAction().desc();
         }
         return "";
+    }
+    
+    /**
+     * Returns the MethodInfo for the given action method, if available.
+     *
+     * @param action the method name
+     * @return the MethodInfo object, or null if not found
+     */
+    public static MethodInfo getMethodInfo(String action) {
+        return methodInfoMap.get(action);
+    }
+    
+    /**
+     * Returns the Action annotation for the given action method, if available.
+     *
+     * @param action the method name
+     * @return the Action annotation, or null if not found
+     */
+    public static Action getActionFor(String action) {
+        MethodInfo info = methodInfoMap.get(action);
+        return info != null ? info.getAction() : null;
+    }
+    
+    /**
+     * Checks if an action method exists in the registry.
+     *
+     * @param action the method name
+     * @return true if the action exists, false otherwise
+     */
+    public static boolean containsAction(String action) {
+        return methodInfoMap.containsKey(action);
     }
     
     /**
