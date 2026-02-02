@@ -121,18 +121,19 @@ public class Webservice extends General {
     }
 
     /**
-     * Sends a POST HTTP request to the configured endpoint with the specified payload.
+     * Sends a POST HTTP request to the configured endpoint with an optional payload.
      * <p>
-     * Executes a POST REST request using the data from the Input field and the endpoint
+     * Executes a POST REST request using the data from the Input field (if provided) and the endpoint
      * previously set with {@code setEndPoint}.
+     * <p>
      * <ul>
-     *   <li>Input: Request payload</li>
+     *   <li>Input: Request payload (optional)</li>
      *   <li>Condition: Optional API configuration alias (e.g., #alias)</li>
      * </ul>
      *
      * @see #setEndPoint()
      */
-    @Action(object = ObjectType.WEBSERVICE, desc = "POST Rest Request ", input = InputType.YES, condition = InputType.OPTIONAL)
+    @Action(object = ObjectType.WEBSERVICE, desc = "POST Rest Request ", input = InputType.OPTIONAL, condition = InputType.OPTIONAL)
     public void postRestRequest() {
         try {
             createhttpRequest(RequestMethod.POST);
@@ -536,6 +537,37 @@ public class Webservice extends General {
                     String columnName = strObj.split(":", 2)[1];
                     userData.putData(sheetName, columnName, responsebodies.get(key));
                     Report.updateTestLog(Action, "Response body is stored in " + strObj, Status.DONE);
+                } catch (Exception ex) {
+                    Logger.getLogger(this.getClass().getName()).log(Level.OFF, ex.getMessage(), ex);
+                    Report.updateTestLog(Action, "Error Storing text in datasheet :" + ex.getMessage(), Status.DEBUG);
+                }
+            } else {
+                Report.updateTestLog(Action,
+                        "Given input [" + Input + "] format is invalid. It should be [sheetName:ColumnName]",
+                        Status.DEBUG);
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, "Error Storing response body in datasheet :" + "\n" + ex.getMessage(),
+                    Status.DEBUG);
+        }
+    }
+
+    /**
+     * This method will store response headers in datasheet
+     */
+
+    @Action(object = ObjectType.WEBSERVICE, desc = "Store Response Headers In DataSheet ", input = InputType.YES)
+    public void storeResponseHeadersInDataSheet() {
+        try {
+            String strObj = Input;
+            if (strObj.matches(".*:.*")) {
+                try {
+                    System.out.println("Updating value in SubIteration " + userData.getSubIteration());
+                    String sheetName = strObj.split(":", 2)[0];
+                    String columnName = strObj.split(":", 2)[1];
+                    userData.putData(sheetName, columnName, response.get(key).headers().toString());
+                    Report.updateTestLog(Action, "Response headers stored in " + strObj, Status.DONE);
                 } catch (Exception ex) {
                     Logger.getLogger(this.getClass().getName()).log(Level.OFF, ex.getMessage(), ex);
                     Report.updateTestLog(Action, "Error Storing text in datasheet :" + ex.getMessage(), Status.DEBUG);
@@ -1635,6 +1667,11 @@ public class Webservice extends General {
                 if (location.createNewFile()) {
                     FileWriter writer = new FileWriter(location);
                     writer.write(data);
+                    // Appending headers when saving response
+                    if (reqOrRes.equals("response")) {
+                        writer.write("\n\n--- Response Headers ---\n");
+                        writer.write(response.get(key).headers().toString());
+                    }
                     writer.close();
                 }
             }
