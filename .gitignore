@@ -19,7 +19,7 @@ pom.xml.next
 /Dist/release/**
 
 #Plugins
-/Resources/Plugins/**
+# /Resources/Plugins/**
 
 # IDE Generated Files
 nbproject
