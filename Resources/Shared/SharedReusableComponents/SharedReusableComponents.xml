@@ -1,2 +1,8 @@
-<Root ref="SharedReusableComponents" type="SRC" />
+<Root ref="SharedReusableComponents" type="SRC">
+    <Folder ref="Testing-1">
+        <Scenario ref="TestingScenario">
+            <TestCase exeType="Executable" ref="Shared1"/>
+            <TestCase exeType="Executable" ref="Shared2"/>
+        </Scenario>
+    </Folder>
 </Root>

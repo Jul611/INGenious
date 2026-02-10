@@ -94,10 +94,10 @@ public class SharedReusableTreeModel extends ProjectTreeModel {
     }
 
     public void save() {
-        String xml = project.getLocation() + File.separator + "ReusableComponent.xml";
+        String xml = System.getProperty("user.dir") + File.separator + "Shared" + File.separator + "SharedReusableComponents" + File.separator +"SharedReusableComponents.xml";
         Document doc = XMLOperation.initTreeOp();
         Element rootElement = doc.createElement("Root");
-        rootElement.setAttribute("type", "RC");
+        rootElement.setAttribute("type", "SRC");
         rootElement.setAttribute("ref", project.getName());
         doc.appendChild(rootElement);
         saveProjectXML(rootElement);

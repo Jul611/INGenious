@@ -345,7 +345,7 @@ public class TestCaseAutoSuggest {
             for (Scenario scenario : sProject.getScenarios()) {
                 int rcount = scenario.getReusableCount();
                 for (int i = 0; i < rcount; i++) {
-                    reusableList.add(scenario.getName() + ":" + scenario.getReusableAt(i).getName());
+                    reusableList.add("[Project] " + scenario.getName() + ":" + scenario.getReusableAt(i).getName());
                 }
             }
             return reusableList;
@@ -356,7 +356,7 @@ public class TestCaseAutoSuggest {
             for (Scenario scenario : sProject.getScenarios()) {
                 int rcount = scenario.getSharedReusableCount();
                 for (int i = 0; i < rcount; i++) {
-                    sharedReusableList.add(scenario.getName() + ":" + scenario.getSharedReusableAt(i).getName());
+                    sharedReusableList.add("[Shared] " + scenario.getName() + ":" + scenario.getSharedReusableAt(i).getName());
                 }
             }
             return sharedReusableList;
