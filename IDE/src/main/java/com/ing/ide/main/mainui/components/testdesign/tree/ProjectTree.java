@@ -301,6 +301,9 @@ public class ProjectTree implements ActionListener {
             case "Make As Reusable/TestCase":
                 makeAsReusableRTestCase();
                 break;
+            case "Make As Shared Reusable":
+                makeAsSharedReusableRTestCase();
+                break;
             case "Details":
                 showDetails();
                 break;
@@ -591,6 +594,20 @@ public class ProjectTree implements ActionListener {
         getTestDesign().getReusableTree().getTreeModel().addTestCase(testCase);
     }
 
+    private void makeAsSharedReusableRTestCase() {
+        if (!getSelectedTestCaseNodes().isEmpty()) {
+            for (TestCaseNode testCaseNode : getSelectedTestCaseNodes()) {
+                testCaseNode.getTestCase().toggleAsSharedReusable();
+                getTreeModel().removeNodeFromParent(testCaseNode);
+                makeAsSharedReusableRTestCase(testCaseNode.getTestCase());
+            }
+        }
+    }
+    
+    void makeAsSharedReusableRTestCase(TestCase testCase) {
+        getTestDesign().getSharedReusableTree().getTreeModel().addTestCase(testCase);
+    }
+
     private void convertToManual() throws IOException {
         if (!getSelectedScenarios().isEmpty()) {
             testDesign.getsMainFrame().getStepMap().convertScenarios(
@@ -748,6 +765,7 @@ public class ProjectTree implements ActionListener {
         protected JMenuItem deleteTestCase;
 
         protected JMenuItem toggleReusable;
+        protected JMenuItem toggleSharedReusable;
 
         protected JMenuItem impactAnalysis;
 
@@ -779,6 +797,8 @@ public class ProjectTree implements ActionListener {
             add(menu);
             add(toggleReusable = create("Make As Reusable/TestCase", null));
             toggleReusable.setText("Make As Reusable");
+            add(toggleSharedReusable = create("Make As Shared Reusable", null));
+            toggleSharedReusable.setText("Make As Shared Reusable");
             addSeparator();
             setCCP();
             addSeparator();
@@ -801,6 +821,7 @@ public class ProjectTree implements ActionListener {
             renameTestCase.setEnabled(false);
             deleteTestCase.setEnabled(false);
             toggleReusable.setEnabled(false);
+            toggleSharedReusable.setEnabled(false);
 
             impactAnalysis.setEnabled(false);
             getCmdSyntax.setEnabled(false);
@@ -825,6 +846,7 @@ public class ProjectTree implements ActionListener {
             renameTestCase.setEnabled(true);
             deleteTestCase.setEnabled(true);
             toggleReusable.setEnabled(true);
+            toggleSharedReusable.setEnabled(true);
 
             impactAnalysis.setEnabled(true);
 
@@ -850,6 +872,7 @@ public class ProjectTree implements ActionListener {
             renameTestCase.setEnabled(false);
             deleteTestCase.setEnabled(false);
             toggleReusable.setEnabled(false);
+            toggleSharedReusable.setEnabled(false);
 
             impactAnalysis.setEnabled(false);
             getCmdSyntax.setEnabled(false);

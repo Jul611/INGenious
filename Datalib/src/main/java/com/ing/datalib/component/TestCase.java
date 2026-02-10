@@ -34,6 +34,8 @@ public class TestCase extends DataModel {
     private SaveListener saveListener;
 
     private Reusable reusable = null;
+    
+    private SharedReusable sharedReusable = null;
 
     public TestCase(Scenario scenario, String name) {
         this.scenario = scenario;
@@ -193,6 +195,22 @@ public class TestCase extends DataModel {
         addStep(index, step);
     }
 
+    public void addSharedReusableStep(String reusable) {
+        TestStep step = new TestStep(this);
+        step.setObject("Execute");
+        step.setAction(reusable);
+        testSteps.add(step);
+        rowAdded(testSteps.size() - 1);
+        fireTableRowsInserted(testSteps.size() - 1, testSteps.size() - 1);
+    }
+
+    public void addSharedReusableStep(int index, String reusable) {
+        TestStep step = new TestStep(this);
+        step.setObject("Execute");
+        step.setAction(reusable);
+        addStep(index, step);
+    }
+
     public void addObjectStep(int index, String objectName, String pageName) {
         TestStep step = new TestStep(this).asObjectStep(objectName, pageName);
         addStep(index, step);
@@ -236,6 +254,34 @@ public class TestCase extends DataModel {
         }
     }
 
+    public TestCase createAsSharedReusable(String reusableName, int fromStep, int toStep) {
+        TestCase newTestcase = getScenario().addTestCase(reusableName);
+        if (newTestcase != null) {
+            for (int i = fromStep; i <= toStep; i++) {
+                testSteps.get(i).copyValuesTo(newTestcase.addNewStep());
+            }
+            startGroupEdit();
+            addSharedReusableStep(fromStep,
+                    getScenario().getName() + ":" + reusableName);
+            for (int i = toStep + 1; i >= fromStep + 1; i--) {
+                rowDeleted(i);
+                testSteps.remove(i);
+            }
+            stopGroupEdit();
+            fireTableRowsDeleted(fromStep + 1, toStep);
+            return newTestcase;
+        }
+        return null;
+    }
+
+    public void toggleAsSharedReusable() {
+        if (sharedReusable == null) {
+            sharedReusable = new SharedReusable();
+        } else {
+            sharedReusable = null;
+        }
+    }
+
     public void copyValuesTo(TestCase testCase) {
         for (TestStep testStep : testSteps) {
             testStep.copyValuesTo(testCase.addNewStep());
@@ -250,6 +296,10 @@ public class TestCase extends DataModel {
         return scenario.getLocation() + File.separator + name + ".csv";
     }
 
+    public String getSharedReusableLocation() {
+        return scenario.getSharedReusableLocation()+ File.separator + name + ".csv";
+    }
+    
     public void loadTestCaseTableModel() {
         if (testSteps.isEmpty()) {
             loadSteps();
@@ -269,7 +319,9 @@ public class TestCase extends DataModel {
     }
 
     private void loadSteps() {
-        List<CSVRecord> records = FileUtils.getRecords(new File(getLocation()));
+        File file = new File(getLocation());
+        File shared_file = new File(getSharedReusableLocation());
+        List<CSVRecord> records = FileUtils.getRecords(file.exists() ? file : shared_file);
         if (!records.isEmpty()) {
             for (CSVRecord record : records) {
                 testSteps.add(new TestStep(this, record));
@@ -454,7 +506,19 @@ public class TestCase extends DataModel {
     public void setReusable(Reusable reusable) {
         this.reusable = reusable;
     }
+    
+    public boolean isSharedReusable() {
+        return getSharedReusable() != null;
+    }
 
+    public SharedReusable getSharedReusable() {
+        return sharedReusable;
+    }
+
+    public void setSharedReusable(SharedReusable sharedReusable) {
+        this.sharedReusable = sharedReusable;
+    }
+    
     public String getKey() {
         return getScenario().getName() + "#" + getName();
     }

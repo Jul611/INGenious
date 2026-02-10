@@ -22,6 +22,7 @@ import javax.swing.TransferHandler;
 import static javax.swing.TransferHandler.COPY_OR_MOVE;
 import static javax.swing.TransferHandler.MOVE;
 import javax.swing.tree.TreePath;
+import com.ing.ide.main.mainui.components.testdesign.tree.model.ReusableNode;
 
 /**
  *
@@ -210,13 +211,14 @@ public class ProjectDnD extends TransferHandler {
         while (scenario.getProject().getScenarioByName(newName) != null) {
             newName = scenario.getName() + " Copy(" + i++ + ")";
         }
-        ScenarioNode sNode = pTree.getTreeModel().addScenario(gNode,
-                scenario.getProject().addScenario(newName));
+        ScenarioNode sNode = pTree.getTreeModel().addScenario(gNode, scenario.getProject().addScenario(newName));
         List<TestCase> testcases;
         if (pTree.getTreeModel().getRoot() instanceof TestPlanNode) {
             testcases = scenario.getTestcasesAlone();
-        } else {
+        } else if (pTree.getTreeModel().getRoot() instanceof ReusableNode) {
             testcases = scenario.getReusables();
+        } else {
+            testcases = scenario.getSharedReusables();
         }
         for (TestCase testcase : testcases) {
             testcase.loadTableModel();

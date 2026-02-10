@@ -82,6 +82,9 @@ public class Project {
         if (loadScenariosFromTestPlan() && loadTestSets()) {
             Reusable.parseAndSetReusable(this);
         }
+        if (loadSharedScenario()) {
+            SharedReusable.parseAndSetSharedReusable(this);
+        }
         loadTestDatas();
         projectSettings = new ProjectSettings(this);
         objectRepository = new ObjectRepository(this);
@@ -226,6 +229,17 @@ public class Project {
                 for (String scenario : testPlan.list(DIR_FILTER)) {
                     scenarios.add(new Scenario(this, scenario));
                 }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private Boolean loadSharedScenario() {
+        File file = new File(System.getProperty("user.dir") + File.separator + "SharedReusableComponents");
+        if (file.exists() && file.isDirectory() && file.list() != null) {
+            for (String scenario : file.list(DIR_FILTER)) {
+                scenarios.add(new Scenario(this, scenario));
             }
             return true;
         }
@@ -508,7 +522,12 @@ public class Project {
             }
 
             private static DataItem fromTC(TestCase tc) {
-                DataItem data = create(tc.getKey(), tc.getName(), tc.isReusable() ? Meta.Attributes.reusable : Meta.Attributes.testcase);
+                DataItem data = create(tc.getKey(), tc.getName(), 
+                    tc.isReusable() 
+                        ? Meta.Attributes.reusable
+                        : tc.isSharedReusable()
+                            ? Meta.Attributes.sharedreusable
+                            : Meta.Attributes.testcase);
                 data.getAttributes().add(Meta.Attributes.scenario, tc.getScenario().getName());
                 return data;
             }

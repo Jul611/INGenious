@@ -28,6 +28,10 @@ public class Scenario extends DataModel {
         return project.getLocation() + File.separator + "TestPlan" + File.separator + name;
     }
 
+    public String getSharedReusableLocation() {
+        return System.getProperty("user.dir") + File.separator + "SharedReusableComponents" + File.separator + name;
+    }
+
     public Project getProject() {
         return project;
     }
@@ -56,8 +60,10 @@ public class Scenario extends DataModel {
 
     private void loadTestcases() {
         File scenDir = new File(getLocation());
-        if (scenDir.exists()) {
-            for (String testCase : scenDir.list(FileUtils.CSV_FILTER)) {
+        File sharedScenDir = new File(getSharedReusableLocation());
+        File dir = scenDir.exists() ? scenDir : sharedScenDir;
+        if (dir.exists()) {
+            for (String testCase : dir.list(FileUtils.CSV_FILTER)) {
                 testCases.add(new TestCase(this, testCase));
             }
         }
@@ -196,7 +202,7 @@ public class Scenario extends DataModel {
     public List<TestCase> getTestcasesAlone() {
         List<TestCase> testCasesAl = new ArrayList<>();
         for (TestCase testCase : testCases) {
-            if (!testCase.isReusable()) {
+            if (!testCase.isReusable() && !testCase.isSharedReusable()) {
                 testCasesAl.add(testCase);
             }
         }
@@ -247,6 +253,27 @@ public class Scenario extends DataModel {
 
     public int getReusableCount() {
         return getReusables().size();
+    }
+    
+    /**
+     * @return all the Shared Reusables
+     */
+    public List<TestCase> getSharedReusables() {
+        List<TestCase> testCasesR = new ArrayList<>();
+        for (TestCase testCase : testCases) {
+            if (testCase.isSharedReusable()) {
+                testCasesR.add(testCase);
+            }
+        }
+        return testCasesR;
+    }
+
+    public TestCase getSharedReusableAt(int i) {
+        return getSharedReusables().get(i);
+    }
+
+    public int getSharedReusableCount() {
+        return getSharedReusables().size();
     }
 
     public void refactorScenario(String oldScenarioName, String newScenarioName) {

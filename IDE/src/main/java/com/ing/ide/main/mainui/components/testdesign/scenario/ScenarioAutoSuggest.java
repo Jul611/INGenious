@@ -32,6 +32,7 @@ public class ScenarioAutoSuggest {
             @Override
             public void beforeSearch(String text) {
                 setSearchList(getReusables());
+                setSearchList(getSharedReusables());
             }
 
         };
@@ -46,6 +47,17 @@ public class ScenarioAutoSuggest {
             }
         }
         return reusableList;
+    }
+    
+    private List<String> getSharedReusables() {
+        List<String> sharedReusableList = new ArrayList<>();
+        for (Scenario scenario : sProject.getScenarios()) {
+            int rcount = scenario.getSharedReusableCount();
+            for (int i = 0; i < rcount; i++) {
+                sharedReusableList.add(scenario.getName() + ":" + scenario.getSharedReusableAt(i).getName());
+            }
+        }
+        return sharedReusableList;
     }
 
     private void stopEditing() {

@@ -53,9 +53,22 @@ public class GroupNode extends CommonNode {
         return name;
     }
 
-
     public boolean rename(String name) {
         ReusableNode rNode = (ReusableNode) getParent();
+        if (rNode.getGroupByName(name) == null) {
+            setName(name);
+            for (TreeNode scenarioNode: Collections.list(children())) {
+                for (TreeNode testCaseNode : Collections.list(scenarioNode.children())) {
+                    ((TestCaseNode)testCaseNode).getTestCase().getReusable().setGroup(name);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean sharedReusableRename(String name) {
+        SharedReusableNode rNode = (SharedReusableNode) getParent();
         if (rNode.getGroupByName(name) == null) {
             setName(name);
             for (TreeNode scenarioNode: Collections.list(children())) {

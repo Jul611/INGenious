@@ -305,7 +305,9 @@ public class TestCaseAutoSuggest {
 
             switch (objectName) {
                 case "Execute":
-                    return getReusables();
+                    List<String> allReusables = getReusables();
+                    allReusables.addAll(getSharedReusables());
+                    return allReusables;
                 case "Browser":
                     return MethodInfoManager.getMethodListFor(ObjectType.BROWSER, ObjectType.ANY);
                 case "Mobile":
@@ -349,6 +351,16 @@ public class TestCaseAutoSuggest {
             return reusableList;
         }
 
+        private List<String> getSharedReusables() {
+            List<String> sharedReusableList = new ArrayList<>();
+            for (Scenario scenario : sProject.getScenarios()) {
+                int rcount = scenario.getSharedReusableCount();
+                for (int i = 0; i < rcount; i++) {
+                    sharedReusableList.add(scenario.getName() + ":" + scenario.getSharedReusableAt(i).getName());
+                }
+            }
+            return sharedReusableList;
+        }
 
         private boolean isWebObject(String objectName, String pageName) {
             ORPageInf page = sProject.getObjectRepository().getWebOR().getPageByName(pageName);

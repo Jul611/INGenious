@@ -18,6 +18,7 @@ import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
+import javax.swing.JTabbedPane;
 
 /**
  *
@@ -37,6 +38,8 @@ public class TestDesignUI extends JPanel {
 
     JPanel appReusablePanel;
 
+    JPanel sharedReusablePanel;
+
     JButton reusableSwitch;
 
     public TestDesignUI(TestDesign testDesign) {
@@ -51,9 +54,24 @@ public class TestDesignUI extends JPanel {
         projectNReusableTreeSplitPane.setResizeWeight(0.5);
 
         projectNReusableTreeSplitPane.setTopComponent(getTreeInPanel("Test Plan", testDesign.getProjectTree().getTree()));
+        
+        JTabbedPane reusableTabs = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
 
-        appReusablePanel = getRTreeInPanel("Reusable Component", testDesign.getReusableTree().getTree());
-        projectNReusableTreeSplitPane.setBottomComponent(appReusablePanel);
+        appReusablePanel = getRTreeInPanel(
+                "Reusable Component",
+                testDesign.getReusableTree().getTree()
+        );
+        reusableTabs.addTab("Project", appReusablePanel);
+
+        sharedReusablePanel = getRTreeInPanel(
+                "Shared Reusable Component",
+                testDesign.getSharedReusableTree().getTree()
+        );
+        reusableTabs.addTab("Shared", sharedReusablePanel);
+        
+//        appReusablePanel = getRTreeInPanel("Reusable Component", testDesign.getReusableTree().getTree());
+//        projectNReusableTreeSplitPane.setBottomComponent(appReusablePanel);
+        projectNReusableTreeSplitPane.setBottomComponent(reusableTabs);
 
         testCaseNTestDataSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         testCaseNTestDataSplitPane.setOneTouchExpandable(true);

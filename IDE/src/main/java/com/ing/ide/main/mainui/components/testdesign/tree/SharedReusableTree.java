@@ -5,7 +5,7 @@ import com.ing.datalib.component.Scenario;
 import com.ing.datalib.component.TestCase;
 import com.ing.ide.main.mainui.components.testdesign.TestDesign;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.GroupNode;
-import com.ing.ide.main.mainui.components.testdesign.tree.model.ReusableTreeModel;
+import com.ing.ide.main.mainui.components.testdesign.tree.model.SharedReusableTreeModel;
 import com.ing.ide.main.utils.keys.Keystroke;
 import com.ing.ide.util.Notification;
 import com.ing.ide.util.Validator;
@@ -22,17 +22,17 @@ import javax.swing.tree.TreePath;
  *
  *
  */
-public class ReusableTree extends ProjectTree {
+public class SharedReusableTree extends ProjectTree {
 
-    private static final Logger LOGGER = Logger.getLogger(ReusableTree.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(SharedReusableTree.class.getName());
 
-    public ReusableTree(TestDesign testDesign) {
+    public SharedReusableTree(TestDesign testDesign) {
         super(testDesign);
     }
 
     @Override
-    protected ReusableTreeModel getNewTreeModel() {
-        return new ReusableTreeModel();
+    protected SharedReusableTreeModel getNewTreeModel() {
+        return new SharedReusableTreeModel();
     }
 
     @Override
@@ -41,8 +41,8 @@ public class ReusableTree extends ProjectTree {
     }
 
     @Override
-    public ReusableTreeModel getTreeModel() {
-        return (ReusableTreeModel) super.getTreeModel();
+    public SharedReusableTreeModel getTreeModel() {
+        return (SharedReusableTreeModel) super.getTreeModel();
     }
 
     @Override
@@ -100,7 +100,7 @@ public class ReusableTree extends ProjectTree {
         if (Validator.isValidName(name)) {
             GroupNode group = getSelectedGroupNode();
             if (group != null && !group.toString().equals(name)) {
-                if (group.rename(name)) {
+                if (group.sharedReusableRename(name)) {
                     return true;
                 } else {
                     Notification.show("Scenario " + name + " Already present");
@@ -199,7 +199,7 @@ public class ReusableTree extends ProjectTree {
             addSeparator();
             super.init();
             toggleReusable.setText("Make As TestCase");
-            toggleSharedReusable.setText("Make As Shared Reusable");
+            toggleSharedReusable.setText("Make As Reusable");
         }
 
         @Override

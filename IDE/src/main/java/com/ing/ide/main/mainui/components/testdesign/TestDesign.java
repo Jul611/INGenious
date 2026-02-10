@@ -11,6 +11,7 @@ import com.ing.ide.main.mainui.components.testdesign.testcase.TestCaseComponent;
 import com.ing.ide.main.mainui.components.testdesign.testdata.TestDataComponent;
 import com.ing.ide.main.mainui.components.testdesign.tree.ProjectTree;
 import com.ing.ide.main.mainui.components.testdesign.tree.ReusableTree;
+import com.ing.ide.main.mainui.components.testdesign.tree.SharedReusableTree;
 import com.ing.ide.main.ui.ImpactUI;
 import java.awt.CardLayout;
 import javax.swing.JPanel;
@@ -35,6 +36,8 @@ public class TestDesign {
 
     private final ReusableTree reusableTree;
 
+    private final SharedReusableTree sharedReusableTree;
+
     private final ObjectRepo objectRepo;
 
     private final AppMainFrame sMainFrame;
@@ -48,6 +51,7 @@ public class TestDesign {
         this.sMainFrame = sMainFrame;
         projectTree = new ProjectTree(this);
         reusableTree = new ReusableTree(this);
+        sharedReusableTree = new SharedReusableTree(this);
         scenarioComp = new ScenarioComponent(this);
         testcaseComp = new TestCaseComponent(this, this.sMainFrame);
         testDataComp = new TestDataComponent(this);
@@ -81,6 +85,13 @@ public class TestDesign {
             testcaseComp.loadTableModelForSelection(selectedNode);
         }
     }
+
+//    public void loadSharedReusableTableModelForSelection(Object selectedNode) {
+//        if (selectedNode instanceof TestCase) {
+//            testCaseScenarioCard.show(testcaseMirage, "testcase");
+//            testcaseComp.loadTableModelForSelection(selectedNode);
+//        }
+//    }
 
     public TestDesignUI getTestDesignUI() {
         return testDesignUI;
@@ -121,6 +132,10 @@ public class TestDesign {
         return reusableTree;
     }
 
+    public SharedReusableTree getSharedReusableTree() {
+        return sharedReusableTree;
+    }
+
     public ObjectRepo getObjectRepo() {
         return objectRepo;
     }
@@ -138,6 +153,7 @@ public class TestDesign {
         testcaseComp.load();
         testDataComp.load();
         reusableTree.load();
+        sharedReusableTree.load();
         projectTree.load();
         objectRepo.load();
     }
@@ -148,6 +164,7 @@ public class TestDesign {
 
     public final void save() {
         reusableTree.save();
+        sharedReusableTree.save();
     }
 
     public Project getProject() {

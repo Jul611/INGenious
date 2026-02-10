@@ -1,20 +1,18 @@
 
 package com.ing.datalib.component;
 
+import com.ing.datalib.component.utils.XMLOperation;
 import java.io.File;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.ing.datalib.component.utils.XMLOperation;
-
 /**
  *
  * 
  */
-public class Reusable {
+public class SharedReusable {
 
     private String executableType = "Executable";
 
@@ -36,18 +34,19 @@ public class Reusable {
 
     public void setGroup(String group) {
         this.group = group;
-    }    
-    
+    }
+
     public String getReusableType() {
         return reusableType;
     }
 
-    public void setReusableType(String reusableType) {
+    public void setreusableType(String reusableType) {
         this.reusableType = reusableType;
     }
-
-    public static void parseAndSetReusable(Project sProject) {
-        String xml = sProject.getLocation() + File.separator + "ReusableComponent.xml";
+    
+    public static void parseAndSetSharedReusable(Project sProject) {
+        String sharedLocation = System.getProperty("user.dir") + File.separator + "SharedReusableComponents";
+        String xml = sharedLocation + File.separator + "SharedReusableComponents.xml";
         if (new File(xml).exists()) {
             Document doc = XMLOperation.initTreeOp(xml);
             Element rootElement = doc.getDocumentElement();
@@ -94,15 +93,15 @@ public class Reusable {
             if (Node.ELEMENT_NODE == testCaseNode.getNodeType()) {
                 String reusableName = XMLOperation.getAttribute(testCaseNode, "ref");
                 String exeType = XMLOperation.getAttribute(testCaseNode, "exeType");
-                Reusable reusable = new Reusable();
+                SharedReusable reusable = new SharedReusable();
                 reusable.setGroup(folderName);
                 reusable.setExecutableType(exeType);
-                reusable.setReusableType("RC");
+                reusable.setreusableType("SRC");
                 TestCase sTestCase = sScenario.getTestCaseByName(reusableName);
                 if (sTestCase == null) {
                     sTestCase = sScenario.addTestCase(reusableName);
                 }
-                sTestCase.setReusable(reusable);
+                sTestCase.setSharedReusable(reusable);
             }
         }
     }
