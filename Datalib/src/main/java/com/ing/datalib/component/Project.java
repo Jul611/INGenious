@@ -236,7 +236,7 @@ public class Project {
     }
 
     private Boolean loadSharedScenario() {
-        File file = new File(System.getProperty("user.dir") + File.separator + "SharedReusableComponents");
+        File file = new File(System.getProperty("user.dir") + File.separator + "Shared" + File.separator + "SharedReusableComponents");
         if (file.exists() && file.isDirectory() && file.list() != null) {
             for (String scenario : file.list(DIR_FILTER)) {
                 scenarios.add(new Scenario(this, scenario));
