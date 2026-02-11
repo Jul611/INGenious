@@ -45,7 +45,7 @@ public class SharedReusable {
     }
     
     public static void parseAndSetSharedReusable(Project sProject) {
-        String sharedLocation = System.getProperty("user.dir") + File.separator + "SharedReusableComponents";
+        String sharedLocation = System.getProperty("user.dir") + File.separator + "Shared" + File.separator + "SharedReusableComponents";
         String xml = sharedLocation + File.separator + "SharedReusableComponents.xml";
         if (new File(xml).exists()) {
             Document doc = XMLOperation.initTreeOp(xml);
