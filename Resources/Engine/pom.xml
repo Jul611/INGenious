@@ -49,6 +49,7 @@
         <mac.version>mac-aarch64</mac.version>
         <setupDir>../Dist/release</setupDir>
         <resourceDir>../Resources</resourceDir>
+        <ingenious-api.version>3.0</ingenious-api.version>
 
         <java.version>11</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -205,6 +206,12 @@
             <version>${project.version}</version>
         </dependency>
         
+        <dependency>
+            <groupId>com.ing</groupId>
+            <artifactId>ingenious-api</artifactId>
+            <version>${ingenious-api.version}</version>
+            <type>jar</type>
+        </dependency>
         
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
@@ -658,5 +665,5 @@
 			<version>${javafx.version}</version>
 			<classifier>${mac.version}</classifier>
 		</dependency>
-    </dependencies>
+        </dependencies>
 </project>
