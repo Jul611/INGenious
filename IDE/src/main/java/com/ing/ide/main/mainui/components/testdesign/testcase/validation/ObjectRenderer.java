@@ -2,6 +2,7 @@
 package com.ing.ide.main.mainui.components.testdesign.testcase.validation;
 
 import com.ing.datalib.component.TestStep;
+import com.ing.engine.support.ObjectTypeUtil;
 import java.awt.Color;
 import java.awt.Font;
 import java.util.Objects;
@@ -61,9 +62,18 @@ public class ObjectRenderer extends AbstractRenderer {
                 .isObjectPresent(step.getReference(), step.getObject());
     }
 
+    /**
+     * Validates if the given value represents a known object type.
+     * <p>
+     * Checks if the value is a recognized system object type (e.g., Execute, Browser,
+     * Mobile, Database, Webservice, etc.) that the framework supports.
+     * </p>
+     *
+     * @param value the object type value to validate
+     * @return true if the value is a known object type, false otherwise
+     */
     private Boolean isValidObject(Object value) {
-        return Objects.toString(value, "").trim()
-                .matches("Execute|Mobile|Browser|Database|Webservice|Kafka|Synthetic Data|Queue|File|General|String Operations");
+        return ObjectTypeUtil.isKnownType(Objects.toString(value, "").trim());
     }
 
 }
