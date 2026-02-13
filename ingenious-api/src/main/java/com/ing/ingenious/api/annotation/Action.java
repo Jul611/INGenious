@@ -1,7 +1,7 @@
-package com.ing.ingenious.annotation;
+package com.ing.ingenious.api.annotation;
 
-import com.ing.ingenious.types.InputType;
-import com.ing.ingenious.types.ObjectType;
+import com.ing.ingenious.api.types.InputType;
+import com.ing.ingenious.api.types.ObjectType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

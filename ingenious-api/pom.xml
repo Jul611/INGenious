@@ -6,7 +6,8 @@
 
     <groupId>com.ing</groupId>
     <artifactId>ingenious-api</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.0</version>
+    <packaging>jar</packaging>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

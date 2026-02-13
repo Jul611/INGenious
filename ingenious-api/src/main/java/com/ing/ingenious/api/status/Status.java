@@ -1,4 +1,4 @@
-package com.ing.ingenious.status;
+package com.ing.ingenious.api.status;
 
 public enum Status {
 

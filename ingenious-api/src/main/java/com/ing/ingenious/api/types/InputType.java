@@ -1,4 +1,4 @@
-package com.ing.ingenious.types;
+package com.ing.ingenious.api.types;
 
 public enum InputType {
     YES,

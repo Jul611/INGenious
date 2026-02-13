@@ -1,5 +1,5 @@
 
-package com.ing.ingenious.types;
+package com.ing.ingenious.api.types;
 
 import java.util.Set;
 import java.util.HashSet;
