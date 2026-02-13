@@ -12,7 +12,7 @@ import com.ing.engine.reporting.performance.har.Har;
 import com.ing.engine.reporting.performance.har.Har.Log;
 import com.ing.engine.reporting.performance.har.Page;
 import com.ing.ingenious.api.status.Status;
-import com.ing.engine.support.methodInf.Action;
+import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 import java.util.Objects;

@@ -4,7 +4,7 @@ package com.ing.engine.commands.browser;
 import com.ing.engine.core.CommandControl;
 import com.ing.engine.execution.exception.ActionException;
 import com.ing.ingenious.api.status.Status;
-import com.ing.engine.support.methodInf.Action;
+import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 import com.microsoft.playwright.FileChooser;

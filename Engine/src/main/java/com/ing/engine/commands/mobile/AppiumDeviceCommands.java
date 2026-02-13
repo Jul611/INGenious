@@ -11,7 +11,7 @@ import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.status.Status;
-import com.ing.engine.support.methodInf.Action;
+import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 import io.appium.java_client.android.AndroidDriver;

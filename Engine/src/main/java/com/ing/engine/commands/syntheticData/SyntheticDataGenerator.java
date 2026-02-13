@@ -6,7 +6,7 @@ import com.github.javafaker.Internet;
 import com.ing.engine.commands.browser.Command;
 import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.status.Status;
-import com.ing.engine.support.methodInf.Action;
+import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 

@@ -3,7 +3,7 @@ package com.ing.engine.commands.galenCommands;
 
 import com.ing.engine.core.CommandControl;
 import com.ing.engine.galenWrapper.SpecValidation.SpecReader;
-import com.ing.engine.support.methodInf.Action;
+import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 import com.galenframework.specs.SpecHorizontally;
