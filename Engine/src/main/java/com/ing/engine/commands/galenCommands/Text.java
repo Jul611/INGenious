@@ -7,7 +7,7 @@ import com.ing.engine.support.methodInf.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 import com.galenframework.specs.SpecText;
 import com.galenframework.specs.SpecText.Type;
-import com.ing.engine.support.Status;
+import com.ing.ingenious.api.status.Status;
 import java.util.Arrays;
 import org.openqa.selenium.support.ui.Select;
 

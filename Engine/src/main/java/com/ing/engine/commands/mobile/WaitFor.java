@@ -5,7 +5,7 @@ import com.ing.engine.constants.SystemDefaults;
 import com.ing.engine.core.CommandControl;
 import com.ing.engine.execution.exception.ForcedException;
 import com.ing.engine.execution.exception.element.ElementException;
-import com.ing.engine.support.Status;
+import com.ing.ingenious.api.status.Status;
 import com.ing.engine.support.methodInf.Action;
 import com.ing.engine.support.methodInf.InputType;
 import com.ing.engine.support.methodInf.ObjectType;

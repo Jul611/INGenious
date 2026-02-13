@@ -5,7 +5,7 @@ import com.ing.datalib.settings.UserDefinedSettings;
 import com.ing.datalib.util.data.LinkedProperties;
 import com.ing.engine.commands.browser.Command;
 import com.ing.engine.core.CommandControl;
-import com.ing.engine.support.Status;
+import com.ing.ingenious.api.status.Status;
 import com.ing.util.encryption.Encryption;
 import com.ing.engine.core.Control;
 import java.util.Collection;

@@ -14,7 +14,7 @@ import com.ing.engine.execution.data.UserDataAccess;
 import com.ing.engine.execution.exception.UnCaughtException;
 import com.ing.engine.execution.run.TestCaseRunner;
 import com.ing.engine.reporting.TestCaseReport;
-import com.ing.engine.support.Status;
+import com.ing.ingenious.api.status.Status;
 import com.ing.engine.support.Step;
 import com.microsoft.playwright.Locator;
 import java.util.HashMap;

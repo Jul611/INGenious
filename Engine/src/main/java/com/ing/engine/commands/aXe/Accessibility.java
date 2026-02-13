@@ -7,7 +7,7 @@ import com.deque.html.axecore.results.AxeResults;
 import com.deque.html.axecore.playwright.Reporter;
 import com.ing.engine.commands.browser.Performance;
 import com.ing.engine.constants.FilePath;
-import com.ing.engine.support.Status;
+import com.ing.ingenious.api.status.Status;
 import com.ing.engine.support.methodInf.Action;
 import com.ing.engine.support.methodInf.InputType;
 import com.ing.engine.support.methodInf.ObjectType;

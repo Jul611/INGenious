@@ -11,7 +11,7 @@ import com.ing.engine.reporting.performance.har.Entry;
 import com.ing.engine.reporting.performance.har.Har;
 import com.ing.engine.reporting.performance.har.Har.Log;
 import com.ing.engine.reporting.performance.har.Page;
-import com.ing.engine.support.Status;
+import com.ing.ingenious.api.status.Status;
 import com.ing.engine.support.methodInf.Action;
 import com.ing.engine.support.methodInf.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
