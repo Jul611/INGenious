@@ -4,7 +4,7 @@ import com.ing.engine.commands.browser.Command;
 import com.ing.engine.commands.galenCommands.Text;
 import com.ing.engine.core.CommandControl;
 import com.ing.engine.support.methodInf.Action;
-import com.ing.engine.support.methodInf.InputType;
+import com.ing.ingenious.api.types.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;

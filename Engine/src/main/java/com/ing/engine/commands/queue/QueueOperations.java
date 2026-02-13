@@ -10,7 +10,7 @@ import com.ing.engine.core.CommandControl;
 import com.ing.engine.core.Control;
 import com.ing.ingenious.api.status.Status;
 import com.ing.engine.support.methodInf.Action;
-import com.ing.engine.support.methodInf.InputType;
+import com.ing.ingenious.api.types.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 import com.jayway.jsonpath.JsonPath;
 import java.io.FileNotFoundException;

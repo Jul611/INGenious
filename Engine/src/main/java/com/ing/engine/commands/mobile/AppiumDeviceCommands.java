@@ -12,7 +12,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.status.Status;
 import com.ing.engine.support.methodInf.Action;
-import com.ing.engine.support.methodInf.InputType;
+import com.ing.ingenious.api.types.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;

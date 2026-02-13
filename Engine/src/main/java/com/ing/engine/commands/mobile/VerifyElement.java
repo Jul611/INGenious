@@ -3,7 +3,7 @@ package com.ing.engine.commands.mobile;
 import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.status.Status;
 import com.ing.engine.support.methodInf.Action;
-import com.ing.engine.support.methodInf.InputType;
+import com.ing.ingenious.api.types.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 
 /*

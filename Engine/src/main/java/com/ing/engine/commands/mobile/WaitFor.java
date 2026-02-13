@@ -7,7 +7,7 @@ import com.ing.engine.execution.exception.ForcedException;
 import com.ing.engine.execution.exception.element.ElementException;
 import com.ing.ingenious.api.status.Status;
 import com.ing.engine.support.methodInf.Action;
-import com.ing.engine.support.methodInf.InputType;
+import com.ing.ingenious.api.types.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
 import java.time.Duration;
 import java.util.logging.Level;
