@@ -27,7 +27,7 @@ public interface CommandApi {
 //    String getCondition();
 //    String getInput();
 //    String getAction();
-//    TestCaseReportApi getReport();
+   TestCaseReportApi getReport();
 //    String getReference();
 //    com.ing.engine.execution.data.UserDataAccess getUserData();
 //    org.openqa.selenium.WebDriver getMDriver();
