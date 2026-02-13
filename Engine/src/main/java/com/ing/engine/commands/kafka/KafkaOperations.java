@@ -13,7 +13,7 @@ import com.ing.engine.core.Control;
 import com.ing.ingenious.api.status.Status;
 import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 import com.jayway.jsonpath.JsonPath;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;

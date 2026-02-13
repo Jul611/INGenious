@@ -6,7 +6,7 @@ import com.ing.engine.drivers.MobileObject;
 import com.ing.ingenious.api.status.Status;
 import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 import java.util.HashMap;
 import java.util.Map;
 

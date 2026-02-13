@@ -10,7 +10,7 @@ import com.ing.engine.constants.FilePath;
 import com.ing.ingenious.api.status.Status;
 import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;

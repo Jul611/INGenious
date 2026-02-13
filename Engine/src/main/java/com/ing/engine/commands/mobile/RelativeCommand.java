@@ -6,7 +6,7 @@ import com.ing.engine.execution.exception.element.ElementException;
 import com.ing.ingenious.api.status.Status;
 import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 import org.openqa.selenium.WebElement;
 
 public class RelativeCommand extends Command {

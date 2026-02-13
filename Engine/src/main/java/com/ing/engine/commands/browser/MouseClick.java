@@ -4,7 +4,7 @@ import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.status.Status;
 import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 import com.microsoft.playwright.Locator;
 import com.ing.engine.execution.exception.ActionException;
 import com.microsoft.playwright.PlaywrightException;

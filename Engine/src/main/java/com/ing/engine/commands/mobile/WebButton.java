@@ -4,7 +4,7 @@ import com.ing.engine.core.CommandControl;
 import com.ing.engine.execution.exception.element.ElementException;
 import com.ing.ingenious.api.status.Status;
 import com.ing.ingenious.api.annotation.Action;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 
 final class WebButton extends MobileGeneral {
 

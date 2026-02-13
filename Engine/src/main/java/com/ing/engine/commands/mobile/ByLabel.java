@@ -5,7 +5,7 @@ import com.ing.engine.commands.galenCommands.Text;
 import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 

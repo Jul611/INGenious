@@ -6,7 +6,7 @@ import com.ing.engine.core.CommandControl;
 
 import com.ing.ingenious.api.status.Status;
 import com.ing.ingenious.api.annotation.Action;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 import com.ing.ingenious.api.types.InputType;
 
 public class SampleScript extends General {

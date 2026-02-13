@@ -14,7 +14,7 @@ import com.ing.engine.reporting.performance.har.Page;
 import com.ing.ingenious.api.status.Status;
 import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;

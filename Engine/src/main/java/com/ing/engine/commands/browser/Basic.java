@@ -6,7 +6,7 @@ import com.ing.engine.execution.exception.ForcedException;
 import com.ing.ingenious.api.status.Status;
 import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 import com.microsoft.playwright.Page.GoBackOptions;
 import com.microsoft.playwright.Page.GoForwardOptions;
 import com.microsoft.playwright.Page.NavigateOptions;
