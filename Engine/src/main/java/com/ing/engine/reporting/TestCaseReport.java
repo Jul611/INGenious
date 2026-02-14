@@ -25,8 +25,9 @@ import java.util.List;
 import java.io.FileWriter;
 import org.json.simple.JSONObject;
 import com.ing.engine.drivers.WebDriverCreation;
+import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
 
-public final class TestCaseReport implements Report {
+public final class TestCaseReport implements Report, TestCaseReportApi {
 
     public static volatile int tcCount;
 

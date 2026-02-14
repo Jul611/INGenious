@@ -24,6 +24,8 @@ import java.util.Stack;
 
 import com.ing.engine.drivers.WebDriverCreation;
 import com.ing.engine.drivers.MobileObject;
+import com.ing.ingenious.api.contract.CommandApi;
+import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
 import java.io.File;
 import java.util.List;
 import java.util.Properties;
@@ -43,7 +45,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-public class Command {
+public class Command implements CommandApi {
 
     public Page Page;
     public Playwright Playwright;
@@ -360,4 +362,39 @@ public class Command {
     /**
      * ******************************
      */
+    
+    @Override
+    public TestCaseReportApi getReport() {
+        return (TestCaseReportApi) Report;
+    }
+
+    @Override
+    public String getData() {
+        return Data;
+    }
+
+    @Override
+    public String getObjectName() {
+        return ObjectName;
+    }
+
+    @Override
+    public String getDescription() {
+        return Description;
+    }
+
+    @Override
+    public String getCondition() {
+        return Condition;
+    }
+
+    @Override
+    public String getInput() {
+        return Input;
+    }
+
+    @Override
+    public String getAction() {
+        return Action;
+    }
 }

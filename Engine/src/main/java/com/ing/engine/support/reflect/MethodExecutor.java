@@ -2,6 +2,10 @@
 package com.ing.engine.support.reflect;
 
 import com.ing.engine.core.CommandControl;
+import com.ing.ingenious.api.contract.GeneralDbApi;
+import com.ing.engine.commands.database.General;
+import com.ing.ingenious.api.contract.GeneralBrApi;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -21,10 +25,26 @@ public class MethodExecutor {
     
     public static boolean executeMethod(String mName, CommandControl inst) throws Throwable {
         MethodHandle handle = getHandle(mName);
+        System.out.println("Executing method: " + mName);
         if (handle != null) {
-            handle.invoke(CACHE_CLASS.get(handle).getConstructor(
-                    CommandControl.class).newInstance(inst));
-            
+            Class<?> clazz = CACHE_CLASS.get(handle);
+            Object arg;
+            java.lang.reflect.Constructor<?> ctor;
+            try {
+                ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralBrApi.class);
+                com.ing.ingenious.api.contract.GeneralBrApi GenDb = new com.ing.engine.commands.browser.General(inst);
+                arg = (com.ing.ingenious.api.contract.GeneralBrApi) GenDb;
+            } catch (NoSuchMethodException e) {
+               try {
+                    ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralDbApi.class);
+                    com.ing.ingenious.api.contract.GeneralDbApi GenDb = new General(inst);
+                    arg = (com.ing.ingenious.api.contract.GeneralDbApi) GenDb;
+                } catch (NoSuchMethodException e2) {
+                    ctor = clazz.getConstructor(CommandControl.class);
+                    arg = inst;
+                }
+            }
+            handle.invoke(ctor.newInstance(arg));
             return true;
         }
         return false;

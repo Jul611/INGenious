@@ -1,5 +1,6 @@
 package com.ing.ingenious.api.contract;
 
+import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
 import java.io.File;
 import java.util.Properties;
 import java.util.Stack;
@@ -19,14 +20,14 @@ public interface CommandApi {
 //    com.ing.engine.drivers.MobileObject getMObject();
 //    com.ing.engine.drivers.PlaywrightDriverCreation getDriver();
 //    
-//    String getData();
-//    String getObjectName();
+   String getData();
+   String getObjectName();
 //    Locator getLocator();
 //    com.ing.datalib.or.common.ObjectGroup<com.ing.datalib.or.image.ImageORObject> getImageObjectGroup();
-//    String getDescription();
-//    String getCondition();
-//    String getInput();
-//    String getAction();
+   String getDescription();
+   String getCondition();
+   String getInput();
+   String getAction();
    TestCaseReportApi getReport();
 //    String getReference();
 //    com.ing.engine.execution.data.UserDataAccess getUserData();

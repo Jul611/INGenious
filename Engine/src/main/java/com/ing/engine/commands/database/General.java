@@ -8,6 +8,8 @@ import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.status.Status;
 import com.ing.util.encryption.Encryption;
 import com.ing.engine.core.Control;
+import com.ing.ingenious.api.contract.GeneralDbApi;
+import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
 import java.util.Collection;
 import java.sql.*;
 import java.util.ArrayList;
@@ -22,7 +24,7 @@ import java.util.regex.Pattern;
  *
  *
  */
-public class General extends Command {
+public class General extends Command implements GeneralDbApi {
 
     public static Connection dbconnection;
     static Statement statement;
@@ -246,5 +248,50 @@ public class General extends Command {
             }
         }
         return query;
+    }
+    
+    @Override
+    public Connection getDbconnection() {
+        return dbconnection;
+    }
+
+    @Override
+    public Statement getStatement() {
+        return statement;
+    }
+
+    @Override
+    public ResultSet getResult() {
+        return result;
+    }
+
+    @Override
+    public ResultSetMetaData getResultData() {
+        return resultData;
+    }
+
+    @Override
+    public List<String> getColNames() {
+        return colNames;
+    }
+
+    @Override
+    public String getData() {
+        return Data;
+    }
+
+    @Override
+    public String getAction() {
+        return Action;
+    }
+
+    @Override
+    public String getInput() {
+        return Input;
+    }
+
+    @Override
+    public TestCaseReportApi getReport() {
+        return (TestCaseReportApi) Report;
     }
 }
