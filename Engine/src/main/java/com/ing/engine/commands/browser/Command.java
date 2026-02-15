@@ -397,4 +397,11 @@ public class Command implements CommandApi {
     public String getAction() {
         return Action;
     }
+
+    @Override
+    public String getReference() {
+        return Reference;
+    }
+
+    
 }
