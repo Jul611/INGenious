@@ -12,53 +12,44 @@ import java.util.Stack;
 
 public interface CommandApi {
     // Variable getters (for Command class fields)
+    // Data related getters
+//    com.ing.engine.execution.data.UserDataAccess getUserData();
+//    String getKey();
+
+//    //Playwright / Browser related getters
 //    Page getPage();
 //    Playwright getPlaywright();
 //    BrowserContext getBrowserContext();
-//    
 //    com.ing.engine.drivers.AutomationObject getAObject();
-//    com.ing.engine.drivers.MobileObject getMObject();
 //    com.ing.engine.drivers.PlaywrightDriverCreation getDriver();
-//    
+//    Locator getLocator();
+
+   //Annotation Input access 
    String getData();
    String getObjectName();
-//    Locator getLocator();
-//    com.ing.datalib.or.common.ObjectGroup<com.ing.datalib.or.image.ImageORObject> getImageObjectGroup();
    String getDescription();
    String getCondition();
    String getInput();
    String getAction();
+   String getReference();
+
+   //Report
    TestCaseReportApi getReport();
-//    String getReference();
-//    com.ing.engine.execution.data.UserDataAccess getUserData();
-//    org.openqa.selenium.WebDriver getMDriver();
-//    org.openqa.selenium.WebElement getElement();
-//    com.ing.engine.drivers.MobileObject getMObjectField();
-//    String getKey();
-    // com.ing.engine.core.CommandControl getCommander();
 
     // Method signatures
+    // Basic data access
     void addVar(String key, String val);
     String getRuntimeVar(String key);
     String getVar(String key);
     void addGlobalVar(String key, String val);
     String getUserDefinedData(String key);
     String getDatasheet(String key);
-    Properties getDataBaseData(String val);
-    File getDBFile(String val);
-    Stack<?> getRunTimeElement();
-    void executeMethod(String Action);
-//    void executeMethod(Locator Locator, String Action, String Input);
-    void executeMethod(String Action, String Input);
-//    void executeMethod(Locator Locator, String Action);
-    Object getDriverControl();
-    Object getMobileDriverControl();
+
+    //Playwright / Browser related getters
+    Object getDriverControl(); 
     Boolean isDriverAlive();
-    String getCurrentBrowserName();
-    Object getCommander();
-    void executeTestCase(String scenarioName, String testCaseName, int subIteration);
-    void executeTestCase(String scenarioName, String testCaseName);
     boolean browserAction();
+
     String resolveAllRuntimeVars(String str);
     String Endpoint();
     String ResponseCode();
@@ -66,4 +57,12 @@ public interface CommandApi {
     String ResponseBody();
     Object Connection();
     String HttpAgent();
+
+    //Mobile
+    // Object getMobileDriverControl();
+    //    com.ing.engine.drivers.MobileObject getMObject();
+    // Object getCommander();
+    //    org.openqa.selenium.WebDriver getMDriver();
+//    org.openqa.selenium.WebElement getElement();
+//    com.ing.engine.drivers.MobileObject getMObjectField();
 }
