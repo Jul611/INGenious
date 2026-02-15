@@ -28,6 +28,6 @@ public interface GeneralDbApi extends CommandApi {
     boolean closeConnection() throws java.sql.SQLException;
     boolean assertDB(String columnName, String condition);
     void storeValue(String input, String condition, boolean isGlobal);
-    File getDBFile(String val);             //gets the DB's configuration file location; check if needed, if yes rename to getDBConfigFile
+
 }
 
