@@ -1,6 +1,7 @@
 package com.ing.ingenious.api.contract;
 
 import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
+import com.ing.ingenious.api.contract.data.UserDataAccessApi;
 import java.io.File;
 import java.util.Properties;
 import java.util.Stack;
@@ -13,7 +14,7 @@ import java.util.Stack;
 public interface CommandApi {
     // Variable getters (for Command class fields)
     // Data related getters
-//    com.ing.engine.execution.data.UserDataAccess getUserData();
+    UserDataAccessApi getUserData();
 //    String getKey();
 
 //    //Playwright / Browser related getters
