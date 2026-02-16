@@ -15,15 +15,16 @@ public interface CommandApi {
     // Variable getters (for Command class fields)
     // Data related getters
     UserDataAccessApi getUserData();
-//    String getKey();
+
 
 //    //Playwright / Browser related getters
-//    Page getPage();
-//    Playwright getPlaywright();
-//    BrowserContext getBrowserContext();
+   Object getPage(); // needs to be cast as Page from com.microsoft.playwright
+   Object getPlaywright(); // needs to be cast as Playwright from com.microsoft.playwright
+   Object getBrowserContext(); //needs to be cast as BrowserContext from com.microsoft.playwright
+   Object getLocator(); // needs to be cast as Locator from com.microsoft.playwright
 //    com.ing.engine.drivers.AutomationObject getAObject();
 //    com.ing.engine.drivers.PlaywrightDriverCreation getDriver();
-//    Locator getLocator();
+
 
    //Annotation Input access 
    String getData();
