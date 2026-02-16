@@ -403,10 +403,5 @@ public class Command implements CommandApi {
         return Reference;
     }
 
-        @Override
-        public com.ing.ingenious.api.contract.data.UserDataAccessApi getUserData() {
-            return userData;
-        }
-
     
 }
