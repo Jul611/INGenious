@@ -17,6 +17,14 @@ public class PluginClassLoader extends URLClassLoader {
      */
     private final ClassLoader parent;
 
+    private static final String[] PARENT_FIRST_PACKAGES = {
+        "com.microsoft.playwright.",     // Playwright
+        "com.ing.ingenious.api.",        // Your API
+        "com.ing.engine.",               // Engine
+        "java.",                         // Java standard
+        "javax."
+    };
+
     /**
      * Constructs a new PluginClassLoader.
      *
@@ -43,7 +51,25 @@ public class PluginClassLoader extends URLClassLoader {
         synchronized (getClassLoadingLock(name)) {
             // Check if class is already loaded
             Class<?> c = findLoadedClass(name);
-
+            
+            // Check if should be parent-first
+            for (String pkg : PARENT_FIRST_PACKAGES) {
+                if (name.startsWith(pkg)) {
+                    // Load from parent first
+                    try {
+                        c = getParent().loadClass(name);
+                        if (resolve) {
+                            resolveClass(c);
+                        }
+                        return c;
+                    } catch (ClassNotFoundException e) {
+                        // Not in parent, try child
+                        break;
+                    }
+                }
+            }
+            
+            // Child-first for everything else
             if (c == null) {
                 try {
                     // Try to load from plugin first
