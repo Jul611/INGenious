@@ -19,13 +19,42 @@ public interface CommandApi {
     UserDataAccessApi getUserData();
 
 
-//    //Playwright / Browser related getters
-   Object getPage(); // needs to be cast as Page from com.microsoft.playwright
-   Object getPlaywright(); // needs to be cast as Playwright from com.microsoft.playwright
-   Object getBrowserContext(); //needs to be cast as BrowserContext from com.microsoft.playwright
-   Object getLocator(); // needs to be cast as Locator from com.microsoft.playwright
-   AutomationObjectApi getAObject();
-   PlaywrightDriverCreationApi getDriver();
+    //Playwright / Browser related getters
+    /**
+     * Retrieves the current Playwright Page instance.
+     * @return the Page object that needs to be cast as {@code com.microsoft.playwright.Page}
+     */
+    Object getPage();
+    
+    /**
+     * Retrieves the Playwright instance.
+     * @return the Playwright object that needs to be cast as {@code com.microsoft.playwright.Playwright}
+     */
+    Object getPlaywright();
+    
+    /**
+     * Retrieves the current browser context.
+     * @return the BrowserContext object that needs to be cast as {@code com.microsoft.playwright.BrowserContext}
+     */
+    Object getBrowserContext();
+    
+    /**
+     * Retrieves the current Locator instance.
+     * @return the Locator object that needs to be cast as {@code com.microsoft.playwright.Locator}
+     */
+    Object getLocator();
+    
+    /**
+     * Retrieves the automation object API for interacting with web elements.
+     * @return the AutomationObjectApi instance
+     */
+    AutomationObjectApi getAObject();
+    
+    /**
+     * Retrieves the Playwright driver creation API.
+     * @return the PlaywrightDriverCreationApi instance for driver management
+     */
+    PlaywrightDriverCreationApi getDriver();
 
 
    //Annotation Input access 
