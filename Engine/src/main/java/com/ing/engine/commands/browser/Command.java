@@ -27,6 +27,7 @@ import com.ing.engine.drivers.MobileObject;
 import com.ing.ingenious.api.contract.CommandApi;
 import com.ing.ingenious.api.contract.data.UserDataAccessApi;
 import com.ing.ingenious.api.contract.drivers.AutomationObjectApi;
+import com.ing.ingenious.api.contract.drivers.PlaywrightDriverCreationApi;
 import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
 import java.io.File;
 import java.util.List;
@@ -433,6 +434,11 @@ public class Command implements CommandApi {
     @Override
     public AutomationObjectApi getAObject() {
         return AObject;
+    }
+
+    @Override
+    public PlaywrightDriverCreationApi getDriver() {
+        return Driver;
     }
 
     

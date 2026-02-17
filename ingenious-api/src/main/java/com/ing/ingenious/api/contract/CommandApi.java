@@ -3,6 +3,7 @@ package com.ing.ingenious.api.contract;
 import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
 import com.ing.ingenious.api.contract.data.UserDataAccessApi;
 import com.ing.ingenious.api.contract.drivers.AutomationObjectApi;
+import com.ing.ingenious.api.contract.drivers.PlaywrightDriverCreationApi;
 import java.io.File;
 import java.util.Properties;
 import java.util.Stack;
@@ -24,7 +25,7 @@ public interface CommandApi {
    Object getBrowserContext(); //needs to be cast as BrowserContext from com.microsoft.playwright
    Object getLocator(); // needs to be cast as Locator from com.microsoft.playwright
    AutomationObjectApi getAObject();
-//    com.ing.engine.drivers.PlaywrightDriverCreation getDriver();
+   PlaywrightDriverCreationApi getDriver();
 
 
    //Annotation Input access 

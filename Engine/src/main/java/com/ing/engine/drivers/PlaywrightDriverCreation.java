@@ -8,6 +8,7 @@ import com.ing.engine.execution.exception.DriverClosedException;
 import com.ing.engine.execution.exception.UnCaughtException;
 import com.ing.engine.constants.FilePath;
 import com.ing.engine.reporting.util.DateTimeUtils;
+import com.ing.ingenious.api.contract.drivers.PlaywrightDriverCreationApi;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -19,7 +20,7 @@ import java.nio.file.Paths;
  * Class to handle driver related operation
  *
  */
-public class PlaywrightDriverCreation {
+public class PlaywrightDriverCreation implements PlaywrightDriverCreationApi {
 
     public Playwright playwright;
     public Page page;
@@ -162,5 +163,22 @@ public class PlaywrightDriverCreation {
     public String getBrowserVersion() {
         return browserContext.browser().version();
     }
+
+    @Override
+    public void setPage(Object page) {
+       setPage((Page) page);
+    }
+
+    @Override
+    public Object getBrowserContext() {
+        return browserContext;
+    }
+
+    @Override
+    public Object getPlaywright() {
+        return playwright;
+    }
+
+
 
 }
