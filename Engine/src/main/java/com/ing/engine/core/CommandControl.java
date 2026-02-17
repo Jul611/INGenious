@@ -1,13 +1,13 @@
 
 package com.ing.engine.core;
 
+import com.ing.ingenious.api.contract.drivers.AutomationObjectApi.FindType;
 import com.ing.datalib.or.common.ObjectGroup;
 import com.ing.datalib.or.image.ImageORObject;
 import com.ing.datalib.settings.DriverSettings;
 import com.ing.datalib.util.data.LinkedProperties;
 import com.ing.datalib.settings.DriverProperties;
 import com.ing.engine.drivers.AutomationObject;
-import com.ing.engine.drivers.AutomationObject.FindType;
 import com.ing.engine.drivers.PlaywrightDriverCreation;
 import com.ing.engine.execution.data.DataProcessor;
 import com.ing.engine.execution.data.UserDataAccess;

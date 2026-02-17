@@ -25,6 +25,8 @@ import java.util.Stack;
 import com.ing.engine.drivers.WebDriverCreation;
 import com.ing.engine.drivers.MobileObject;
 import com.ing.ingenious.api.contract.CommandApi;
+import com.ing.ingenious.api.contract.data.UserDataAccessApi;
+import com.ing.ingenious.api.contract.drivers.AutomationObjectApi;
 import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
 import java.io.File;
 import java.util.List;
@@ -401,6 +403,36 @@ public class Command implements CommandApi {
     @Override
     public String getReference() {
         return Reference;
+    }
+
+    @Override
+    public UserDataAccessApi getUserData() {
+        return userData;
+    }
+
+    @Override
+    public Object getPage() {
+        return Page;
+    }
+
+    @Override
+    public Object getPlaywright() {
+        return Playwright;
+    }
+
+    @Override
+    public Object getBrowserContext() {
+        return BrowserContext;
+    }
+
+    @Override
+    public Object getLocator() {
+        return Locator;
+    }
+
+    @Override
+    public AutomationObjectApi getAObject() {
+        return AObject;
     }
 
     

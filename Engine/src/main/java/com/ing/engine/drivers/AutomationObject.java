@@ -12,6 +12,7 @@ import com.ing.engine.constants.SystemDefaults;
 import com.ing.engine.core.Control;
 import com.ing.engine.core.CommandControl;
 import com.ing.engine.reporting.intf.Report;
+import com.ing.ingenious.api.contract.drivers.AutomationObjectApi;
 import com.ing.ingenious.api.status.Status;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.FrameLocator;
@@ -37,7 +38,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static org.apache.http.client.methods.RequestBuilder.options;
 
-public class AutomationObject {
+public class AutomationObject implements AutomationObjectApi {
 
     public AutomationObject(CommandControl cc) {
         super();
@@ -63,19 +64,6 @@ public class AutomationObject {
     public static HashMap<String, String> globalDynamicValue = new HashMap<>();
     public static String Action = "";
     static HashMap<String, String> chainLocatorMaping = new HashMap<String, String>();
-
-    public enum FindType {
-        GLOBAL_OBJECT, DEFAULT;
-
-        public static FindType fromString(String val) {
-            switch (val.toLowerCase()) {
-                case "globalobject":
-                    return GLOBAL_OBJECT;
-                default:
-                    return DEFAULT;
-            }
-        }
-    }
 
     public AutomationObject() {
     }
@@ -907,6 +895,57 @@ public class AutomationObject {
             }
         }
         return minKey;
+    }
+
+    // ===== API Interface Implementations (Object type wrappers) =====
+    
+    @Override
+    public void setPage(Object page) {
+        setPage((Page) page);
+    }
+
+    @Override
+    public void setDriver(Object page) {
+        setDriver((Page) page);
+    }
+
+    @Override
+    public Object findElement(Object page, String objectKey, String pageKey, FindType condition) {
+        return findElement((Page) page, objectKey, pageKey, condition);
+    }
+    
+    @Override
+    public List<Object> findElementsList(String objectKey, String pageKey) {
+        List<Locator> locators = findElements(objectKey, pageKey);
+        return locators != null ? new ArrayList<>(locators) : null;
+    }
+    
+    @Override
+    public List<Object> findElementsList(String objectKey, String pageKey, String attribute) {
+        List<Locator> locators = findElements(objectKey, pageKey, attribute);
+        return locators != null ? new ArrayList<>(locators) : null;
+    }
+    
+    @Override
+    public List<Object> findElementsList(String objectKey, String pageKey, FindType condition) {
+        List<Locator> locators = findElements(objectKey, pageKey, condition);
+        return locators != null ? new ArrayList<>(locators) : null;
+    }
+    
+    @Override
+    public List<Object> findElementsList(String objectKey, String pageKey, String attribute, FindType condition) {
+        List<Locator> locators = findElements(objectKey, pageKey, attribute, condition);
+        return locators != null ? new ArrayList<>(locators) : null;
+    }
+
+    @Override
+    public void storeElementDetailsinOR(Object attributes, String attribute, String value) {
+        storeElementDetailsinOR((List<ORAttribute>) attributes, attribute, value);
+    }
+
+    @Override
+    public String getAttributeValue(Object attributes, String attribute) {
+        return getAttributeValue((List<ORAttribute>) attributes, attribute);
     }
 
 }
