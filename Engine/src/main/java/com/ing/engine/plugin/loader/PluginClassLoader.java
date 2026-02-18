@@ -17,6 +17,20 @@ public class PluginClassLoader extends URLClassLoader {
      */
     private final ClassLoader parent;
 
+    /**
+     * List of package name prefixes for which the parent class loader is always consulted first.
+     * <p>
+     * Classes in these packages are loaded parent-first to prevent plugins from shadowing or overriding
+     * core framework, API, engine, or JDK classes. This ensures stability and avoids class conflicts
+     * between the framework and plugins.
+     * </p>
+     * <ul>
+     *   <li><b>com.microsoft.playwright.</b> - Playwright core classes</li>
+     *   <li><b>com.ing.ingenious.api.</b> - Framework API contracts</li>
+     *   <li><b>com.ing.engine.</b> - Engine and core framework classes</li>
+     *   <li><b>java.</b>, <b>javax.</b> - Java standard library</li>
+     * </ul>
+     */
     private static final String[] PARENT_FIRST_PACKAGES = {
         "com.microsoft.playwright.",     // Playwright
         "com.ing.ingenious.api.",        // Your API
@@ -37,14 +51,19 @@ public class PluginClassLoader extends URLClassLoader {
     }
 
     /**
-     * Loads the class with the specified name. This implementation uses a child-first
-     * strategy: it attempts to load the class from the plugin JARs first, then delegates
-     * to the parent class loader if not found.
+     * Loads the class with the specified name using a hybrid child-first/parent-first strategy.
+     * <p>
+     * <b>Class Loading Strategy:</b>
+     * <ul>
+     *   <li>For classes in certain core packages (e.g., <code>com.microsoft.playwright.</code>, <code>com.ing.ingenious.api.</code>, <code>com.ing.engine.</code>, <code>java.</code>, <code>javax.</code>), the parent class loader is always consulted first to ensure framework and JDK classes are not shadowed by plugins.</li>
+     *   <li>For all other classes, the loader attempts to load from the plugin JARs first (child-first), then delegates to the parent if not found. This allows plugins to override or isolate their own dependencies.</li>
+     * </ul>
+     * <b>Thread Safety:</b> Uses class loading locks to ensure safe concurrent loading.
      *
-     * @param name    the name of the class
+     * @param name    the fully qualified name of the class
      * @param resolve if true, then resolve the class
      * @return the resulting Class object
-     * @throws ClassNotFoundException if the class could not be found
+     * @throws ClassNotFoundException if the class could not be found in either the plugin or parent class loader
      */
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {

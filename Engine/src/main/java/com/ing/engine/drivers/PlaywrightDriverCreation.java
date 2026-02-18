@@ -164,21 +164,43 @@ public class PlaywrightDriverCreation implements PlaywrightDriverCreationApi {
         return browserContext.browser().version();
     }
 
-    @Override
-    public void setPage(Object page) {
-       setPage((Page) page);
-    }
 
+     /**
+      * Sets the Playwright Page instance for this driver.
+      * <p>
+      * <b>API-Plugin Contract:</b> Required by {@link PlaywrightDriverCreationApi}. The argument is provided as Object for type erasure; cast to {@link Page} when calling framework methods.
+      * </p>
+      * @param page the Playwright Page instance (as Object, must be cast to {@link Page})
+      */
+     @Override
+     public void setPage(Object page) {
+         setPage((Page) page);
+     }
+
+
+    /**
+     * Returns the current Playwright BrowserContext instance.
+     * <p>
+     * <b>API-Plugin Contract:</b> Required by {@link PlaywrightDriverCreationApi}. The returned Object should be cast to {@link BrowserContext} for Playwright operations.
+     * </p>
+     * @return the current BrowserContext as Object (cast to {@link BrowserContext})
+     */
     @Override
     public Object getBrowserContext() {
         return browserContext;
     }
 
+
+    /**
+     * Returns the current Playwright instance.
+     * <p>
+     * <b>API-Plugin Contract:</b> Required by {@link PlaywrightDriverCreationApi}. The returned Object should be cast to {@link Playwright} for Playwright operations.
+     * </p>
+     * @return the current Playwright instance as Object (cast to {@link Playwright})
+     */
     @Override
     public Object getPlaywright() {
         return playwright;
     }
-
-
 
 }

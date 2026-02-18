@@ -250,50 +250,69 @@ public class General extends Command implements GeneralDbApi {
         return query;
     }
     
+
+    /**
+     * Returns the current database connection used by this command.
+     * <p>
+     * <b>API-Plugin Contract:</b> This method is required by the {@link GeneralDbApi} contract. Plugin code may use this to access the underlying JDBC {@link Connection} for advanced operations.
+     * </p>
+     * @return the active {@link Connection} instance, or null if not connected
+     */
     @Override
     public Connection getDbconnection() {
         return dbconnection;
     }
 
+
+    /**
+     * Returns the current SQL statement object used for database operations.
+     * <p>
+     * <b>API-Plugin Contract:</b> This method is required by the {@link GeneralDbApi} contract. Plugin code may use this to execute custom SQL queries or updates.
+     * </p>
+     * @return the current {@link Statement} instance, or null if not initialized
+     */
     @Override
     public Statement getStatement() {
         return statement;
     }
 
+
+    /**
+     * Returns the current result set from the last executed query.
+     * <p>
+     * <b>API-Plugin Contract:</b> This method is required by the {@link GeneralDbApi} contract. Plugin code may use this to iterate over query results.
+     * </p>
+     * @return the current {@link ResultSet}, or null if no query has been executed
+     */
     @Override
     public ResultSet getResult() {
         return result;
     }
 
+
+    /**
+     * Returns the metadata for the current result set.
+     * <p>
+     * <b>API-Plugin Contract:</b> This method is required by the {@link GeneralDbApi} contract. Plugin code may use this to inspect column information for the current result set.
+     * </p>
+     * @return the {@link ResultSetMetaData} for the current result set, or null if not available
+     */
     @Override
     public ResultSetMetaData getResultData() {
         return resultData;
     }
 
+
+    /**
+     * Returns the list of column names for the current result set.
+     * <p>
+     * <b>API-Plugin Contract:</b> This method is required by the {@link GeneralDbApi} contract. Plugin code may use this to access or display column names from the last query.
+     * </p>
+     * @return a list of column names, or an empty list if no result set is available
+     */
     @Override
     public List<String> getColNames() {
         return colNames;
     }
-
-    @Override
-    public String getData() {
-        return Data;
-    }
-
-    @Override
-    public String getAction() {
-        return Action;
-    }
-
-    @Override
-    public String getInput() {
-        return Input;
-    }
-
-    @Override
-    public TestCaseReportApi getReport() {
-        return (TestCaseReportApi) Report;
-    }
-
 
 }
