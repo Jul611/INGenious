@@ -4,8 +4,6 @@ package com.ing.ingenious.api.contract.data;
  * Interface for user data access operations
  */
 public interface UserDataAccessApi {
-    // TestCaseRunner context(); --- provided by UserDataAccess implementation, not part of the API contract
-
     String getCurrentScenario();
 
     String getCurrentTestCase();

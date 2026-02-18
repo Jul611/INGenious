@@ -177,7 +177,7 @@ To automatically copy your JAR and dependencies to the plugin directory, use the
 
 ### 5. Implement Entry Classes
 
-Create your entry class(es) with action methods. Entry classes typically extend framework base classes for convenience, though it's not strictly required.
+Create your entry class(es) with action methods. Entry classes receive the contract interface (such as `GeneralBrApi` or `GeneralDbApi`) via constructor injection. All framework functionalities are accessed through this contract instance, which is provided to your entry class by the framework at runtime.
 
 **Basic Plugin Example:**
 
