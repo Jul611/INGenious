@@ -561,11 +561,10 @@ java.lang.NoClassDefFoundError: com/microsoft/playwright/Page
 
 ### Why `provided` Scope is Critical
 
-The `<scope>provided</scope>` for `ingenious-api` and `playwright` is essential:
-
-- **Prevents ClassCastException**: Ensures Playwright classes are loaded from the parent classloader, not duplicated in your plugin
-- **Smaller JAR Size**: Plugin JAR remains ~10KB instead of ~10MB with bundled Playwright  
-- **Version Consistency**: Framework controls Playwright version, ensuring compatibility
+ The `<scope>provided</scope>` for `ingenious-api` and `playwright` is essential:
+ 
+ - **Prevents ClassCastException**: Ensures Playwright classes are loaded from the parent classloader, not duplicated in your plugin
+ - **Version Consistency**: Framework controls Playwright version, ensuring compatibility
 
 ### Optional Plugin Dependencies
 
