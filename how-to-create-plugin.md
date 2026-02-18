@@ -559,80 +559,33 @@ java.lang.NoClassDefFoundError: com/microsoft/playwright/Page
 
 ## Plugin Dependencies
 
-Plugins can include their own dependencies and use different versions of libraries as needed. The framework uses a custom classloader for each plugin to isolate dependencies, preventing conflicts between plugins and the core application.
-
-### Required Dependencies
-
-All plugins MUST include these dependencies with `provided` scope:
-
-1. **ingenious-api** - Provides API contracts and annotations
-2. **playwright** - Playwright library (must match framework version)
-
-```xml
-<dependencies>
-    <!-- REQUIRED -->
-    <dependency>
-        <groupId>com.ing.ingenious</groupId>
-        <artifactId>ingenious-api</artifactId>
-        <version>1.0.0</version>
-        <scope>provided</scope>
-    </dependency>
-    
-    <!-- REQUIRED -->
-    <dependency>
-        <groupId>com.microsoft.playwright</groupId>
-        <artifactId>playwright</artifactId>
-        <version>1.50.0</version>
-        <scope>provided</scope>
-    </dependency>
-</dependencies>
-```
-
 ### Why `provided` Scope is Critical
 
-The `<scope>provided</scope>` configuration is essential for several reasons:
+The `<scope>provided</scope>` for `ingenious-api` and `playwright` is essential:
 
-1. **Prevents ClassCastException**: Ensures Playwright classes are loaded from the parent classloader, not duplicated in plugin
-2. **Smaller JAR Size**: Your plugin JAR remains small (~10KB) instead of ~10MB with bundled Playwright
-3. **Version Consistency**: Framework controls Playwright version, ensuring compatibility
-4. **Memory Efficiency**: Shared classes loaded once, not duplicated per plugin
+- **Prevents ClassCastException**: Ensures Playwright classes are loaded from the parent classloader, not duplicated in your plugin
+- **Smaller JAR Size**: Plugin JAR remains ~10KB instead of ~10MB with bundled Playwright  
+- **Version Consistency**: Framework controls Playwright version, ensuring compatibility
 
 ### Optional Plugin Dependencies
 
-You can add plugin-specific dependencies with `compile` scope. These will be packaged in your plugin's `lib` folder:
+Add plugin-specific dependencies with `compile` scope - these will be packaged in your `lib` folder:
 
 ```xml
-<dependencies>
-    <!-- Plugin-specific dependencies use 'compile' scope -->
-    <dependency>
-        <groupId>com.google.code.gson</groupId>
-        <artifactId>gson</artifactId>
-        <version>2.10.1</version>
-        <scope>compile</scope>
-    </dependency>
-    
-    <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-lang3</artifactId>
-        <version>3.12.0</version>
-        <scope>compile</scope>
-    </dependency>
-</dependencies>
+<dependency>
+    <groupId>com.google.code.gson</groupId>
+    <artifactId>gson</artifactId>
+    <version>2.10.1</version>
+    <scope>compile</scope>
+</dependency>
 ```
 
 ### Dependency Isolation
 
-Each plugin runs in its own isolated classloader, which means:
-
-- ✅ Plugin A can use Gson 2.10, Plugin B can use Gson 2.8
-- ✅ Plugins can use different versions of the same library without conflicts
-- ✅ Plugin dependencies don't affect the core framework
-- ✅ Plugins don't interfere with each other
-
-**Important**: 
-- Since `ingenious-api` and `playwright` use `provided` scope, they won't be included in your plugin's `lib` folder
-- The Maven Dependency Plugin (if configured) only copies `compile` scoped dependencies
-- If your plugin has no additional `compile` dependencies, your `lib` folder may be empty (which is fine)
+Each plugin runs in its own isolated classloader:
+- Different plugins can use different versions of the same library without conflicts
+- Plugin dependencies don't affect the core framework or other plugins
+- If your plugin has no `compile` dependencies, your `lib` folder may be empty (which is fine)
 
 ---
 
