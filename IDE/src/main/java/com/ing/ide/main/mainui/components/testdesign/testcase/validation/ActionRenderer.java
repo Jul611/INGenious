@@ -5,7 +5,7 @@ import com.ing.datalib.component.TestStep;
 import com.ing.datalib.or.common.ORPageInf;
 import com.ing.engine.support.ObjectTypeUtil;
 import com.ing.engine.support.methodInf.MethodInfoManager;
-import com.ing.engine.support.methodInf.ObjectType;
+import com.ing.ingenious.api.types.ObjectType;
 import java.awt.Color;
 import java.awt.Font;
 import java.util.Objects;
