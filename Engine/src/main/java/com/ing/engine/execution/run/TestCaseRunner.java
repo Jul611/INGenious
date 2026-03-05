@@ -20,7 +20,7 @@ import com.ing.engine.execution.exception.UnCaughtException;
 import com.ing.engine.execution.exception.data.DataNotFoundException;
 import com.ing.engine.execution.exception.data.GlobalDataNotFoundException;
 import com.ing.engine.execution.exception.data.TestDataNotFoundException;
-import com.ing.engine.execution.exception.element.ElementException;
+import com.ing.ingenious.api.exception.mobile.ElementException;
 import com.ing.engine.reporting.TestCaseReport;
 import com.ing.ingenious.api.status.Status;
 import com.ing.engine.support.Step;
