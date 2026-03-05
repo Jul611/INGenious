@@ -33,6 +33,7 @@ public class MethodExecutor {
      *   <ol>
      *     <li>{@code (GeneralBrApi)}: If present, injects a new {@link com.ing.engine.commands.browser.General} instance.</li>
      *     <li>{@code (GeneralDbApi)}: If present, injects a new {@link com.ing.engine.commands.database.General} instance.</li>
+     *     <li>{@code (GeneralMobileApi)}: If present, injects a new mobile General instance.</li>
      *     <li>{@code (CommandControl)}: Fallback, injects the provided {@code inst} argument.</li>
      *   </ol>
      *   <li>Invokes the discovered method on the constructed instance.</li>
@@ -48,26 +49,38 @@ public class MethodExecutor {
         System.out.println("Executing method: " + mName);
         if (handle != null) {
             Class<?> clazz = CACHE_CLASS.get(handle);
-            Object arg;
-            java.lang.reflect.Constructor<?> ctor;
-            try {
-                ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralBrApi.class);
-                com.ing.ingenious.api.contract.GeneralBrApi GenDb = new com.ing.engine.commands.browser.General(inst);
-                arg = (com.ing.ingenious.api.contract.GeneralBrApi) GenDb;
-            } catch (NoSuchMethodException e) {
-               try {
-                    ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralDbApi.class);
-                    com.ing.ingenious.api.contract.GeneralDbApi GenDb = new General(inst);
-                    arg = (com.ing.ingenious.api.contract.GeneralDbApi) GenDb;
-                } catch (NoSuchMethodException e2) {
-                    ctor = clazz.getConstructor(CommandControl.class);
-                    arg = inst;
-                }
-            }
-            handle.invoke(ctor.newInstance(arg));
+            Object instance = createInstance(clazz, inst);
+            handle.invoke(instance);
             return true;
         }
         return false;
+    }
+
+    private static Object createInstance(Class<?> clazz, CommandControl inst) throws Exception {
+        // Try GeneralBrApi constructor
+        try {
+            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralBrApi.class);
+            com.ing.ingenious.api.contract.GeneralBrApi genBr = new com.ing.engine.commands.browser.General(inst);
+            return ctor.newInstance(genBr);
+        } catch (NoSuchMethodException ignored) {}
+        
+        // Try GeneralDbApi constructor
+        try {
+            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralDbApi.class);
+            com.ing.ingenious.api.contract.GeneralDbApi genDb = new General(inst);
+            return ctor.newInstance(genDb);
+        } catch (NoSuchMethodException ignored) {}
+        
+        // Try GeneralMobileApi constructor
+        try {
+            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralMobileApi.class);
+            com.ing.ingenious.api.contract.GeneralMobileApi genMobile = new com.ing.engine.commands.mobile.General(inst);
+            return ctor.newInstance(genMobile);
+        } catch (NoSuchMethodException ignored) {}
+        
+        // Fallback to CommandControl constructor
+        java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(CommandControl.class);
+        return ctor.newInstance(inst);
     }
     
     private static MethodHandle makeHandle(String mName) {
