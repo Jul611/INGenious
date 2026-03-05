@@ -12,7 +12,7 @@ import com.ing.engine.execution.data.DataProcessor;
 import com.ing.engine.execution.data.Parameter;
 import com.ing.engine.execution.data.StepSet;
 import com.ing.engine.execution.exception.DriverClosedException;
-import com.ing.engine.execution.exception.ForcedException;
+import com.ing.ingenious.api.exception.ForcedException;
 import com.ing.engine.execution.exception.TestFailedException;
 import com.ing.engine.execution.exception.ActionException;
 import com.ing.engine.execution.exception.AppiumDriverException;
