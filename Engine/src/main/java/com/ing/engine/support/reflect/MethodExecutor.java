@@ -5,6 +5,7 @@ import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.contract.GeneralDbApi;
 import com.ing.engine.commands.database.General;
 import com.ing.ingenious.api.contract.GeneralBrApi;
+import com.ing.ingenious.api.contract.GeneralMobileApi;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -74,7 +75,7 @@ public class MethodExecutor {
         // Try GeneralMobileApi constructor
         try {
             java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralMobileApi.class);
-            com.ing.ingenious.api.contract.GeneralMobileApi genMobile = new com.ing.engine.commands.mobile.General(inst);
+            com.ing.ingenious.api.contract.GeneralMobileApi genMobile = new com.ing.engine.commands.mobile.MobileGeneral(inst);
             return ctor.newInstance(genMobile);
         } catch (NoSuchMethodException ignored) {}
         
