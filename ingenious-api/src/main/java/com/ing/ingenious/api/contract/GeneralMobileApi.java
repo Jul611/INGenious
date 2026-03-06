@@ -1,5 +1,9 @@
 package com.ing.ingenious.api.contract;
 
+import com.ing.ingenious.api.contract.CommandApi;
+import com.ing.ingenious.api.contract.drivers.MobileObjectApi;
+import com.ing.ingenious.api.contract.drivers.MobileDriverControlApi;
+
 /**
  * Interface for mobile general API contract in INGenious.
  * Provides methods to check mobile driver and element state, scroll bars, and alerts.
@@ -8,6 +12,35 @@ package com.ing.ingenious.api.contract;
  * for plugin development with Appium/Selenium WebDriver.
  */
 public interface GeneralMobileApi extends CommandApi {
+
+    // ===== Mobile / Selenium Related Getters =====
+    
+    /**
+     * Retrieves the mobile object API for interacting with mobile/web elements using Selenium.
+     * @return the MobileObjectApi instance for element finding operations
+     */
+    MobileObjectApi getMObject();
+    
+    /**
+     * Retrieves the mobile driver control API for driver management.
+     * @return the MobileDriverControlApi instance for driver control and management
+     */
+    MobileDriverControlApi getMobileDriverControl();
+    
+    /**
+     * Retrieves the current WebDriver/AppiumDriver instance.
+     * @return the WebDriver object that needs to be cast as {@code org.openqa.selenium.WebDriver}, 
+     *         {@code io.appium.java_client.android.AndroidDriver}, or {@code io.appium.java_client.ios.IOSDriver}
+     */
+    Object getMDriver();
+    
+    /**
+     * Retrieves the current WebElement instance.
+     * @return the WebElement object that needs to be cast as {@code org.openqa.selenium.WebElement}
+     */
+    Object getElement();
+
+    // ===== Mobile / Selenium Related Utility Methods =====
 
     /**
      * Checks if the mobile driver is alive and responsive.

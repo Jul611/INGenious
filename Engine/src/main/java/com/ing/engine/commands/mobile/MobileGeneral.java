@@ -5,6 +5,7 @@ import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.exception.mobile.ElementException;
 import com.ing.ingenious.api.exception.mobile.ElementException.ExceptionType;
 import com.ing.ingenious.api.contract.GeneralMobileApi;
+import com.ing.ingenious.api.contract.drivers.MobileObjectApi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openqa.selenium.JavascriptExecutor;
@@ -120,4 +121,21 @@ public class MobileGeneral extends Command implements GeneralMobileApi {
             return false;
         }
     }
+    
+    @Override
+    public MobileObjectApi getMObject() {
+        return mObject;
+    }
+
+    @Override
+    public Object getMDriver() {
+        return mDriver;
+    }
+
+    @Override
+    public Object getElement() {
+        return Element;
+    }
+
+    
 }

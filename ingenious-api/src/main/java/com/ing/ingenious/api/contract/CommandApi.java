@@ -4,8 +4,7 @@ import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
 import com.ing.ingenious.api.contract.data.UserDataAccessApi;
 import com.ing.ingenious.api.contract.drivers.AutomationObjectApi;
 import com.ing.ingenious.api.contract.drivers.PlaywrightDriverCreationApi;
-import com.ing.ingenious.api.contract.drivers.MobileObjectApi;
-import com.ing.ingenious.api.contract.drivers.MobileDriverControlApi;
+
 import java.io.File;
 import java.util.Properties;
 import java.util.Stack;
@@ -219,38 +218,4 @@ public interface CommandApi {
      */
     String HttpAgent();
 
-        // Mobile
-    //    com.ing.engine.drivers.MobileObject getMObject();
-    //    org.openqa.selenium.WebDriver getMDriver();
-    // org.openqa.selenium.WebElement getElement();
-    // com.ing.engine.drivers.MobileObject getMObjectField();
-
-
-    // ===== Mobile / Selenium Related Getters =====
-    
-    /**
-     * Retrieves the mobile object API for interacting with mobile/web elements using Selenium.
-     * @return the MobileObjectApi instance for element finding operations
-     */
-    MobileObjectApi getMObject();
-    
-    /**
-     * Retrieves the mobile driver control API for driver management.
-     * @return the MobileDriverControlApi instance for driver control and management
-     */
-    MobileDriverControlApi getMobileDriverControl();
-    
-    /**
-     * Retrieves the current WebDriver/AppiumDriver instance.
-     * @return the WebDriver object that needs to be cast as {@code org.openqa.selenium.WebDriver}, 
-     *         {@code io.appium.java_client.android.AndroidDriver}, or {@code io.appium.java_client.ios.IOSDriver}
-     */
-    Object getMDriver();
-    
-    /**
-     * Retrieves the current WebElement instance.
-     * @return the WebElement object that needs to be cast as {@code org.openqa.selenium.WebElement}
-     */
-    Object getElement();
-    
 }

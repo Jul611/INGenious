@@ -502,20 +502,4 @@ public class Command implements CommandApi {
         return Driver;
     }
 
-    @Override
-    public MobileObjectApi getMObject() {
-        return mObject;
-    }
-
-    @Override
-    public Object getMDriver() {
-        return mDriver;
-    }
-
-    @Override
-    public Object getElement() {
-        return Element;
-    }
-
-    
 }
