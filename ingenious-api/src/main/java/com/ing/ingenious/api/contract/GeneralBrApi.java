@@ -1,10 +1,71 @@
 package com.ing.ingenious.api.contract;
 
+import com.ing.ingenious.api.contract.drivers.AutomationObjectApi;
+import com.ing.ingenious.api.contract.drivers.PlaywrightDriverCreationApi;
+
 /**
  * Interface for browser general API contract in INGenious.
  * Provides methods to check browser and element state, and scroll bar presence.
  */
 public interface GeneralBrApi extends CommandApi {
+
+    //Playwright / Browser related getters
+    /**
+     * Retrieves the current Playwright Page instance.
+     * @return the Page object that needs to be cast as {@code com.microsoft.playwright.Page}
+     */
+    Object getPage();
+    
+    /**
+     * Retrieves the Playwright instance.
+     * @return the Playwright object that needs to be cast as {@code com.microsoft.playwright.Playwright}
+     */
+    Object getPlaywright();
+    
+    /**
+     * Retrieves the current browser context.
+     * @return the BrowserContext object that needs to be cast as {@code com.microsoft.playwright.BrowserContext}
+     */
+    Object getBrowserContext();
+    
+    /**
+     * Retrieves the current Locator instance.
+     * @return the Locator object that needs to be cast as {@code com.microsoft.playwright.Locator}
+     */
+    Object getLocator();
+    
+    /**
+     * Retrieves the automation object API for interacting with web elements.
+     * @return the AutomationObjectApi instance
+     */
+    AutomationObjectApi getAObject();
+    
+    /**
+     * Retrieves the Playwright driver creation API.
+     * @return the PlaywrightDriverCreationApi instance for driver management
+     */
+    PlaywrightDriverCreationApi getDriver();
+
+    /**
+     * Retrieves the Playwright driver control instance.
+     * This returns the same instance as {@link #getDriver()}.
+     * @return the PlaywrightDriverCreationApi instance for driver control and management
+     */
+    PlaywrightDriverCreationApi getDriverControl();
+
+    //Browser related utility methods
+
+    /**
+     * Checks if the browser driver is alive.
+     * @return true if the driver is alive, false otherwise
+     */
+    Boolean isDriverAlive();
+    
+    /**
+     * Executes a browser action.
+     * @return true if the action was successful, false otherwise
+     */
+    boolean browserAction();
 
     /**
      * Checks if the browser driver is alive and responsive.

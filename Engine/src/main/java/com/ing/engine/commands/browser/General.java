@@ -6,6 +6,8 @@ import com.ing.ingenious.api.exception.mobile.ElementException;
 import com.ing.ingenious.api.exception.mobile.ElementException.ExceptionType;
 import com.ing.ingenious.api.contract.GeneralBrApi;
 import com.ing.ingenious.api.contract.data.UserDataAccessApi;
+import com.ing.ingenious.api.contract.drivers.AutomationObjectApi;
+import com.ing.ingenious.api.contract.drivers.PlaywrightDriverCreationApi;
 
 /**
  *
@@ -58,6 +60,61 @@ public class General extends Command implements GeneralBrApi {
     public boolean isvScrollBarPresent() {
         return (boolean) (Page
                 .evaluate("document.documentElement.scrollHeight>document.documentElement.clientHeight;"));
+    }
+    
+    
+    /**
+     * Implementation of {@link CommandApi#getPage()} for the API-plugin contract.
+     * @return the Page object that should be cast to {@link com.microsoft.playwright.Page}
+     */
+    @Override
+    public Object getPage() {
+        return Page;
+    }
+
+    /**
+     * Implementation of {@link CommandApi#getPlaywright()} for the API-plugin contract.
+     * @return the Playwright object that should be cast to {@link com.microsoft.playwright.Playwright}
+     */
+    @Override
+    public Object getPlaywright() {
+        return Playwright;
+    }
+
+    /**
+     * Implementation of {@link CommandApi#getBrowserContext()} for the API-plugin contract.
+     * @return the BrowserContext object that should be cast to {@link com.microsoft.playwright.BrowserContext}
+     */
+    @Override
+    public Object getBrowserContext() {
+        return BrowserContext;
+    }
+
+    /**
+     * Implementation of {@link CommandApi#getLocator()} for the API-plugin contract.
+     * @return the Locator object that should be cast to {@link com.microsoft.playwright.Locator}
+     */
+    @Override
+    public Object getLocator() {
+        return Locator;
+    }
+
+    /**
+     * Implementation of {@link CommandApi#getAObject()} for the API-plugin contract.
+     * @return the AutomationObjectApi instance for web element interactions
+     */
+    @Override
+    public AutomationObjectApi getAObject() {
+        return AObject;
+    }
+
+    /**
+     * Implementation of {@link CommandApi#getDriver()} for the API-plugin contract.
+     * @return the PlaywrightDriverCreationApi instance for driver management
+     */
+    @Override
+    public PlaywrightDriverCreationApi getDriver() {
+        return Driver;
     }
 
 }

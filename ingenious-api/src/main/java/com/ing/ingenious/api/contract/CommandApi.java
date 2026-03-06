@@ -28,44 +28,6 @@ public interface CommandApi {
     UserDataAccessApi getUserData();
 
 
-    //Playwright / Browser related getters
-    /**
-     * Retrieves the current Playwright Page instance.
-     * @return the Page object that needs to be cast as {@code com.microsoft.playwright.Page}
-     */
-    Object getPage();
-    
-    /**
-     * Retrieves the Playwright instance.
-     * @return the Playwright object that needs to be cast as {@code com.microsoft.playwright.Playwright}
-     */
-    Object getPlaywright();
-    
-    /**
-     * Retrieves the current browser context.
-     * @return the BrowserContext object that needs to be cast as {@code com.microsoft.playwright.BrowserContext}
-     */
-    Object getBrowserContext();
-    
-    /**
-     * Retrieves the current Locator instance.
-     * @return the Locator object that needs to be cast as {@code com.microsoft.playwright.Locator}
-     */
-    Object getLocator();
-    
-    /**
-     * Retrieves the automation object API for interacting with web elements.
-     * @return the AutomationObjectApi instance
-     */
-    AutomationObjectApi getAObject();
-    
-    /**
-     * Retrieves the Playwright driver creation API.
-     * @return the PlaywrightDriverCreationApi instance for driver management
-     */
-    PlaywrightDriverCreationApi getDriver();
-
-
    /**
     * Gets the data input parameter from the action annotation.
     * @return the data input string
@@ -155,26 +117,7 @@ public interface CommandApi {
      * @return the datasheet value
      */
     String getDatasheet(String key);
-
-    /**
-     * Retrieves the Playwright driver control instance.
-     * This returns the same instance as {@link #getDriver()}.
-     * @return the PlaywrightDriverCreationApi instance for driver control and management
-     */
-    PlaywrightDriverCreationApi getDriverControl();
     
-    /**
-     * Checks if the browser driver is alive.
-     * @return true if the driver is alive, false otherwise
-     */
-    Boolean isDriverAlive();
-    
-    /**
-     * Executes a browser action.
-     * @return true if the action was successful, false otherwise
-     */
-    boolean browserAction();
-
     /**
      * Resolves all runtime variables in the given string.
      * @param str the string containing runtime variable references
