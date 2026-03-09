@@ -58,25 +58,32 @@ public class MethodExecutor {
     }
 
     private static Object createInstance(Class<?> clazz, CommandControl inst) throws Exception {
-        // Try GeneralBrApi constructor
+        // Try BrowserPluginApi constructor
         try {
             java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.BrowserPluginApi.class);
             com.ing.ingenious.api.contract.BrowserPluginApi genBr = new com.ing.engine.commands.browser.General(inst);
             return ctor.newInstance(genBr);
         } catch (NoSuchMethodException ignored) {}
         
-        // Try GeneralDbApi constructor
+        // Try DatabasePluginApi constructor
         try {
             java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.DatabasePluginApi.class);
             com.ing.ingenious.api.contract.DatabasePluginApi genDb = new General(inst);
             return ctor.newInstance(genDb);
         } catch (NoSuchMethodException ignored) {}
         
-        // Try GeneralMobileApi constructor
+        // Try MobilePluginApi constructor
         try {
             java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.MobilePluginApi.class);
             com.ing.ingenious.api.contract.MobilePluginApi genMobile = new com.ing.engine.commands.mobile.MobileGeneral(inst);
             return ctor.newInstance(genMobile);
+        } catch (NoSuchMethodException ignored) {}
+
+        // Try WebservicePluginApi constructor
+        try {
+            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.WebservicePluginApi.class);
+            com.ing.ingenious.api.contract.WebservicePluginApi genWebservice = new com.ing.engine.commands.webservice.WebserviceGeneral(inst);
+            return ctor.newInstance(genWebservice);
         } catch (NoSuchMethodException ignored) {}
         
         // Fallback to CommandControl constructor
