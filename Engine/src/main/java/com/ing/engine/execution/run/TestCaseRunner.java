@@ -410,6 +410,18 @@ public class TestCaseRunner {
                 if (!testStep.isCommented()) {
                     checkForStartLoop(testStep, currStep);
                     try {
+                        if(isLastStep
+                                && testCase.getParentTestCase()!=null
+                                && this.breakSubIterationFlag){
+                            DataNotFoundException dnfe = new DataNotFoundException("Reached the end of data sheet.");
+                            CauseInfo causeInfo = dnfe.new CauseInfo(Cause.EndOfDataSheet, "Reached the end of data sheet.");
+                            dnfe.cause = causeInfo;
+                            this.breakSubIterationFlag = false;
+                            if (this.stepStack.empty()){
+                                currStep = checkForEndLoop(testStep, currStep);
+                            }
+                            throw dnfe;
+                        }
                         runStep(testStep);
                         isLastData = checkIfLastData(testStep, currStep);
                     } catch (DriverClosedException | TestFailedException | UnCaughtException ex) {
@@ -441,18 +453,8 @@ public class TestCaseRunner {
                         onError(ex);
                     }
                     
-                    if (isLastStep && this.breakSubIterationFlag){
-                        DataNotFoundException dnfe = new DataNotFoundException("Reached the end of data sheet.");
-                        CauseInfo causeInfo = dnfe.new CauseInfo(Cause.EndOfDataSheet, "Reached the end of data sheet.");
-                        dnfe.cause = causeInfo;
-                        this.breakSubIterationFlag = false;
-                        if (this.stepStack.empty()){
-                            // Normal flow
-                            currStep = checkForEndLoop(testStep, currStep);
-                            continue;
-                        }
-                        throw dnfe;
-                    } else {
+                    if (!(isLastStep && this.breakSubIterationFlag)){
+                        // Normal flow
                         currStep = checkForEndLoop(testStep, currStep);
                     }
                 }

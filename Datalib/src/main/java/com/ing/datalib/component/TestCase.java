@@ -48,6 +48,8 @@ public class TestCase extends DataModel {
     private SaveListener saveListener;
 
     private Reusable reusable = null;
+    
+    private TestCase parentTestCase = null;
 
     public TestCase(Scenario scenario, String name) {
         this.scenario = scenario;
@@ -72,6 +74,14 @@ public class TestCase extends DataModel {
 
     public List<TestStep> getTestSteps() {
         return testSteps;
+    }
+    
+    public void setParentTestCase(TestCase parentTestCase){
+        this.parentTestCase = parentTestCase;
+    }
+    
+    public TestCase getParentTestCase(){
+        return this.parentTestCase;
     }
 
     @Override
