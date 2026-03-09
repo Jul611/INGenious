@@ -24,7 +24,7 @@ import java.util.Stack;
 
 import com.ing.engine.drivers.WebDriverCreation;
 import com.ing.engine.drivers.MobileObject;
-import com.ing.ingenious.api.contract.CommandApi;
+import com.ing.ingenious.api.contract.CommandPluginApi;
 import com.ing.ingenious.api.contract.data.UserDataAccessApi;
 import com.ing.ingenious.api.contract.drivers.AutomationObjectApi;
 import com.ing.ingenious.api.contract.drivers.MobileObjectApi;
@@ -49,7 +49,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-public class Command implements CommandApi {
+public class Command implements CommandPluginApi {
 
     public Page Page;
     public Playwright Playwright;
@@ -368,7 +368,7 @@ public class Command implements CommandApi {
      */
     
     /**
-     * Implementation of {@link CommandApi#getReport()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getReport()} for the API-plugin contract.
      * @return the TestCaseReportApi instance for logging test results
      */
     @Override
@@ -377,7 +377,7 @@ public class Command implements CommandApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getData()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getData()} for the API-plugin contract.
      * @return the data input parameter
      */
     @Override
@@ -386,7 +386,7 @@ public class Command implements CommandApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getObjectName()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getObjectName()} for the API-plugin contract.
      * @return the object name
      */
     @Override
@@ -395,7 +395,7 @@ public class Command implements CommandApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getDescription()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getDescription()} for the API-plugin contract.
      * @return the action description
      */
     @Override
@@ -404,7 +404,7 @@ public class Command implements CommandApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getCondition()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getCondition()} for the API-plugin contract.
      * @return the condition parameter
      */
     @Override
@@ -413,7 +413,7 @@ public class Command implements CommandApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getInput()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getInput()} for the API-plugin contract.
      * @return the input parameter
      */
     @Override
@@ -422,7 +422,7 @@ public class Command implements CommandApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getAction()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getAction()} for the API-plugin contract.
      * @return the action name
      */
     @Override
@@ -431,7 +431,7 @@ public class Command implements CommandApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getReference()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getReference()} for the API-plugin contract.
      * @return the reference parameter
      */
     @Override
@@ -440,7 +440,7 @@ public class Command implements CommandApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getUserData()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getUserData()} for the API-plugin contract.
      * @return the UserDataAccessApi instance for test data access
      */
     @Override

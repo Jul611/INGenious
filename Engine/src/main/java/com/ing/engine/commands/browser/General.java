@@ -4,7 +4,7 @@ package com.ing.engine.commands.browser;
 import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.exception.mobile.ElementException;
 import com.ing.ingenious.api.exception.mobile.ElementException.ExceptionType;
-import com.ing.ingenious.api.contract.GeneralBrApi;
+import com.ing.ingenious.api.contract.BrowserPluginApi;
 import com.ing.ingenious.api.contract.data.UserDataAccessApi;
 import com.ing.ingenious.api.contract.drivers.AutomationObjectApi;
 import com.ing.ingenious.api.contract.drivers.PlaywrightDriverCreationApi;
@@ -13,7 +13,7 @@ import com.ing.ingenious.api.contract.drivers.PlaywrightDriverCreationApi;
  *
  * 
  */
-public class General extends Command implements GeneralBrApi {
+public class General extends Command implements BrowserPluginApi {
 
     public General(CommandControl cc) {
         super(cc);
@@ -64,7 +64,7 @@ public class General extends Command implements GeneralBrApi {
     
     
     /**
-     * Implementation of {@link CommandApi#getPage()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getPage()} for the API-plugin contract.
      * @return the Page object that should be cast to {@link com.microsoft.playwright.Page}
      */
     @Override
@@ -73,7 +73,7 @@ public class General extends Command implements GeneralBrApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getPlaywright()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getPlaywright()} for the API-plugin contract.
      * @return the Playwright object that should be cast to {@link com.microsoft.playwright.Playwright}
      */
     @Override
@@ -82,7 +82,7 @@ public class General extends Command implements GeneralBrApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getBrowserContext()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getBrowserContext()} for the API-plugin contract.
      * @return the BrowserContext object that should be cast to {@link com.microsoft.playwright.BrowserContext}
      */
     @Override
@@ -91,7 +91,7 @@ public class General extends Command implements GeneralBrApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getLocator()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getLocator()} for the API-plugin contract.
      * @return the Locator object that should be cast to {@link com.microsoft.playwright.Locator}
      */
     @Override
@@ -100,7 +100,7 @@ public class General extends Command implements GeneralBrApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getAObject()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getAObject()} for the API-plugin contract.
      * @return the AutomationObjectApi instance for web element interactions
      */
     @Override
@@ -109,7 +109,7 @@ public class General extends Command implements GeneralBrApi {
     }
 
     /**
-     * Implementation of {@link CommandApi#getDriver()} for the API-plugin contract.
+     * Implementation of {@link CommandPluginApi#getDriver()} for the API-plugin contract.
      * @return the PlaywrightDriverCreationApi instance for driver management
      */
     @Override

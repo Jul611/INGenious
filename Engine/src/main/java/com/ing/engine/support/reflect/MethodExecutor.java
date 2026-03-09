@@ -2,9 +2,9 @@
 package com.ing.engine.support.reflect;
 
 import com.ing.engine.core.CommandControl;
-import com.ing.ingenious.api.contract.GeneralDbApi;
+import com.ing.ingenious.api.contract.DatabasePluginApi;
 import com.ing.engine.commands.database.General;
-import com.ing.ingenious.api.contract.GeneralBrApi;
+import com.ing.ingenious.api.contract.BrowserPluginApi;
 import com.ing.ingenious.api.contract.GeneralMobileApi;
 
 import java.lang.invoke.MethodHandle;
@@ -60,22 +60,22 @@ public class MethodExecutor {
     private static Object createInstance(Class<?> clazz, CommandControl inst) throws Exception {
         // Try GeneralBrApi constructor
         try {
-            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralBrApi.class);
-            com.ing.ingenious.api.contract.GeneralBrApi genBr = new com.ing.engine.commands.browser.General(inst);
+            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.BrowserPluginApi.class);
+            com.ing.ingenious.api.contract.BrowserPluginApi genBr = new com.ing.engine.commands.browser.General(inst);
             return ctor.newInstance(genBr);
         } catch (NoSuchMethodException ignored) {}
         
         // Try GeneralDbApi constructor
         try {
-            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralDbApi.class);
-            com.ing.ingenious.api.contract.GeneralDbApi genDb = new General(inst);
+            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.DatabasePluginApi.class);
+            com.ing.ingenious.api.contract.DatabasePluginApi genDb = new General(inst);
             return ctor.newInstance(genDb);
         } catch (NoSuchMethodException ignored) {}
         
         // Try GeneralMobileApi constructor
         try {
-            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.GeneralMobileApi.class);
-            com.ing.ingenious.api.contract.GeneralMobileApi genMobile = new com.ing.engine.commands.mobile.MobileGeneral(inst);
+            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.MobilePluginApi.class);
+            com.ing.ingenious.api.contract.MobilePluginApi genMobile = new com.ing.engine.commands.mobile.MobileGeneral(inst);
             return ctor.newInstance(genMobile);
         } catch (NoSuchMethodException ignored) {}
         

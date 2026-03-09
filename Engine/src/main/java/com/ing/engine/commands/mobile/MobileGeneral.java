@@ -4,14 +4,14 @@ import com.ing.engine.commands.browser.Command;
 import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.exception.mobile.ElementException;
 import com.ing.ingenious.api.exception.mobile.ElementException.ExceptionType;
-import com.ing.ingenious.api.contract.GeneralMobileApi;
+import com.ing.ingenious.api.contract.MobilePluginApi;
 import com.ing.ingenious.api.contract.drivers.MobileObjectApi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoAlertPresentException;
 
-public class MobileGeneral extends Command implements GeneralMobileApi {
+public class MobileGeneral extends Command implements MobilePluginApi {
 
     public MobileGeneral(CommandControl cc) {
         super(cc);
