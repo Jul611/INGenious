@@ -1,6 +1,6 @@
 package com.ing.ingenious.api.contract;
 
-import com.ing.ingenious.api.contract.CommandApi;
+import com.ing.ingenious.api.contract.CommandPluginApi;
 import com.ing.ingenious.api.contract.drivers.MobileObjectApi;
 import com.ing.ingenious.api.contract.drivers.MobileDriverControlApi;
 
@@ -11,7 +11,7 @@ import com.ing.ingenious.api.contract.drivers.MobileDriverControlApi;
  * This interface extends CommandApi to provide mobile-specific general operations
  * for plugin development with Appium/Selenium WebDriver.
  */
-public interface GeneralMobileApi extends CommandApi {
+public interface MobilePluginApi extends CommandPluginApi {
 
     // ===== Mobile / Selenium Related Getters =====
     

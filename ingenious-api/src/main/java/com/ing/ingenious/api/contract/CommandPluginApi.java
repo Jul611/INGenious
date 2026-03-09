@@ -19,14 +19,13 @@ import java.util.Stack;
  * Provides access to test data, Playwright objects, reporting, variables, and framework utilities.
  * This interface is injected into plugin entry classes via constructor.
  */
-public interface CommandApi {
+public interface CommandPluginApi {
 
     /**
      * Gets the user data access API for test data operations.
      * @return the UserDataAccessApi instance for accessing test data
      */
     UserDataAccessApi getUserData();
-
 
    /**
     * Gets the data input parameter from the action annotation.
@@ -125,40 +124,5 @@ public interface CommandApi {
      */
     String resolveAllRuntimeVars(String str);
     
-    /**
-     * Gets the endpoint URL for HTTP/API operations.
-     * @return the endpoint URL
-     */
-    String Endpoint();
-    
-    /**
-     * Gets the HTTP response code.
-     * @return the response code as a string
-     */
-    String ResponseCode();
-    
-    /**
-     * Gets the HTTP response message.
-     * @return the response message
-     */
-    String ResponseMessage();
-    
-    /**
-     * Gets the HTTP response body.
-     * @return the response body as a string
-     */
-    String ResponseBody();
-    
-    /**
-     * Gets the HTTP connection object.
-     * @return the connection object (needs to be cast to appropriate type)
-     */
-    Object Connection();
-    
-    /**
-     * Gets the HTTP user agent string.
-     * @return the HTTP user agent
-     */
-    String HttpAgent();
 
 }

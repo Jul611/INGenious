@@ -7,7 +7,7 @@ import com.ing.ingenious.api.contract.drivers.PlaywrightDriverCreationApi;
  * Interface for browser general API contract in INGenious.
  * Provides methods to check browser and element state, and scroll bar presence.
  */
-public interface GeneralBrApi extends CommandApi {
+public interface BrowserPluginApi extends CommandPluginApi {
 
     //Playwright / Browser related getters
     /**
