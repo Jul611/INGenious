@@ -646,7 +646,9 @@ The INGenious Framework currently runs on:
 
 ## Complete Plugin Template
 
-Here is a complete, working `pom.xml` template for creating a plugin:
+### POM.xml Template
+
+Here is a comprehensive `pom.xml` template for creating plugins:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -656,49 +658,92 @@ Here is a complete, working `pom.xml` template for creating a plugin:
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     
-    <groupId>com.example</groupId>
-    <artifactId>my-plugin</artifactId>
+    <groupId>com.ing.plugin</groupId>
+    <artifactId>my-custom-plugin</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
     
-    <name>My INGenious Plugin</name>
+    <name>My INGenious Custom Plugin</name>
+    <description>Custom plugin for INGenious Playwright Framework</description>
     
     <properties>
-        <!-- REQUIRED: Match framework Java version -->
+        <!-- CRITICAL: Must match framework's Java version (17) -->
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        
+        <!-- Version properties for easier maintenance -->
+        <ingenious.api.version>1.0.0</ingenious.api.version>
+        <playwright.version>1.50.0</playwright.version>
     </properties>
     
     <dependencies>
-        <!-- REQUIRED: API with provided scope -->
+        <!-- ============================================= -->
+        <!-- REQUIRED: Framework API (provided scope)     -->
+        <!-- ============================================= -->
         <dependency>
             <groupId>com.ing.ingenious</groupId>
             <artifactId>ingenious-api</artifactId>
-            <version>1.0.0</version>
+            <version>${ingenious.api.version}</version>
             <scope>provided</scope>
         </dependency>
         
-        <!-- REQUIRED: Playwright with provided scope -->
+        <!-- ============================================= -->
+        <!-- REQUIRED FOR BROWSER/MOBILE PLUGINS          -->
+        <!-- Playwright with provided scope               -->
+        <!-- ============================================= -->
         <dependency>
             <groupId>com.microsoft.playwright</groupId>
             <artifactId>playwright</artifactId>
-            <version>1.50.0</version>
+            <version>${playwright.version}</version>
             <scope>provided</scope>
         </dependency>
         
-        <!-- Optional: Add your plugin-specific dependencies with compile scope -->
+        <!-- ============================================= -->
+        <!-- OPTIONAL: Plugin-specific dependencies       -->
+        <!-- Use compile scope - will be packaged in lib  -->
+        <!-- ============================================= -->
+        
+        <!-- Example: Apache Commons for utility functions -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+            <scope>compile</scope>
+        </dependency>
+        
+        <!-- Example: JSON processing -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
             <scope>compile</scope>
         </dependency>
+        
+        <!-- Example: Selenium/Appium for mobile plugins -->
+        <!-- Uncomment if creating mobile plugin -->
+        <!--
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>4.16.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.appium</groupId>
+            <artifactId>java-client</artifactId>
+            <version>9.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        -->
     </dependencies>
     
     <build>
         <plugins>
-            <!-- Package plugin-specific dependencies (only needed if you have compile-scoped dependencies) -->
+            <!-- ============================================= -->
+            <!-- Copy plugin dependencies to lib folder       -->
+            <!-- Only compile-scoped dependencies are copied  -->
+            <!-- ============================================= -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -713,13 +758,16 @@ Here is a complete, working `pom.xml` template for creating a plugin:
                         <configuration>
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
                             <includeScope>compile</includeScope>
-                            <excludeTransitive>true</excludeTransitive>
+                            <excludeTransitive>false</excludeTransitive>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
             
-            <!-- Configure JAR manifest with entry classes -->
+            <!-- ============================================= -->
+            <!-- Configure JAR manifest with entry classes    -->
+            <!-- List ALL plugin entry classes here           -->
+            <!-- ============================================= -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -727,16 +775,23 @@ Here is a complete, working `pom.xml` template for creating a plugin:
                 <configuration>
                     <archive>
                         <manifestEntries>
+                            <!-- Comma-separated list of fully qualified class names -->
                             <pluginEntryClasses>
-                                com.ing.plugin.browser.BrowserTestPlugin
+                                com.ing.plugin.browser.BrowserTestPlugin,
+                                com.ing.plugin.database.DatabasePlugin,
+                                com.ing.plugin.mobile.MobileTestPlugin
                             </pluginEntryClasses>
                             <Implementation-Version>${project.version}</Implementation-Version>
+                            <Implementation-Title>${project.name}</Implementation-Title>
                         </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>
             
-            <!-- Optional: Auto-deploy to plugin folder -->
+            <!-- ============================================= -->
+            <!-- Optional: Auto-deploy plugin to target dir   -->
+            <!-- Update deploy.dir to your INGenious location -->
+            <!-- ============================================= -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -747,14 +802,25 @@ Here is a complete, working `pom.xml` template for creating a plugin:
                         <phase>package</phase>
                         <configuration>
                             <target>
-                                <!-- Update this path to your INGenious plugins directory -->
+                                <!-- ⚠️ UPDATE THIS PATH to your INGenious plugins directory -->
                                 <property name="deploy.dir" 
-                                          value="/path/to/INGenious/plugins/my-plugin"/>
+                                          value="${user.home}/INGenious/plugins/${project.artifactId}"/>
+                                
+                                <!-- Create plugin directory if it doesn't exist -->
+                                <mkdir dir="${deploy.dir}"/>
+                                <mkdir dir="${deploy.dir}/lib"/>
+                                
+                                <!-- Copy plugin JAR -->
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      tofile="${deploy.dir}/${project.artifactId}.jar"/>
-                                <copy todir="${deploy.dir}/lib">
+                                      tofile="${deploy.dir}/${project.artifactId}.jar"
+                                      overwrite="true"/>
+                                
+                                <!-- Copy dependencies to lib folder -->
+                                <copy todir="${deploy.dir}/lib" overwrite="true">
                                     <fileset dir="${project.build.directory}/lib"/>
                                 </copy>
+                                
+                                <echo message="Plugin deployed to: ${deploy.dir}"/>
                             </target>
                         </configuration>
                         <goals>
@@ -768,35 +834,1059 @@ Here is a complete, working `pom.xml` template for creating a plugin:
 </project>
 ```
 
-### Example Plugin Action Class
+---
 
-See the complete **BrowserTestPlugin** example in [Step 5: Implement Entry Classes](#5-implement-entry-classes) for a full, working plugin implementation.
+### Plugin Class Templates
 
-That example demonstrates:
-- ✅ Proper constructor with `GeneralBrApi` parameter
-- ✅ Casting Playwright objects once in the constructor
-- ✅ Using typed fields for full IDE support
-- ✅ Real-world error handling with TimeoutError
-- ✅ Proper use of NavigateOptions for configuration
-- ✅ Integration with the reporting API
+Below are complete, production-ready plugin templates for different use cases. Each demonstrates proper initialization, error handling, and reporting patterns.
 
-**Find the source code**: Working plugin examples are available in the `P33148-INGenious-Playwright-Framework-Plugins` repository under the `browser-test-plugin` directory.
+#### 1. Browser Plugin Template
 
-### Quick Start Checklist
+Use this template for browser automation actions with Playwright:
 
-- [ ] Java 17 configured in `pom.xml`
-- [ ] `ingenious-api` dependency with `provided` scope
-- [ ] `playwright` dependency (version 1.50.0) with `provided` scope
-- [ ] Plugin entry classes listed in JAR manifest
-- [ ] Maven Dependency Plugin configured (only if you have additional compile-scoped dependencies)
-- [ ] Action methods annotated with `@Action`
-- [ ] Playwright objects cast from `Object` with null checks
-- [ ] Built with `mvn clean install package`
-- [ ] JAR and `lib` folder deployed to plugins directory
+```java
+package com.ing.plugin.browser;
+
+import com.ing.ingenious.api.annotation.Action;
+import com.ing.ingenious.api.contract.BrowserPluginApi;
+import com.ing.ingenious.api.contract.data.UserDataAccessApi;
+import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
+import com.ing.ingenious.api.exception.ForcedException;
+import com.ing.ingenious.api.exception.ActionException;
+import com.ing.ingenious.api.types.ObjectType;
+import com.ing.ingenious.api.types.InputType;
+import com.ing.ingenious.api.status.Status;
+
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.PlaywrightException;
+import com.microsoft.playwright.TimeoutError;
+import com.microsoft.playwright.assertions.LocatorAssertions;
+import com.microsoft.playwright.assertions.PageAssertions;
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
+import org.opentest4j.AssertionFailedError;
+import java.util.regex.Pattern;
+
+/**
+ * Browser automation plugin for Playwright-based actions
+ * 
+ * @author Your Name
+ */
+public class BrowserTestPlugin {
+    
+    // API contract instance
+    BrowserPluginApi gen;
+    
+    // Test data fields (auto-populated by framework)
+    public String Data;
+    public String Action;
+    public String Input;
+    public String Condition;
+    public TestCaseReportApi Report;
+    public UserDataAccessApi userData;
+    public String ObjectName;
+    
+    // Playwright objects (cast once in constructor)
+    public Page Page;
+    public Locator Locator;
+
+    /**
+     * Constructor - receives BrowserPluginApi from framework
+     * Cast Playwright objects once here for type safety
+     */
+    public BrowserTestPlugin(BrowserPluginApi gen) {
+        this.gen = gen;
+        
+        // Initialize test data fields
+        this.Data = gen.getData();
+        this.Action = gen.getAction();
+        this.Input = gen.getInput();
+        this.Condition = gen.getCondition();
+        this.Report = gen.getReport();
+        this.userData = gen.getUserData();
+        this.ObjectName = gen.getObjectName();
+        
+        // Cast Playwright objects once (returned as Object for version independence)
+        this.Page = (Page) gen.getPage();
+        this.Locator = (Locator) gen.getLocator();
+    }
+
+    /**
+     * Example: Navigate to URL with timeout support
+     */
+    @Action(object = ObjectType.BROWSER, 
+            desc = "Open the Url [<Data>] in the Browser", 
+            input = InputType.YES, 
+            condition = InputType.OPTIONAL)
+    public void openUrl() {
+        try {
+            Page.NavigateOptions options = new Page.NavigateOptions();
+            
+            // Optional timeout from Condition field
+            if (Condition != null && Condition.matches("[0-9]+")) {
+                options.setTimeout(Double.parseDouble(Condition) * 1000);
+            }
+            
+            Page.navigate(Data, options);
+            Report.updateTestLog("Open", "Opened URL: " + Data, Status.DONE);
+            
+        } catch (TimeoutError e) {
+            Report.updateTestLog("Open", 
+                "Opened URL: " + Data + " (page load cancelled after timeout)", 
+                Status.DONE);
+        } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, e);
+            Report.updateTestLog("Open", e.getMessage(), Status.FAIL);
+            throw new ForcedException("Open", e.getMessage());
+        }
+    }
+
+    /**
+     * Example: Assert element contains text
+     */
+    @Action(object = ObjectType.PLAYWRIGHT, 
+            desc = "Assert if [<Object>] contains the text [<Data>]", 
+            input = InputType.YES)
+    public void assertElementContains() {
+        String actualText = "";
+        try {
+            LocatorAssertions.ContainsTextOptions options = 
+                new LocatorAssertions.ContainsTextOptions();
+            options.setTimeout(getTimeoutValue());
+            
+            actualText = Locator.innerHTML();
+            highlightElement();
+            assertThat(Locator).containsText(Data, options);
+            
+            Report.updateTestLog(Action, 
+                "Element [" + ObjectName + "] contains text '" + Data + "'", 
+                Status.PASS);
+                
+        } catch (PlaywrightException e) {
+            handlePlaywrightException(e);
+        } catch (AssertionFailedError err) {
+            handleAssertionFailure(err, 
+                "[" + ObjectName + "] does not contain text '" + Data + 
+                "'. Actual text is '" + actualText + "'");
+        } finally {
+            removeHighlightFromElement();
+        }
+    }
+
+    /**
+     * Example: Fill input field
+     */
+    @Action(object = ObjectType.PLAYWRIGHT, 
+            desc = "Enter the value [<Data>] in the Field [<Object>]", 
+            input = InputType.YES)
+    public void fillField() {
+        try {
+            Locator.clear();
+            Locator.fill(Data);
+            Report.updateTestLog(Action, 
+                "Entered Text '" + Data + "' on [" + ObjectName + "]", 
+                Status.DONE);
+        } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, e);
+            Report.updateTestLog("Could not perform [" + Action + "] action", 
+                "Error: " + e.getMessage(), Status.FAIL);
+            throw new ActionException(e);
+        }
+    }
+
+    /**
+     * Example: Assert page title matches pattern
+     */
+    @Action(object = ObjectType.BROWSER, 
+            desc = "Assert if Page has title [<Data>]", 
+            input = InputType.YES)
+    public void assertPageTitleMatches() {
+        try {
+            PageAssertions.HasTitleOptions options = 
+                new PageAssertions.HasTitleOptions();
+            options.setTimeout(getTimeoutValue());
+            
+            assertThat(Page).hasTitle(Pattern.compile(Data), options);
+            Report.updateTestLog(Action, 
+                "Page has title matching '" + Data + "'", 
+                Status.PASS);
+                
+        } catch (AssertionFailedError e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, e);
+            Report.updateTestLog("Assertion Failed", 
+                "Page does not have title matching '" + Data + "'", 
+                Status.FAIL);
+        } catch (PlaywrightException e) {
+            throw new ActionException(e);
+        }
+    }
+
+    /**
+     * Example: Store element text in variable
+     */
+    @Action(object = ObjectType.PLAYWRIGHT, 
+            desc = "Store [<Object>] element's text into variable [<Data>]", 
+            input = InputType.YES)
+    public void storeElementTextInVariable() {
+        try {
+            String text = Locator.textContent();
+            String variableName = Data;
+            
+            if (!variableName.matches("%.*%")) {
+                Report.updateTestLog(Action, 
+                    "Variable format incorrect. Expected: %variableName%", 
+                    Status.FAIL);
+                return;
+            }
+            
+            gen.addVar(variableName, text);
+            Report.updateTestLog(Action, 
+                "Stored text '" + text + "' in variable " + variableName, 
+                Status.DONE);
+                
+        } catch (PlaywrightException e) {
+            handlePlaywrightException(e);
+        }
+    }
+
+    // ========== Helper Methods ==========
+
+    private void highlightElement() {
+        Locator.scrollIntoViewIfNeeded();
+        Locator.evaluate("element => element.style.outline = '2px solid red'");
+    }
+    
+    private void removeHighlightFromElement() {
+        Locator.evaluate("element => element.style.outline = ''");
+    }
+    
+    private double getTimeoutValue() {
+        double timeout = 5000; // default 5 seconds
+        if (StringUtils.isNotBlank(Condition)) {
+            try {
+                timeout = Double.parseDouble(Condition) * 1000;
+            } catch (NumberFormatException e) {
+                // Use default timeout
+            }
+        }
+        return timeout;
+    }
+    
+    private void handlePlaywrightException(PlaywrightException e) {
+        Report.updateTestLog(Action, 
+            "Element [" + ObjectName + "] not found. Error: " + e.getMessage(), 
+            Status.FAIL);
+        Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, e);
+    }
+    
+    private void handleAssertionFailure(AssertionFailedError err, String message) {
+        if (err.getMessage().contains("locator resolved to")) {
+            Report.updateTestLog(Action, message, Status.FAIL);
+        } else {
+            Report.updateTestLog(Action, 
+                "Element [" + ObjectName + "] not found on Page", 
+                Status.FAIL);
+        }
+        Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, err);
+    }
+}
+```
 
 ---
 
-**For more information:**
-- **Sample Plugins**: See `browser-test-plugin` and `sample-plugin` in the `P33148-INGenious-Playwright-Framework-Plugins` repository for complete working examples
-- **API Documentation**: Check the `ingenious-api` module for interface contracts and annotations
-- **Architecture Details**: Refer to the architecture design document for classloader architecture and version compatibility
+#### 2. Database Plugin Template
+
+Use this template for database testing actions:
+
+```java
+package com.ing.plugin.database;
+
+import com.ing.ingenious.api.contract.DatabasePluginApi;
+import com.ing.ingenious.api.contract.data.UserDataAccessApi;
+import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
+import com.ing.ingenious.api.status.Status;
+import com.ing.ingenious.api.types.InputType;
+import com.ing.ingenious.api.types.ObjectType;
+import com.ing.ingenious.api.annotation.Action;
+
+import java.sql.SQLException;
+import java.sql.ResultSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Database testing plugin for SQL operations
+ * 
+ * @author Your Name
+ */
+public class DatabasePlugin {
+    
+    // API contract instance
+    DatabasePluginApi gen;
+    
+    // Test data fields
+    public String Data;
+    public String Action;
+    public String Input;
+    public String Condition;
+    public TestCaseReportApi Report;
+    public UserDataAccessApi userData;
+    public String ObjectName;
+
+    /**
+     * Constructor - receives DatabasePluginApi from framework
+     */
+    public DatabasePlugin(DatabasePluginApi gen) {
+        this.gen = gen;
+        this.Data = gen.getData();
+        this.Action = gen.getAction();
+        this.Input = gen.getInput();
+        this.Condition = gen.getCondition();
+        this.Report = gen.getReport();
+        this.userData = gen.getUserData();
+        this.ObjectName = gen.getObjectName();
+    }
+
+    /**
+     * Example: Execute DML query (INSERT, UPDATE, DELETE)
+     */
+    @Action(object = ObjectType.DATABASE, 
+            desc = "Execute DML Query [<Data>]", 
+            input = InputType.YES)
+    public void executeDMLQuery() {
+        try {
+            if (Data == null || Data.trim().isEmpty()) {
+                Report.updateTestLog(Action, "Query is empty or null", Status.FAIL);
+                return;
+            }
+            
+            // Process query for variable substitution
+            String processedQuery = processQuery(Data);
+            String originalData = this.Data;
+            this.Data = processedQuery;
+            
+            // Execute DML through framework API
+            gen.executeDML();
+            
+            // Restore original data
+            this.Data = originalData;
+            
+            Report.updateTestLog(Action, 
+                "DML Query executed successfully: " + processedQuery, 
+                Status.PASS);
+                
+        } catch (SQLException ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "SQL Error: " + ex.getMessage(), 
+                Status.FAIL);
+        } catch (Exception ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "Unexpected error: " + ex.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Execute SELECT query and store row count
+     */
+    @Action(object = ObjectType.DATABASE, 
+            desc = "Execute Query [<Data>] and Store Row Count in [<Condition>]", 
+            input = InputType.YES, 
+            condition = InputType.YES)
+    public void executeQueryAndStoreCount() {
+        try {
+            if (Data == null || Data.trim().isEmpty()) {
+                Report.updateTestLog(Action, "Query is empty or null", Status.FAIL);
+                return;
+            }
+            
+            String variableName = Condition;
+            if (!variableName.matches("%.*%")) {
+                Report.updateTestLog(Action, 
+                    "Variable format incorrect. Expected: %variableName%", 
+                    Status.FAIL);
+                return;
+            }
+            
+            // Process query
+            String processedQuery = processQuery(Data);
+            String originalData = this.Data;
+            this.Data = processedQuery;
+            
+            // Execute SELECT
+            gen.executeSelect();
+            ResultSet rs = gen.getResult();
+            
+            // Count rows
+            int rowCount = 0;
+            if (rs != null) {
+                while (rs.next()) {
+                    rowCount++;
+                }
+            }
+            
+            // Restore and store result
+            this.Data = originalData;
+            gen.addVar(variableName, String.valueOf(rowCount));
+            
+            Report.updateTestLog(Action, 
+                "Query executed. Row count [" + rowCount + "] stored in " + variableName, 
+                Status.PASS);
+                
+        } catch (SQLException ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "SQL Error: " + ex.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Execute SELECT and store column value
+     */
+    @Action(object = ObjectType.DATABASE, 
+            desc = "Execute Query [<Data>] and Store Column [<Input>] in [<Condition>]", 
+            input = InputType.YES, 
+            condition = InputType.YES)
+    public void executeQueryAndStoreValue() {
+        try {
+            if (Data == null || Data.trim().isEmpty()) {
+                Report.updateTestLog(Action, "Query is empty or null", Status.FAIL);
+                return;
+            }
+            
+            String columnName = Input;
+            String variableName = Condition;
+            
+            if (!variableName.matches("%.*%")) {
+                Report.updateTestLog(Action, 
+                    "Variable format incorrect. Expected: %variableName%", 
+                    Status.FAIL);
+                return;
+            }
+            
+            // Process and execute query
+            String processedQuery = processQuery(Data);
+            String originalData = this.Data;
+            this.Data = processedQuery;
+            
+            gen.executeSelect();
+            ResultSet rs = gen.getResult();
+            
+            if (rs != null && rs.next()) {
+                String value = rs.getString(columnName);
+                gen.addVar(variableName, value);
+                
+                Report.updateTestLog(Action, 
+                    "Value [" + value + "] from column [" + columnName + 
+                    "] stored in " + variableName, 
+                    Status.PASS);
+            } else {
+                Report.updateTestLog(Action, "Query returned no results", Status.DONE);
+            }
+            
+            this.Data = originalData;
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "SQL Error: " + ex.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Assert query row count
+     */
+    @Action(object = ObjectType.DATABASE, 
+            desc = "Assert Query [<Input>] returns [<Data>] rows", 
+            input = InputType.YES)
+    public void assertQueryRowCount() {
+        try {
+            if (Input == null || Input.trim().isEmpty()) {
+                Report.updateTestLog(Action, "Query is empty or null", Status.FAIL);
+                return;
+            }
+            
+            String expectedCount = Data;
+            String processedQuery = processQuery(Input);
+            String originalData = this.Data;
+            this.Data = processedQuery;
+            
+            gen.executeSelect();
+            ResultSet rs = gen.getResult();
+            
+            int actualCount = 0;
+            if (rs != null) {
+                while (rs.next()) {
+                    actualCount++;
+                }
+            }
+            
+            this.Data = originalData;
+            
+            if (String.valueOf(actualCount).equals(expectedCount)) {
+                Report.updateTestLog(Action, 
+                    "Query returned expected row count: " + actualCount, 
+                    Status.PASS);
+            } else {
+                Report.updateTestLog(Action, 
+                    "Query returned " + actualCount + " rows but expected " + 
+                    expectedCount + " rows", 
+                    Status.FAIL);
+            }
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "SQL Error: " + ex.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    // ========== Helper Methods ==========
+
+    /**
+     * Process query - handles variable substitution
+     * Replaces %variableName% with actual values
+     */
+    private String processQuery(String query) {
+        if (query == null) return null;
+        
+        // Find all variables in format %variableName%
+        Pattern pattern = Pattern.compile("%([^%]+)%");
+        Matcher matcher = pattern.matcher(query);
+        StringBuffer result = new StringBuffer();
+        
+        while (matcher.find()) {
+            String variableName = "%" + matcher.group(1) + "%";
+            String value = gen.getVar(variableName);
+            
+            if (value == null || value.equals(variableName)) {
+                // Variable not found, keep original
+                matcher.appendReplacement(result, 
+                    Matcher.quoteReplacement(variableName));
+            } else {
+                // Replace with actual value
+                matcher.appendReplacement(result, 
+                    Matcher.quoteReplacement(value));
+            }
+        }
+        matcher.appendTail(result);
+        
+        return result.toString();
+    }
+}
+```
+
+---
+
+#### 3. General Purpose Plugin Template
+
+Use this template for general testing actions and utility operations:
+
+```java
+package com.ing.plugin.general;
+
+import com.ing.ingenious.api.contract.CommandPluginApi;
+import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
+import com.ing.ingenious.api.status.Status;
+import com.ing.ingenious.api.types.InputType;
+import com.ing.ingenious.api.types.ObjectType;
+import com.ing.ingenious.api.annotation.Action;
+
+/**
+ * General purpose plugin for text assertions and utility operations
+ * 
+ * @author Your Name
+ */
+public class TextAssertsPlugin {
+    
+    // API contract instance
+    CommandPluginApi gen;
+    
+    // Test data fields
+    public String Data;
+    public String Action;
+    public String Input;
+    public TestCaseReportApi Report;
+
+    /**
+     * Constructor - receives CommandPluginApi from framework
+     */
+    public TextAssertsPlugin(CommandPluginApi gen) {
+        this.gen = gen;
+        this.Data = gen.getData();
+        this.Action = gen.getAction();
+        this.Input = gen.getInput();
+        this.Report = gen.getReport();
+    }
+
+    /**
+     * Example: Assert text is in lowercase
+     */
+    @Action(object = "Text_Assert", 
+            desc = "Assert if [<Input>] is in lower case", 
+            input = InputType.YES)
+    public void assertTextInLowerCase() {
+        String value = gen.getVar(Input);
+        
+        if (value == null) {
+            Report.updateTestLog(Action, 
+                "Variable " + Input + " is not defined", 
+                Status.FAIL);
+            return;
+        }
+        
+        if (value.equals(value.toLowerCase())) {
+            Report.updateTestLog(Action, 
+                "The text '" + value + "' is in lower case", 
+                Status.PASS);
+        } else {
+            Report.updateTestLog(Action, 
+                "The text '" + value + "' is not in lower case", 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Assert text is in uppercase
+     */
+    @Action(object = "Text_Assert", 
+            desc = "Assert if [<Input>] is in upper case", 
+            input = InputType.YES)
+    public void assertTextInUpperCase() {
+        String value = gen.getVar(Input);
+        
+        if (value == null) {
+            Report.updateTestLog(Action, 
+                "Variable " + Input + " is not defined", 
+                Status.FAIL);
+            return;
+        }
+        
+        if (value.equals(value.toUpperCase())) {
+            Report.updateTestLog(Action, 
+                "The text '" + value + "' is in upper case", 
+                Status.PASS);
+        } else {
+            Report.updateTestLog(Action, 
+                "The text '" + value + "' is not in upper case", 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Assert text contains substring
+     */
+    @Action(object = "Text_Assert", 
+            desc = "Assert if [<Input>] contains [<Data>]", 
+            input = InputType.YES)
+    public void assertTextContains() {
+        String value = gen.getVar(Input);
+        
+        if (value == null) {
+            Report.updateTestLog(Action, 
+                "Variable " + Input + " is not defined", 
+                Status.FAIL);
+            return;
+        }
+        
+        if (value.contains(Data)) {
+            Report.updateTestLog(Action, 
+                "Text '" + value + "' contains '" + Data + "'", 
+                Status.PASS);
+        } else {
+            Report.updateTestLog(Action, 
+                "Text '" + value + "' does not contain '" + Data + "'", 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Assert text matches pattern
+     */
+    @Action(object = "Text_Assert", 
+            desc = "Assert if [<Input>] matches pattern [<Data>]", 
+            input = InputType.YES)
+    public void assertTextMatchesPattern() {
+        String value = gen.getVar(Input);
+        
+        if (value == null) {
+            Report.updateTestLog(Action, 
+                "Variable " + Input + " is not defined", 
+                Status.FAIL);
+            return;
+        }
+        
+        if (value.matches(Data)) {
+            Report.updateTestLog(Action, 
+                "Text '" + value + "' matches pattern '" + Data + "'", 
+                Status.PASS);
+        } else {
+            Report.updateTestLog(Action, 
+                "Text '" + value + "' does not match pattern '" + Data + "'", 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Custom string operation
+     */
+    @Action(object = ObjectType.GENERAL, 
+            desc = "Convert [<Input>] to uppercase and store in [<Data>]", 
+            input = InputType.YES)
+    public void convertToUpperCase() {
+        String value = gen.getVar(Input);
+        
+        if (value == null) {
+            Report.updateTestLog(Action, 
+                "Variable " + Input + " is not defined", 
+                Status.FAIL);
+            return;
+        }
+        
+        String uppercaseValue = value.toUpperCase();
+        gen.addVar(Data, uppercaseValue);
+        
+        Report.updateTestLog(Action, 
+            "Converted '" + value + "' to uppercase and stored in " + Data, 
+            Status.DONE);
+    }
+}
+```
+
+---
+
+#### 4. Mobile Plugin Template
+
+Use this template for mobile testing with Appium:
+
+```java
+package com.ing.plugin.mobile;
+
+import com.ing.ingenious.api.annotation.Action;
+import com.ing.ingenious.api.contract.MobilePluginApi;
+import com.ing.ingenious.api.contract.data.UserDataAccessApi;
+import com.ing.ingenious.api.contract.drivers.MobileObjectApi;
+import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
+import com.ing.ingenious.api.types.ObjectType;
+import com.ing.ingenious.api.types.InputType;
+import com.ing.ingenious.api.status.Status;
+import com.ing.ingenious.api.exception.mobile.ElementException;
+import com.ing.ingenious.api.exception.mobile.ElementException.ExceptionType;
+import com.ing.ingenious.api.exception.ForcedException;
+
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import io.appium.java_client.AppiumBy;
+import io.appium.java_client.ios.IOSDriver;
+
+/**
+ * Mobile testing plugin for Appium-based mobile automation
+ * 
+ * @author Your Name
+ */
+public class MobileTestPlugin {
+    
+    // API contract instance
+    MobilePluginApi gen;
+    
+    // Test data fields
+    public String Data;
+    public String Action;
+    public String Input;
+    public String Condition;
+    public TestCaseReportApi Report;
+    public UserDataAccessApi userData;
+    public String ObjectName;
+    
+    // Mobile driver objects
+    public WebDriver mDriver;
+    public WebElement Element;
+    public MobileObjectApi mObject;
+
+    /**
+     * Constructor - receives MobilePluginApi from framework
+     */
+    public MobileTestPlugin(MobilePluginApi gen) {
+        this.gen = gen;
+        
+        // Initialize test data fields
+        this.Data = gen.getData();
+        this.Action = gen.getAction();
+        this.Input = gen.getInput();
+        this.Condition = gen.getCondition();
+        this.Report = gen.getReport();
+        this.userData = gen.getUserData();
+        this.ObjectName = gen.getObjectName();
+        
+        // Cast mobile objects
+        this.Element = (WebElement) gen.getElement();
+        this.mDriver = (WebDriver) gen.getMDriver();
+        this.mObject = gen.getMObject();
+    }
+
+    /**
+     * Example: Tap on mobile element
+     */
+    @Action(object = ObjectType.APP, 
+            desc = "Tap the [<Object>]")
+    public void tap() {
+        if (gen.elementEnabled()) {
+            Element.click();
+            Report.updateTestLog(Action, 
+                "Tapped on " + ObjectName, 
+                Status.DONE);
+        } else {
+            throw new ElementException(ExceptionType.Element_Not_Enabled, ObjectName);
+        }
+    }
+
+    /**
+     * Example: Set text in mobile field
+     */
+    @Action(object = ObjectType.APP, 
+            desc = "Enter the value [<Data>] in the Field [<Object>]", 
+            input = InputType.YES)
+    public void setText() {
+        if (gen.elementEnabled()) {
+            Element.clear();
+            Element.sendKeys(Data);
+            Report.updateTestLog(Action, 
+                "Entered Text '" + Data + "' on '" + ObjectName + "'", 
+                Status.DONE);
+        } else {
+            throw new ElementException(ExceptionType.Element_Not_Enabled, ObjectName);
+        }
+    }
+
+    /**
+     * Example: Scroll to text in Android
+     */
+    @Action(object = ObjectType.MOBILE, 
+            desc = "Scroll to Text [<Data>] in Android", 
+            input = InputType.YES)
+    public void scrollInAndroid() {
+        try {
+            mDriver.findElement(AppiumBy.androidUIAutomator(
+                "new UiScrollable(new UiSelector().scrollable(true))" +
+                ".scrollIntoView(new UiSelector().text(\"" + Data + "\").instance(0))"
+            ));
+            Report.updateTestLog(Action, 
+                "Scrolled to '" + Data + "'", 
+                Status.DONE);
+        } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, e);
+            Report.updateTestLog("Could not perform [" + Action + "] action", 
+                "Error: " + e.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Scroll to element in iOS
+     */
+    @Action(object = ObjectType.MOBILE, 
+            desc = "Scroll to Element [<Data>] in direction [<Condition>]", 
+            input = InputType.YES, 
+            condition = InputType.YES)
+    public void scrollInIOS() {
+        try {
+            HashMap<String, Object> scrollObject = new HashMap<>();
+            scrollObject.put("direction", Condition.toLowerCase());
+            
+            // Parse attribute and value from Data (format: "attribute=value")
+            String attribute = Data.split("=")[0];
+            String value = Data.split("=")[1];
+            scrollObject.put(attribute, value);
+            
+            IOSDriver driver = (IOSDriver) mDriver;
+            driver.executeScript("mobile:scroll", scrollObject);
+            
+            Report.updateTestLog(Action, 
+                "Scrolled to '" + Data + "'", 
+                Status.DONE);
+        } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, e);
+            Report.updateTestLog("Could not perform [" + Action + "] action", 
+                "Error: " + e.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Assert element is displayed
+     */
+    @Action(object = ObjectType.APP, 
+            desc = "Assert if [<Object>] element is displayed")
+    public void assertElementDisplayed() {
+        boolean isDisplayed = gen.elementDisplayed();
+        
+        if (isDisplayed) {
+            Report.updateTestLog(Action, 
+                "Element [" + ObjectName + "] is displayed", 
+                Status.PASS);
+        } else {
+            throw new ForcedException(Action, 
+                "Element [" + ObjectName + "] is not displayed");
+        }
+    }
+
+    /**
+     * Example: Swipe gesture
+     */
+    @Action(object = ObjectType.MOBILE, 
+            desc = "Swipe [<Data>] on [<Object>]", 
+            input = InputType.YES)
+    public void swipe() {
+        try {
+            // Data could be: "up", "down", "left", "right"
+            String direction = Data.toLowerCase();
+            
+            // Get element bounds
+            int startX = Element.getLocation().getX() + (Element.getSize().getWidth() / 2);
+            int startY = Element.getLocation().getY() + (Element.getSize().getHeight() / 2);
+            
+            // Calculate end coordinates based on direction
+            int endX = startX;
+            int endY = startY;
+            int offset = 200;
+            
+            switch (direction) {
+                case "up":
+                    endY = startY - offset;
+                    break;
+                case "down":
+                    endY = startY + offset;
+                    break;
+                case "left":
+                    endX = startX - offset;
+                    break;
+                case "right":
+                    endX = startX + offset;
+                    break;
+            }
+            
+            // Perform swipe using mObject API
+            mObject.swipe(startX, startY, endX, endY, 500);
+            
+            Report.updateTestLog(Action, 
+                "Swiped " + direction + " on [" + ObjectName + "]", 
+                Status.DONE);
+                
+        } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, e);
+            Report.updateTestLog("Could not perform [" + Action + "] action", 
+                "Error: " + e.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    // ========== Helper Methods ==========
+
+    public boolean elementPresent() {
+        return gen.checkIfDriverIsAlive() && Element != null;
+    }
+}
+```
+
+---
+
+### Using the Templates
+
+1. **Choose the appropriate template** based on your plugin type:
+   - **BrowserTestPlugin**: For web browser automation
+   - **DatabasePlugin**: For database testing
+   - **TextAssertsPlugin**: For general purpose operations
+   - **MobileTestPlugin**: For mobile app testing
+
+2. **Customize the package name** to match your project structure
+
+3. **Add your custom actions** following the patterns shown
+
+4. **Update the POM.xml** with your plugin entry classes
+
+5. **Build and deploy**: `mvn clean install package`
+
+### Key Patterns Demonstrated
+
+✅ **Proper initialization**: All fields populated in constructor  
+✅ **Error handling**: Try-catch with appropriate logging  
+✅ **Null checks**: Defensive programming prevents NPE  
+✅ **Variable substitution**: Support for runtime variables  
+✅ **Status reporting**: Clear PASS/FAIL/DONE status  
+✅ **Helper methods**: DRY principle for repeated logic  
+✅ **Type safety**: Cast Playwright/Selenium objects once  
+
+**Find complete working examples** in the `P33148-INGenious-Playwright-Framework-Plugins` repository.
+
+### Quick Start Checklist
+
+Before deploying your plugin, verify:
+
+**POM Configuration:**
+- [ ] Java 17 (or lower) configured: `maven.compiler.source` and `target`
+- [ ] `ingenious-api` dependency with `<scope>provided</scope>`
+- [ ] `playwright` dependency (version 1.50.0) with `<scope>provided</scope>` (for browser/mobile plugins)
+- [ ] Plugin entry classes listed in JAR manifest: `<pluginEntryClasses>`
+- [ ] Maven Dependency Plugin configured (only if you have compile-scoped dependencies)
+- [ ] Maven Antrun Plugin configured with correct `deploy.dir` path (optional)
+
+**Plugin Class:**
+- [ ] Constructor accepts appropriate API interface (`BrowserPluginApi`, `DatabasePluginApi`, etc.)
+- [ ] All test data fields initialized in constructor
+- [ ] Playwright/Selenium objects cast once in constructor (not in action methods)
+- [ ] Action methods annotated with `@Action` including `object`, `desc`, and `input` parameters
+- [ ] Proper null checks before using objects
+- [ ] Error handling with try-catch blocks
+- [ ] Status reporting using `Report.updateTestLog()`
+- [ ] Variable format validation for storage actions (`%variableName%`)
+
+**Build and Deploy:**
+- [ ] Build successful: `mvn clean install package`
+- [ ] JAR file generated in `target/` directory
+- [ ] `lib/` folder contains compile-scoped dependencies (if any)
+- [ ] Plugin deployed to: `<INGenious>/plugins/<your-plugin>/`
+- [ ] Both JAR and `lib/` folder copied to plugin directory
+
+**Testing:**
+- [ ] Plugin loads without errors in INGenious Studio
+- [ ] Actions appear in suggested actions list
+- [ ] Actions execute successfully with test data
+- [ ] Reports show correct status (PASS/FAIL/DONE)
+
+---
+
+### Additional Resources
+
+**Sample Plugins:**
+- **Browser Plugin**: `browser-test-plugin` in `P33148-INGenious-Playwright-Framework-Plugins`
+- **Database Plugin**: `general-test-plugin` (DatabasePlugin class)
+- **Mobile Plugin**: `mobile-test-plugin` in `P33148-INGenious-Playwright-Framework-Plugins`
+- **Text Assertions**: `general-test-plugin` (TextAsserts class)
+
+**API Documentation:**
+- Check the `ingenious-api` module for interface contracts and annotations
+- Review JavaDoc in API classes for method documentation
+
+**Architecture Details:**
+- Refer to the architecture design document for classloader architecture
+- See version compatibility matrix for Java and Playwright version requirements
+
+**Need Help?**
+- Review the [Troubleshooting](#troubleshooting) section for common issues
+- Check [Common Configuration Mistakes](#common-configuration-mistakes) table
+- Examine working plugin examples in the samples repository
