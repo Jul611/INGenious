@@ -8,8 +8,10 @@ import java.util.Objects;
 import org.apache.commons.csv.CSVRecord;
 
 /**
- *
- * 
+ * Represents a single step within a {@link TestCase}, storing action, object,
+ * input and related fields. Integrates with the test case table model, supports
+ * reusable/page‑object step detection, and provides utilities such as comment
+ * and breakpoint toggling.
  */
 public class TestStep {
 
