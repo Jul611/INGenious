@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
  *
  *
  */
-public class General extends Command implements DatabasePluginApiApi {
+public class General extends Command implements DatabasePluginApi {
 
     public static Connection dbconnection;
     static Statement statement;

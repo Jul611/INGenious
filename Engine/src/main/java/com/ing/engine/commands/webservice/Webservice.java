@@ -7,6 +7,7 @@ import com.ing.ingenious.api.status.Status;
 import com.ing.ingenious.api.annotation.Action;
 import com.ing.ingenious.api.types.InputType;
 import com.ing.ingenious.api.types.ObjectType;
+import com.ing.ingenious.api.types.RequestMethod;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.io.FileNotFoundException;

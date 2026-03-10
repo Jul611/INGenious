@@ -4,9 +4,10 @@ import com.ing.engine.commands.browser.Command;
 import com.ing.engine.constants.FilePath;
 import com.ing.engine.core.CommandControl;
 import com.ing.engine.core.Control;
-import com.ing.engine.execution.exception.ActionException;
+import com.ing.ingenious.api.exception.ActionException;
 import com.ing.ingenious.api.contract.WebservicePluginApi;
 import com.ing.ingenious.api.status.Status;
+import com.ing.ingenious.api.types.RequestMethod;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -51,15 +52,6 @@ public class GeneralWebservice extends Command implements WebservicePluginApi {
         super(cc);
     }
 
-    public enum RequestMethod {
-        POST,
-        PUT,
-        PATCH,
-        GET,
-        DELETE,
-        DELETEWITHPAYLOAD
-    }
-
     protected TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
         @Override
         public X509Certificate[] getAcceptedIssuers() {
@@ -77,18 +69,11 @@ public class GeneralWebservice extends Command implements WebservicePluginApi {
 
     /**
      * Implementation of WebservicePluginApi.createHttpRequest() for the API-plugin contract.
-     * @param requestMethod the RequestMethod object that should be cast to {@link RequestMethod}
-     */
-    @Override
-    public void createHttpRequest(Object requestMethod) throws InterruptedException, Exception {
-        createHttpRequest((RequestMethod) requestMethod);
-    }
-
-    /**
      * Creates and executes an HTTP request with the specified request method.
      * @param requestmethod the HTTP request method to use
      */
-    protected void createHttpRequest(RequestMethod requestmethod) throws InterruptedException, Exception {
+    @Override
+    public void createHttpRequest(RequestMethod requestmethod) throws InterruptedException, Exception {
         try {
             setheaders();
             setRequestMethod(requestmethod);
@@ -468,6 +453,90 @@ public class GeneralWebservice extends Command implements WebservicePluginApi {
 
     protected Boolean isSelfSigned() {
         return Control.getCurrentProject().getProjectSettings().getDriverSettings().selfSigned();
+    }
+
+    /**
+     * WebservicePluginApi implementation methods for direct map access
+     */
+    
+    /**
+     * Gets the context key for webservice operations.
+     * @return the key used to index webservice maps
+     */
+    @Override
+    public String getKey() {
+        return key;
+    }
+    
+    /**
+     * Gets direct access to the shared endpoints map.
+     * @return the static endPoints map
+     */
+    @Override
+    public Map<String, String> getEndPointsMap() {
+        return endPoints;
+    }
+    
+    /**
+     * Gets direct access to the shared headers map.
+     * @return the static headers map
+     */
+    @Override
+    public Map<String, ArrayList<String>> getHeadersMap() {
+        return headers;
+    }
+    
+    /**
+     * Gets direct access to the shared URL parameters map.
+     * @return the static urlParams map
+     */
+    @Override
+    public Map<String, ArrayList<String>> getUrlParamsMap() {
+        return urlParams;
+    }
+    
+    /**
+     * Gets direct access to the shared response bodies map.
+     * @return the static responsebodies map
+     */
+    @Override
+    public Map<String, String> getResponseBodiesMap() {
+        return responsebodies;
+    }
+    
+    /**
+     * Gets direct access to the shared response codes map.
+     * @return the static responsecodes map
+     */
+    @Override
+    public Map<String, String> getResponseCodesMap() {
+        return responsecodes;
+    }
+    
+    /**
+     * Gets direct access to the shared response messages map.
+     * @return the static responsemessages map
+     */
+    @Override
+    public Map<String, String> getResponseMessagesMap() {
+        return responsemessages;
+    }
+    
+    /**
+     * Gets a driver property value from the current project settings.
+     * This respects the current API config context set by setEndPoint.
+     * @param propertyKey the property key to retrieve
+     * @return the property value, or null if not found
+     */
+    @Override
+    public String getDriverProperty(String propertyKey) {
+        try {
+            String value = Control.getCurrentProject().getProjectSettings().getDriverSettings().getAPIConfigProperty(propertyKey);
+            return (value != null && !value.isEmpty()) ? value : null;
+        } catch (Exception ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, ex.getMessage(), ex);
+            return null;
+        }
     }
 
 }

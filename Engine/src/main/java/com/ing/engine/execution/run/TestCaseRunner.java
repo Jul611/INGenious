@@ -14,7 +14,7 @@ import com.ing.engine.execution.data.StepSet;
 import com.ing.engine.execution.exception.DriverClosedException;
 import com.ing.ingenious.api.exception.ForcedException;
 import com.ing.engine.execution.exception.TestFailedException;
-import com.ing.engine.execution.exception.ActionException;
+import com.ing.ingenious.api.exception.ActionException;
 import com.ing.engine.execution.exception.AppiumDriverException;
 import com.ing.engine.execution.exception.UnCaughtException;
 import com.ing.engine.execution.exception.data.DataNotFoundException;

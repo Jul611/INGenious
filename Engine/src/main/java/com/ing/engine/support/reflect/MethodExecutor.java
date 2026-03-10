@@ -5,7 +5,8 @@ import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.contract.DatabasePluginApi;
 import com.ing.engine.commands.database.General;
 import com.ing.ingenious.api.contract.BrowserPluginApi;
-import com.ing.ingenious.api.contract.GeneralMobileApi;
+import com.ing.ingenious.api.contract.MobilePluginApi;
+import com.ing.ingenious.api.contract.CommandPluginApi;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -82,8 +83,15 @@ public class MethodExecutor {
         // Try WebservicePluginApi constructor
         try {
             java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.WebservicePluginApi.class);
-            com.ing.ingenious.api.contract.WebservicePluginApi genWebservice = new com.ing.engine.commands.webservice.WebserviceGeneral(inst);
+            com.ing.ingenious.api.contract.WebservicePluginApi genWebservice = new com.ing.engine.commands.webservice.GeneralWebservice(inst);
             return ctor.newInstance(genWebservice);
+        } catch (NoSuchMethodException ignored) {}
+        
+        // Try CommandPluginApi constructor (generic plugin API)
+        try {
+            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(com.ing.ingenious.api.contract.CommandPluginApi.class);
+            com.ing.ingenious.api.contract.CommandPluginApi genCmd = new com.ing.engine.commands.browser.Command(inst);
+            return ctor.newInstance(genCmd);
         } catch (NoSuchMethodException ignored) {}
         
         // Fallback to CommandControl constructor
