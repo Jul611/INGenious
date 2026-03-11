@@ -3,6 +3,7 @@ package com.ing.ide.main.mainui.components.testdesign.testcase.validation;
 import com.ing.datalib.component.TestStep;
 import com.ing.datalib.or.web.ResolvedWebObject;
 import com.ing.datalib.or.mobile.ResolvedMobileObject;
+import com.ing.datalib.or.sap.ResolvedSapObject;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -63,7 +64,17 @@ public class ReferenceRenderer extends AbstractRenderer {
                     decorated = "[Project] " + mres.getPageName();
                 }
             } else {
-                decorated = ref;
+                var sref = ResolvedSapObject.PageRef.parse(ref);
+                var sres = repo.resolveSapObject(sref, step.getObject());
+                if (sres != null) {
+                    if (sres.isFromShared()) {
+                        decorated = "[Shared] " + sres.getPageName();
+                    } else if (sres.isFromProject()) {
+                        decorated = "[Project] " + sres.getPageName();
+                    }
+                } else {
+                    decorated = ref;
+                }
             }
         } else {
             if (wres.isFromShared()) {
@@ -106,6 +117,7 @@ public class ReferenceRenderer extends AbstractRenderer {
         String pageToken = step.getReference();
         String objectName = step.getObject();
 
+        // Check Web OR
         ResolvedWebObject.PageRef wref = ResolvedWebObject.PageRef.parse(pageToken);
         if (wref != null && wref.name != null && wref.scope != null) {
             if (repo.resolveWebObject(wref, objectName) != null) {
@@ -115,10 +127,26 @@ public class ReferenceRenderer extends AbstractRenderer {
             return true;
         }
 
+        // Check Mobile OR
         ResolvedMobileObject.PageRef mref = ResolvedMobileObject.PageRef.parse(pageToken);
         if (mref != null && mref.name != null && mref.scope != null) {
-            return repo.resolveMobileObject(mref, objectName) != null;
+            if (repo.resolveMobileObject(mref, objectName) != null) {
+                return true;
+            }
+        } else if (repo.resolveMobileObjectWithScope(pageToken, objectName) != null) {
+            return true;
         }
-        return repo.resolveMobileObjectWithScope(pageToken, objectName) != null;
+
+        // Check SAP OR
+        ResolvedSapObject.PageRef sref = ResolvedSapObject.PageRef.parse(pageToken);
+        if (sref != null && sref.name != null && sref.scope != null) {
+            if (repo.resolveSapObject(sref, objectName) != null) {
+                return true;
+            }
+        } else if (repo.resolveSapObjectWithScope(pageToken, objectName) != null) {
+            return true;
+        }
+
+        return false;
     }
 }

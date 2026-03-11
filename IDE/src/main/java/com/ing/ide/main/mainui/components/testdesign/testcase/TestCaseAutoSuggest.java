@@ -13,6 +13,7 @@ import static com.ing.datalib.component.TestStep.HEADERS.Input;
 import static com.ing.datalib.component.TestStep.HEADERS.ObjectName;
 import static com.ing.datalib.component.TestStep.HEADERS.Reference;
 import com.ing.datalib.or.mobile.ResolvedMobileObject;
+import com.ing.datalib.or.sap.ResolvedSapObject;
 import com.ing.datalib.or.web.ResolvedWebObject;
 import com.ing.datalib.testdata.model.Record;
 import com.ing.datalib.testdata.model.TestDataModel;
@@ -333,6 +334,8 @@ public class TestCaseAutoSuggest {
                         return MethodInfoManager.getMethodListFor(ObjectType.PLAYWRIGHT, ObjectType.WEB, ObjectType.ANY);
                     } else if (isMobileObject(objectName, pageToken)) {
                         return MethodInfoManager.getMethodListFor(ObjectType.APP);
+                    } else if (isSapObject(objectName, pageToken)) {
+                        return MethodInfoManager.getMethodListFor(ObjectType.SAP);
                     }
             }
             return new ArrayList<>();
@@ -379,6 +382,25 @@ public class TestCaseAutoSuggest {
             ResolvedMobileObject r = (ref != null && ref.name != null && ref.scope != null)
                     ? repo.resolveMobileObject(ref, objectName)
                     : repo.resolveMobileObjectWithScope(pageToken, objectName);
+            return r != null && r.isPresent();
+        }
+
+        /**
+         * Detect SAP objects via SAP resolver (supports scoped refs + shared)
+         * instead of directly accessing getSapOR()/pages.
+         */
+        private boolean isSapObject(String objectName, String pageToken) {
+            if (pageToken == null
+                    || pageToken.isBlank()
+                    || objectName == null
+                    || objectName.isBlank()) {
+                return false;
+            }
+            var repo = sProject.getObjectRepository();
+            ResolvedSapObject.PageRef ref = ResolvedSapObject.PageRef.parse(pageToken);
+            ResolvedSapObject r = (ref != null && ref.name != null && ref.scope != null)
+                    ? repo.resolveSapObject(ref, objectName)
+                    : repo.resolveSapObjectWithScope(pageToken, objectName);
             return r != null && r.isPresent();
         }
 
