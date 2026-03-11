@@ -4,6 +4,8 @@ import com.ing.datalib.or.api.APIOR;
 import com.ing.datalib.or.api.APIORPage;
 import com.ing.datalib.or.mobile.MobileOR;
 import com.ing.datalib.or.mobile.MobileORPage;
+import com.ing.datalib.or.sap.SapOR;
+import com.ing.datalib.or.sap.SapORPage;
 import com.ing.datalib.or.web.WebOR;
 import com.ing.datalib.or.web.WebORPage;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,6 +76,14 @@ public class YamlORReader {
     public boolean apiORExists(File orLocation) {
         File apiPagesDir = new File(orLocation, "API/pages");
         return apiPagesDir.exists() && apiPagesDir.isDirectory();
+    }
+    
+    /**
+     * Check if a YAML-based SAP OR exists.
+     */
+    public boolean sapORExists(File orLocation) {
+        File sapPagesDir = new File(orLocation, "SAP/pages");
+        return sapPagesDir.exists() && sapPagesDir.isDirectory();
     }
     
     /**
@@ -194,6 +204,46 @@ public class YamlORReader {
     public APIORPage readAPIPage(File yamlFile, APIOR root) throws IOException {
         YamlAPIPageDefinition pageDef = yamlMapper.readValue(yamlFile, YamlAPIPageDefinition.class);
         return pageDef.toAPIORPage(root);
+    }
+    
+    /**
+     * Read SAP OR from YAML files.
+     * 
+     * @param orLocation The ObjectRepository directory
+     * @return SapOR populated with pages from YAML files
+     */
+    public SapOR readSapOR(File orLocation) throws IOException {
+        SapOR sapOR = new SapOR();
+        File sapPagesDir = new File(orLocation, "SAP/pages");
+        
+        if (!sapPagesDir.exists()) {
+            LOGGER.info("No SAP OR YAML directory found at: " + sapPagesDir.getAbsolutePath());
+            return sapOR;
+        }
+        
+        List<File> yamlFiles = listYamlFiles(sapPagesDir);
+        LOGGER.info("Found " + yamlFiles.size() + " SAP OR YAML files");
+        
+        for (File yamlFile : yamlFiles) {
+            try {
+                YamlSapPageDefinition pageDef = yamlMapper.readValue(yamlFile, YamlSapPageDefinition.class);
+                SapORPage page = pageDef.toSapORPage(sapOR);
+                sapOR.getPages().add(page);
+                LOGGER.fine("Loaded SAP page: " + page.getName() + " with " + pageDef.getElementCount() + " elements");
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Failed to read YAML file: " + yamlFile.getName(), e);
+            }
+        }
+        
+        return sapOR;
+    }
+    
+    /**
+     * Read a single SAP page from a YAML file.
+     */
+    public SapORPage readSapPage(File yamlFile, SapOR root) throws IOException {
+        YamlSapPageDefinition pageDef = yamlMapper.readValue(yamlFile, YamlSapPageDefinition.class);
+        return pageDef.toSapORPage(root);
     }
     
     /**

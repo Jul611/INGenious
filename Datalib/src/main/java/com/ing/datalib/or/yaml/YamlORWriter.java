@@ -4,6 +4,8 @@ import com.ing.datalib.or.api.APIOR;
 import com.ing.datalib.or.api.APIORPage;
 import com.ing.datalib.or.mobile.MobileOR;
 import com.ing.datalib.or.mobile.MobileORPage;
+import com.ing.datalib.or.sap.SapOR;
+import com.ing.datalib.or.sap.SapORPage;
 import com.ing.datalib.or.web.WebOR;
 import com.ing.datalib.or.web.WebORPage;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -110,6 +112,24 @@ public class YamlORWriter {
     }
     
     /**
+     * Write entire SAP OR to YAML files (one per page).
+     * 
+     * @param sapOR The SapOR to write
+     * @param orLocation The ObjectRepository directory
+     */
+    public void writeSapOR(SapOR sapOR, File orLocation) throws IOException {
+        File sapPagesDir = new File(orLocation, "SAP/pages");
+        ensureDirectory(sapPagesDir);
+        
+        List<SapORPage> pages = sapOR.getPages();
+        LOGGER.info("Writing " + pages.size() + " SAP pages to YAML");
+        
+        for (SapORPage page : pages) {
+            writeSapPage(page, sapPagesDir);
+        }
+    }
+    
+    /**
      * Write a single Web page to YAML.
      */
     public void writeWebPage(WebORPage page, File pagesDir) throws IOException {
@@ -140,6 +160,17 @@ public class YamlORWriter {
         
         yamlMapper.writeValue(yamlFile, pageDef);
         LOGGER.fine("Wrote API page: " + yamlFile.getName());
+    }
+    
+    /**
+     * Write a single SAP page to YAML.
+     */
+    public void writeSapPage(SapORPage page, File pagesDir) throws IOException {
+        YamlSapPageDefinition pageDef = YamlSapPageDefinition.fromSapORPage(page);
+        File yamlFile = new File(pagesDir, sanitizeFileName(page.getName()) + ".yaml");
+        
+        yamlMapper.writeValue(yamlFile, pageDef);
+        LOGGER.fine("Wrote SAP page: " + yamlFile.getName());
     }
     
     /**
@@ -187,6 +218,23 @@ public class YamlORWriter {
             boolean deleted = yamlFile.delete();
             if (deleted) {
                 LOGGER.info("Deleted API page YAML: " + pageName);
+            }
+            return deleted;
+        }
+        return false;
+    }
+    
+    /**
+     * Delete a SAP page YAML file.
+     */
+    public boolean deleteSapPage(String pageName, File orLocation) {
+        File sapPagesDir = new File(orLocation, "SAP/pages");
+        File yamlFile = new File(sapPagesDir, sanitizeFileName(pageName) + ".yaml");
+        
+        if (yamlFile.exists()) {
+            boolean deleted = yamlFile.delete();
+            if (deleted) {
+                LOGGER.info("Deleted SAP page YAML: " + pageName);
             }
             return deleted;
         }
@@ -256,6 +304,29 @@ public class YamlORWriter {
             boolean renamed = oldFile.renameTo(newFile);
             if (renamed) {
                 LOGGER.info("Renamed API page YAML: " + oldName + " -> " + newName);
+            }
+            return renamed;
+        }
+        return false;
+    }
+    
+    /**
+     * Rename a SAP page YAML file.
+     * 
+     * @param oldName The current page name
+     * @param newName The new page name
+     * @param orLocation The ObjectRepository directory
+     * @return true if rename was successful
+     */
+    public boolean renameSapPage(String oldName, String newName, File orLocation) {
+        File sapPagesDir = new File(orLocation, "SAP/pages");
+        File oldFile = new File(sapPagesDir, sanitizeFileName(oldName) + ".yaml");
+        File newFile = new File(sapPagesDir, sanitizeFileName(newName) + ".yaml");
+        
+        if (oldFile.exists() && !newFile.exists()) {
+            boolean renamed = oldFile.renameTo(newFile);
+            if (renamed) {
+                LOGGER.info("Renamed SAP page YAML: " + oldName + " -> " + newName);
             }
             return renamed;
         }
