@@ -277,14 +277,11 @@ public class MobileOR implements ORRootInf<MobileORPage> {
         return scope == ORScope.SHARED;
     }
 
-    public List<String> getProjects() {
-        if (isShared()) {
-            return projects;
-        }
-        return null;
+    public List<String> getSharedProjects() {
+        return isShared() ? projects : Collections.emptyList();
     }
     
-    public void setProjects(List<String> projects) {
+    public void setSharedProjects(List<String> projects) {
         this.projects = (projects == null) ? new ArrayList<>() : projects;
     }
 }

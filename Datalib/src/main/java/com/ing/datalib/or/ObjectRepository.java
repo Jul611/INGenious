@@ -262,30 +262,30 @@ public class ObjectRepository {
      */
     public void save() {
         try {
-            java.util.List<String> existingProjects = (webSharedOR != null) ? webSharedOR.getProjects() : java.util.List.of();
+            java.util.List<String> existingProjects = (webSharedOR != null) ? webSharedOR.getSharedProjects() : java.util.List.of();
             java.util.LinkedHashSet<String> mergedProjects = new java.util.LinkedHashSet<>();
             if (existingProjects != null) mergedProjects.addAll(existingProjects);
             mergedProjects.addAll(sharedUsageProjects);
             boolean projectsChanged = false;
             if (webSharedOR != null) {
                 java.util.ArrayList<String> mergedList = new java.util.ArrayList<>(mergedProjects);
-                java.util.List<String> current = webSharedOR.getProjects();
+                java.util.List<String> current = webSharedOR.getSharedProjects();
                 projectsChanged = (current == null) || !new java.util.LinkedHashSet<>(current).equals(mergedProjects);
                 if (projectsChanged) {
-                    webSharedOR.setProjects(mergedList);
+                    webSharedOR.setSharedProjects(mergedList);
                 }
             }
-            java.util.List<String> mExisting = (mobileSharedOR != null) ? mobileSharedOR.getProjects() : java.util.List.of();
+            java.util.List<String> mExisting = (mobileSharedOR != null) ? mobileSharedOR.getSharedProjects() : java.util.List.of();
             java.util.LinkedHashSet<String> mMerged = new java.util.LinkedHashSet<>();
             if (mExisting != null) mMerged.addAll(mExisting);
             mMerged.addAll(sharedUsageProjects);
             boolean mProjectsChanged = false;
             if (mobileSharedOR != null) {
                 java.util.ArrayList<String> mList = new java.util.ArrayList<>(mMerged);
-                java.util.List<String> mCurrent = mobileSharedOR.getProjects();
+                java.util.List<String> mCurrent = mobileSharedOR.getSharedProjects();
                 mProjectsChanged = (mCurrent == null) || !new java.util.LinkedHashSet<>(mCurrent).equals(mMerged);
                 if (mProjectsChanged) {
-                    mobileSharedOR.setProjects(mList);
+                    mobileSharedOR.setSharedProjects(mList);
                 }
             }
             

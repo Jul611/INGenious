@@ -1071,9 +1071,9 @@ public abstract class ObjectTree implements ActionListener {
         java.util.List<String> projects = null;
 
         if (root instanceof com.ing.datalib.or.web.WebOR) {
-            projects = ((com.ing.datalib.or.web.WebOR) root).getProjects();
+            projects = ((com.ing.datalib.or.web.WebOR) root).getSharedProjects();
         } else if (root instanceof com.ing.datalib.or.mobile.MobileOR) {
-            projects = ((com.ing.datalib.or.mobile.MobileOR) root).getProjects();
+            projects = ((com.ing.datalib.or.mobile.MobileOR) root).getSharedProjects();
         }
 
         if (projects == null || projects.isEmpty()) {
@@ -1106,9 +1106,9 @@ public abstract class ObjectTree implements ActionListener {
         java.util.List<String> projects = null;
 
         if (root instanceof com.ing.datalib.or.web.WebOR) {
-            projects = ((com.ing.datalib.or.web.WebOR) root).getProjects();
+            projects = ((com.ing.datalib.or.web.WebOR) root).getSharedProjects();
         } else if (root instanceof com.ing.datalib.or.mobile.MobileOR) {
-            projects = ((com.ing.datalib.or.mobile.MobileOR) root).getProjects();
+            projects = ((com.ing.datalib.or.mobile.MobileOR) root).getSharedProjects();
         }
 
         if (projects != null && !projects.isEmpty()) {
