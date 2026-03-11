@@ -16,7 +16,10 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.ing.datalib.or.mobile.ResolvedMobileObject;
+import com.ing.datalib.or.sap.ResolvedSapObject;
 import com.ing.datalib.or.sap.SapOR;
+import com.ing.datalib.or.sap.SapORObject;
+import com.ing.datalib.or.sap.SapORPage;
 import com.ing.datalib.or.web.ResolvedWebObject;
 import com.ing.datalib.or.web.WebOR.ORScope;
 import com.ing.datalib.or.web.WebORObject;
@@ -791,6 +794,54 @@ public class ObjectRepository {
        return null;
    }
 
+    /**
+     * Resolves a SapOR object from a scoped PageRef and object name, returning a
+     * ResolvedSapObject containing scope, page, object name, and object group.
+     */
+    public ResolvedSapObject resolveSapObject(ResolvedSapObject.PageRef pageRef, String objectName) {
+        if (pageRef == null || objectName == null) return null;
+        if (pageRef.scope == SapOR.ORScope.PROJECT) {
+            var g = getFrom(sapProjectOR, pageRef.name, objectName);
+            if (g != null) {
+                String actualPageName = g.getParent() != null ? g.getParent().getName() : pageRef.name;
+                return new ResolvedSapObject(SapOR.ORScope.PROJECT, actualPageName, objectName, g);
+            }
+            return null;
+        }
+        if (pageRef.scope == SapOR.ORScope.SHARED) {
+            var g = getFrom(sapSharedOR, pageRef.name, objectName);
+            if (g != null) {
+                markSharedUsage();
+                String actualPageName = g.getParent() != null ? g.getParent().getName() : pageRef.name;
+                return new ResolvedSapObject(SapOR.ORScope.SHARED, actualPageName, objectName, g);
+            }
+            return null;
+        }
+        return resolveSapObjectWithScope(pageRef.name, objectName);
+    }
+
+    /**
+     * Resolves a SapOR object by searching project scope first, then shared scope.
+     *
+     * @param pageName page to search
+     * @param objectName object group name
+     * @return resolved SapOR object with scope metadata
+     */
+    public ResolvedSapObject resolveSapObjectWithScope(String pageName, String objectName) {
+        var proj = getFrom(sapProjectOR, pageName, objectName);
+        if (proj != null) {
+            String actualPageName = proj.getParent() != null ? proj.getParent().getName() : pageName;
+            return new ResolvedSapObject(SapOR.ORScope.PROJECT, actualPageName, objectName, proj);
+        }
+        var shared = getFrom(sapSharedOR, pageName, objectName);
+        if (shared != null) {
+            markSharedUsage();
+            String actualPageName = shared.getParent() != null ? shared.getParent().getName() : pageName;
+            return new ResolvedSapObject(SapOR.ORScope.SHARED, actualPageName, objectName, shared);
+        }
+        return null;
+    }
+
     private ObjectGroup<WebORObject> getFrom(WebOR or, String page, String obj) {
         if (or == null) return null;
         var p = or.getPageByName(page);
@@ -800,6 +851,12 @@ public class ObjectRepository {
     private ObjectGroup<MobileORObject> getFrom(MobileOR or, String page, String obj) {
         if (or == null) return null;
         MobileORPage p = or.getPageByName(page);
+        return (p == null) ? null : p.getObjectGroupByName(obj);
+    }
+    
+    private ObjectGroup<SapORObject> getFrom(SapOR or, String page, String obj) {
+        if (or == null) return null;
+        SapORPage p = or.getPageByName(page);
         return (p == null) ? null : p.getObjectGroupByName(obj);
     }
     

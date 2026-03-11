@@ -4,6 +4,7 @@ import com.ing.datalib.component.Scenario;
 import com.ing.datalib.component.TestStep;
 import com.ing.datalib.or.web.ResolvedWebObject;
 import com.ing.datalib.or.mobile.ResolvedMobileObject;
+import com.ing.datalib.or.sap.ResolvedSapObject;
 import com.ing.engine.support.methodInf.MethodInfoManager;
 import com.ing.engine.support.methodInf.ObjectType;
 
@@ -122,6 +123,8 @@ public class ActionRenderer extends AbstractRenderer {
                     valid = MethodInfoManager.getMethodListFor(ObjectType.PLAYWRIGHT, ObjectType.WEB).contains(action);
                 } else if (isMobileObject(step)) {
                     valid = MethodInfoManager.getMethodListFor(ObjectType.APP).contains(action);
+                } else if (isSapObject(step)) {
+                    valid = MethodInfoManager.getMethodListFor(ObjectType.SAP).contains(action);
                 }
                 break;
         }
@@ -153,6 +156,19 @@ public class ActionRenderer extends AbstractRenderer {
         ResolvedMobileObject r = (ref != null && ref.name != null && ref.scope != null)
             ? repo.resolveMobileObject(ref, objectName)
             : repo.resolveMobileObjectWithScope(pageToken, objectName);
+
+        return r != null && r.isPresent();
+    }
+
+    private boolean isSapObject(TestStep step) {
+        var repo = step.getProject().getObjectRepository();
+        String pageToken = step.getReference();
+        String objectName = step.getObject();
+
+        ResolvedSapObject.PageRef ref = ResolvedSapObject.PageRef.parse(pageToken);
+        ResolvedSapObject r = (ref != null && ref.name != null && ref.scope != null)
+            ? repo.resolveSapObject(ref, objectName)
+            : repo.resolveSapObjectWithScope(pageToken, objectName);
 
         return r != null && r.isPresent();
     }

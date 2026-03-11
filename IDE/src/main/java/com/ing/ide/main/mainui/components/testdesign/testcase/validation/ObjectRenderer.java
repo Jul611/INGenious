@@ -3,6 +3,7 @@ package com.ing.ide.main.mainui.components.testdesign.testcase.validation;
 import com.ing.datalib.component.TestStep;
 import com.ing.datalib.or.web.ResolvedWebObject;
 import com.ing.datalib.or.mobile.ResolvedMobileObject;
+import com.ing.datalib.or.sap.ResolvedSapObject;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -52,6 +53,8 @@ public class ObjectRenderer extends AbstractRenderer {
         var repo = step.getProject().getObjectRepository();
         String pageToken = step.getReference();
         String objectName = step.getObject();
+        
+        // Check Web OR
         ResolvedWebObject.PageRef wref = ResolvedWebObject.PageRef.parse(pageToken);
         if (wref != null && wref.name != null && wref.scope != null) {
             if (repo.resolveWebObject(wref, objectName) != null) {
@@ -60,11 +63,28 @@ public class ObjectRenderer extends AbstractRenderer {
         } else if (repo.resolveWebObjectWithScope(pageToken, objectName) != null) {
             return true;
         }
+        
+        // Check Mobile OR
         ResolvedMobileObject.PageRef mref = ResolvedMobileObject.PageRef.parse(pageToken);
         if (mref != null && mref.name != null && mref.scope != null) {
-            return repo.resolveMobileObject(mref, objectName) != null;
+            if (repo.resolveMobileObject(mref, objectName) != null) {
+                return true;
+            }
+        } else if (repo.resolveMobileObjectWithScope(pageToken, objectName) != null) {
+            return true;
         }
-        return repo.resolveMobileObjectWithScope(pageToken, objectName) != null;
+        
+        // Check SAP OR
+        ResolvedSapObject.PageRef sref = ResolvedSapObject.PageRef.parse(pageToken);
+        if (sref != null && sref.name != null && sref.scope != null) {
+            if (repo.resolveSapObject(sref, objectName) != null) {
+                return true;
+            }
+        } else if (repo.resolveSapObjectWithScope(pageToken, objectName) != null) {
+            return true;
+        }
+        
+        return false;
     }
 
     private Boolean isValidObject(Object value) {
