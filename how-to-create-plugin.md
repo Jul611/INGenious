@@ -1843,7 +1843,6 @@ import java.util.regex.Pattern;
 /**
  * Webservice testing plugin for REST API operations
  * 
- * @author Your Name
  */
 public class WebserviceTestPlugin {
     
