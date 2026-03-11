@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 
 import com.ing.engine.drivers.WebDriverCreation;
 import com.ing.engine.drivers.WebDriverFactory;
+import com.ing.engine.drivers.SAPSessionCreation;
 import java.time.Instant;
 
 public class Control {
@@ -44,6 +45,8 @@ public class Control {
     private static PlaywrightDriverCreation playwrightDriver;
 
     private static WebDriverCreation webDriver;
+
+    private static SAPSessionCreation sapSession;
 
     private static void start() {
         do {
@@ -179,8 +182,16 @@ public class Control {
         return webDriver;
     }
 
+    static SAPSessionCreation getSapSession() {
+        return sapSession;
+    }
+    
     static void setPlaywrightDriver(PlaywrightDriverCreation Driver) {
         playwrightDriver = Driver;
+    }
+
+    static void setSapSession(SAPSessionCreation session) {
+        sapSession = session;
     }
 
     static void setWebDriver(WebDriverCreation Driver) {

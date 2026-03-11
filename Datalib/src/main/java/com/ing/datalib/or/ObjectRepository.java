@@ -16,6 +16,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.ing.datalib.or.mobile.ResolvedMobileObject;
+import com.ing.datalib.or.sap.SapOR;
 import com.ing.datalib.or.web.ResolvedWebObject;
 import com.ing.datalib.or.web.WebOR.ORScope;
 import com.ing.datalib.or.web.WebORObject;
@@ -43,6 +44,7 @@ public class ObjectRepository {
     private MobileOR mobileProjectOR;
     private MobileOR mobileSharedOR;
     private APIOR apiProjectOR;
+    private SapOR sapOR;
     
     private final Set<String> sharedUsageProjects = new HashSet<>();
     
@@ -167,6 +169,17 @@ public class ObjectRepository {
             if (apiProjectOR != null) {
                 apiProjectOR.setObjectRepository(this);
             }
+            
+            // Load SAP OR (always XML format)
+            if (new File(getSapORLocation()).exists()) {
+                sapOR = XML_MAPPER.readValue(new File(getSapORLocation()), SapOR.class);
+                sapOR.setName(sProject.getName());
+            } else {
+                sapOR = new SapOR(sProject.getName());
+            }
+            if (sapOR != null) {
+                sapOR.setObjectRepository(this);
+            }
 
             // Set remaining properties for shared and project ORs
             if (webSharedOR != null) {
@@ -190,6 +203,9 @@ public class ObjectRepository {
             }
             if (apiProjectOR != null) {
                 apiProjectOR.setSaved(true);
+            }
+            if (sapOR != null) {
+                sapOR.setSaved(true);
             }
 
             LOG.log(Level.INFO, "Shared WebOR loaded: {0}", (webSharedOR != null));
@@ -216,6 +232,9 @@ public class ObjectRepository {
     public String getAPIORLocation() {
         return sProject.getLocation() + File.separator + "APIOR.object";
     }
+    public String getSapORLocation() {
+        return sProject.getLocation() + File.separator + "SapOR.object";
+    }
     public String getSharedMORLocation() {
         return "Shared" + File.separator + "SharedMobileObjects" + File.separator + "SharedMOR.object";
     }
@@ -233,6 +252,9 @@ public class ObjectRepository {
     }
     public String getAPIORRepLocation() {
         return sProject.getLocation() + File.separator + "APIObjectRepository";
+    }
+    public String getSapORRepLocation() {
+        return sProject.getLocation() + File.separator + "SapObjectRepository";
     }
     public String getSharedMORRepLocation() {
         return "Shared" + File.separator + "SharedMobileObjects" + File.separator + "MobileObjectRepository";
@@ -254,6 +276,9 @@ public class ObjectRepository {
     }
     public APIOR getAPIOR() {
         return apiProjectOR;
+    }
+    public SapOR getSapOR() {
+        return sapOR;
     }
 
     /**
@@ -348,6 +373,15 @@ public class ObjectRepository {
                     apiProjectOR.setSaved(true);
                 }
                 LOG.info("Saved project ORs in XML format");
+            }
+            
+            // === SAP OR (always XML format) ===
+            if (sapOR != null) {
+                File sapORFile = new File(getSapORLocation());
+                sapORFile.getParentFile().mkdirs();
+                XML_MAPPER.writerWithDefaultPrettyPrinter()
+                        .writeValue(sapORFile, sapOR);
+                sapOR.setSaved(true);
             }
         } catch (IOException ex) {
             Logger.getLogger(ObjectRepository.class.getName()).log(Level.SEVERE, null, ex);

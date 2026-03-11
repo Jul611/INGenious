@@ -18,6 +18,7 @@ public enum ObjectType {
     QUEUE,
     DATA,
     GENERAL,
-    STRINGOPERATIONS
+    STRINGOPERATIONS,
+    SAP
     
 }
