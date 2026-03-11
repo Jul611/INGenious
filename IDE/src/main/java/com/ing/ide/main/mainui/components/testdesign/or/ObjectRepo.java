@@ -6,6 +6,7 @@ import com.ing.ide.main.fx.INGIcons;
 import com.ing.ide.main.mainui.components.testdesign.TestDesign;
 import com.ing.ide.main.mainui.components.testdesign.or.structureddata.StructuredDataORPanel;
 import com.ing.ide.main.mainui.components.testdesign.or.mobile.MobileORPanel;
+import com.ing.ide.main.mainui.components.testdesign.or.sap.SapORPanel;
 import com.ing.ide.main.mainui.components.testdesign.or.web.WebORPanel;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -47,6 +48,8 @@ public class ObjectRepo extends JPanel implements ItemListener {
 
     private final StructuredDataORPanel structuredDataOR;
 
+    private final SapORPanel sapOR;
+
     public ObjectRepo(TestDesign testDesign) {
         this.testDesign = testDesign;
         switchToolBar = new SwitchToolBar();
@@ -54,6 +57,7 @@ public class ObjectRepo extends JPanel implements ItemListener {
         webOR = new WebORPanel(testDesign);
         mobileOR = new MobileORPanel(testDesign);
         structuredDataOR = new StructuredDataORPanel(testDesign);
+        sapOR = new SapORPanel(testDesign);
         init();
     }
 
@@ -79,6 +83,7 @@ public class ObjectRepo extends JPanel implements ItemListener {
         repos.add(webOR, "Web");
         repos.add(mobileOR, "Mobile");
         repos.add(structuredDataOR, "Structured Data");
+        repos.add(sapOR, "SAP");
         switchToolBar.bgroup.getElements().nextElement().setSelected(true);
     }
 
@@ -100,6 +105,9 @@ public class ObjectRepo extends JPanel implements ItemListener {
                     case "StructuredData":
                         structuredDataOR.adjustUI();
                         break;
+                    case "SAP":
+                        sapOR.adjustUI();
+                        break;
                 }
             });
         }
@@ -109,12 +117,14 @@ public class ObjectRepo extends JPanel implements ItemListener {
         webOR.load();
         mobileOR.load();
         structuredDataOR.load();
+        sapOR.load();
     }
 
     public void adjustUI() {
         webOR.adjustUI();
         mobileOR.adjustUI();
         structuredDataOR.adjustUI();
+        sapOR.adjustUI();
     }
 
     public WebORPanel getWebOR() {
@@ -129,6 +139,10 @@ public class ObjectRepo extends JPanel implements ItemListener {
         return structuredDataOR;
     }
 
+    public SapORPanel getSapOR() {
+        return sapOR;
+    }
+
     public Boolean navigateToObject(String objectName, String pageName) {
         if (webOR.navigateToObject(objectName, pageName)) {
             switchToolBar.webButton.setSelected(true);
@@ -138,6 +152,9 @@ public class ObjectRepo extends JPanel implements ItemListener {
             return true;
         } else if (structuredDataOR.navigateToObject(objectName, pageName)) {
             switchToolBar.structuredDataButton.setSelected(true);
+            return true;
+        } else if (sapOR.navigateToObject(objectName, pageName)) {
+            switchToolBar.sapButton.setSelected(true);
             return true;
         }
         return false;
@@ -151,6 +168,7 @@ public class ObjectRepo extends JPanel implements ItemListener {
         //private JToggleButton imageButton;
         private JToggleButton mobileButton;
         private JToggleButton structuredDataButton;
+        private JToggleButton sapButton;
 
         public SwitchToolBar() {
             init();
@@ -168,7 +186,9 @@ public class ObjectRepo extends JPanel implements ItemListener {
             add(webButton = create("Web", "or.Web"));
             //add(imageButton = create("Image"));
             add(mobileButton = create("Mobile", "or.Mobile"));
+
             add(structuredDataButton = create("Structured Data", "or.StructuredData"));
+            add(sapButton = create("SAP", "or.SAP"));
         }
 
         private JToggleButton create(String text, String iconKey) {
