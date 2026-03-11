@@ -720,6 +720,14 @@ Here is a comprehensive `pom.xml` template for creating plugins:
             <scope>compile</scope>
         </dependency>
         
+        <!-- Example: JSONPath for webservice plugins -->
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>2.8.0</version>
+            <scope>compile</scope>
+        </dependency>
+        
         <!-- Example: Selenium/Appium for mobile plugins -->
         <!-- Uncomment if creating mobile plugin -->
         <!--
@@ -779,7 +787,8 @@ Here is a comprehensive `pom.xml` template for creating plugins:
                             <pluginEntryClasses>
                                 com.ing.plugin.browser.BrowserTestPlugin,
                                 com.ing.plugin.database.DatabasePlugin,
-                                com.ing.plugin.mobile.MobileTestPlugin
+                                com.ing.plugin.mobile.MobileTestPlugin,
+                                com.ing.plugin.webservice.WebserviceTestPlugin
                             </pluginEntryClasses>
                             <Implementation-Version>${project.version}</Implementation-Version>
                             <Implementation-Title>${project.name}</Implementation-Title>
@@ -1805,6 +1814,470 @@ public class MobileTestPlugin {
 
 ---
 
+#### 5. Webservice Plugin Template
+
+Use this template for REST API and web service testing:
+
+```java
+package com.ing.plugin.webservice;
+
+import com.ing.ingenious.api.annotation.Action;
+import com.ing.ingenious.api.contract.WebservicePluginApi;
+import com.ing.ingenious.api.contract.data.UserDataAccessApi;
+import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
+import com.ing.ingenious.api.types.ObjectType;
+import com.ing.ingenious.api.types.InputType;
+import com.ing.ingenious.api.types.RequestMethod;
+import com.ing.ingenious.api.status.Status;
+
+import com.jayway.jsonpath.JsonPath;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Webservice testing plugin for REST API operations
+ * 
+ * @author Your Name
+ */
+public class WebserviceTestPlugin {
+    
+    // API contract instance
+    WebservicePluginApi gen;
+    
+    // Test data fields
+    public String Data;
+    public String Action;
+    public String Input;
+    public String Condition;
+    public TestCaseReportApi Report;
+    public UserDataAccessApi userData;
+    public String ObjectName;
+    
+    // Webservice-specific fields
+    public String endpoint;
+    public String responseCode;
+    public String responseMessage;
+    public String responseBody;
+    public Object connection;
+    public String httpAgent;
+    
+    // Shared storage - Framework's static maps for multi-request context
+    private String key;  // Current context key
+    private Map<String, String> endPoints;
+    private Map<String, ArrayList<String>> headers;
+    private Map<String, ArrayList<String>> urlParams;
+    private Map<String, String> responseBodies;
+    private Map<String, String> responseCodes;
+    private Map<String, String> responseMessages;
+
+    /**
+     * Constructor - receives WebservicePluginApi from framework
+     */
+    public WebserviceTestPlugin(WebservicePluginApi gen) {
+        this.gen = gen;
+        
+        // Initialize test data fields
+        this.Data = gen.getData();
+        this.Action = gen.getAction();
+        this.Input = gen.getInput();
+        this.Condition = gen.getCondition();
+        this.Report = gen.getReport();
+        this.userData = gen.getUserData();
+        this.ObjectName = gen.getObjectName();
+        
+        // Initialize webservice-specific fields from API
+        this.endpoint = gen.Endpoint();
+        this.responseCode = gen.ResponseCode();
+        this.responseMessage = gen.ResponseMessage();
+        this.responseBody = gen.ResponseBody();
+        this.connection = gen.Connection();
+        this.httpAgent = gen.HttpAgent();
+        
+        // Get references to shared maps from framework
+        this.key = gen.getKey();
+        this.endPoints = gen.getEndPointsMap();
+        this.headers = gen.getHeadersMap();
+        this.urlParams = gen.getUrlParamsMap();
+        this.responseBodies = gen.getResponseBodiesMap();
+        this.responseCodes = gen.getResponseCodesMap();
+        this.responseMessages = gen.getResponseMessagesMap();
+    }
+
+    /**
+     * Example: Execute GET request
+     */
+    @Action(object = ObjectType.WEBSERVICE, 
+            desc = "GET Rest Request", 
+            input = InputType.NO, 
+            condition = InputType.OPTIONAL)
+    public void getRestRequest() {
+        try {
+            gen.createHttpRequest(RequestMethod.GET);
+            
+            // Update local fields with response
+            this.responseCode = gen.ResponseCode();
+            this.responseBody = gen.ResponseBody();
+            this.responseMessage = gen.ResponseMessage();
+            
+            // Optional: Additional logging (createHttpRequest already logs)
+            Report.updateTestLog(Action, 
+                "GET request executed. Response code: " + responseCode, 
+                Status.DONE);
+                
+        } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, e);
+            Report.updateTestLog(Action,
+                "Error executing GET request: " + e.getMessage(),
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Execute POST request
+     */
+    @Action(object = ObjectType.WEBSERVICE, 
+            desc = "POST Rest Request", 
+            input = InputType.YES, 
+            condition = InputType.OPTIONAL)
+    public void postRestRequest() {
+        try {
+            gen.createHttpRequest(RequestMethod.POST);
+            
+            // Update local fields with response
+            this.responseCode = gen.ResponseCode();
+            this.responseBody = gen.ResponseBody();
+            this.responseMessage = gen.ResponseMessage();
+            
+            Report.updateTestLog(Action, 
+                "POST request executed. Response code: " + responseCode, 
+                Status.DONE);
+                
+        } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, e);
+            Report.updateTestLog(Action,
+                "Error executing POST request: " + e.getMessage(),
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Execute PUT request
+     */
+    @Action(object = ObjectType.WEBSERVICE, 
+            desc = "PUT Rest Request", 
+            input = InputType.YES, 
+            condition = InputType.OPTIONAL)
+    public void putRestRequest() {
+        try {
+            gen.createHttpRequest(RequestMethod.PUT);
+            
+            // Update local fields with response
+            this.responseCode = gen.ResponseCode();
+            this.responseBody = gen.ResponseBody();
+            this.responseMessage = gen.ResponseMessage();
+            
+            Report.updateTestLog(Action, 
+                "PUT request executed. Response code: " + responseCode, 
+                Status.DONE);
+                
+        } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, e);
+            Report.updateTestLog(Action,
+                "Error executing PUT request: " + e.getMessage(),
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Add HTTP header to request
+     */
+    @Action(object = ObjectType.WEBSERVICE, 
+            desc = "Add Header [<Data>]", 
+            input = InputType.YES)
+    public void addHeader() {
+        try {
+            String headerData = Data;
+            
+            // Handle datasheet variable substitution: {sheetName:columnName}
+            headerData = processDatasheetVariables(headerData);
+            
+            // Handle runtime variable substitution: %variable%
+            headerData = processRuntimeVariables(headerData);
+            
+            // Store the header in shared map
+            if (headers.containsKey(key)) {
+                headers.get(key).add(headerData);
+            } else {
+                ArrayList<String> toBeAdded = new ArrayList<>();
+                toBeAdded.add(headerData);
+                headers.put(key, toBeAdded);
+            }
+            
+            Report.updateTestLog(Action, 
+                "Header added: " + headerData, 
+                Status.DONE);
+                
+        } catch (Exception ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "Error adding header: " + ex.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Store JSON element value in variable
+     */
+    @Action(object = ObjectType.WEBSERVICE, 
+            desc = "Store JSON Element [<Data>] in variable [<Condition>]", 
+            input = InputType.YES, 
+            condition = InputType.YES)
+    public void storeJSONElement() {
+        try {
+            String variableName = Condition;
+            String jsonpath = Data;
+            
+            if (!variableName.matches("%.*%")) {
+                Report.updateTestLog(Action, 
+                    "Variable format incorrect. Expected: %variableName%", 
+                    Status.FAIL);
+                return;
+            }
+            
+            String currentResponseBody = gen.ResponseBody();
+            
+            if (currentResponseBody == null || currentResponseBody.isEmpty()) {
+                Report.updateTestLog(Action, 
+                    "Response body is empty or null", 
+                    Status.FAIL);
+                return;
+            }
+            
+            String value = JsonPath.read(currentResponseBody, jsonpath).toString();
+            gen.addVar(variableName, value);
+            
+            Report.updateTestLog(Action, 
+                "JSON element value [" + value + "] stored in " + variableName, 
+                Status.DONE);
+                
+        } catch (Exception ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "Error storing JSON element: " + ex.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Assert response code
+     */
+    @Action(object = ObjectType.WEBSERVICE, 
+            desc = "Assert Response Code is [<Data>]", 
+            input = InputType.YES)
+    public void assertResponseCode() {
+        try {
+            String currentResponseCode = gen.ResponseCode();
+            
+            if (currentResponseCode != null && currentResponseCode.equals(Data)) {
+                Report.updateTestLog(Action, 
+                    "Status code is: " + Data, 
+                    Status.PASS);
+            } else {
+                Report.updateTestLog(Action, 
+                    "Status code is " + currentResponseCode + " but expected " + Data,
+                    Status.FAIL);
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "Error validating response code: " + ex.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Assert response body contains text
+     */
+    @Action(object = ObjectType.WEBSERVICE, 
+            desc = "Assert Response Body contains [<Data>]", 
+            input = InputType.YES)
+    public void assertResponseBodyContains() {
+        try {
+            String currentResponseBody = gen.ResponseBody();
+            
+            if (currentResponseBody != null && currentResponseBody.contains(Data)) {
+                Report.updateTestLog(Action, 
+                    "Response body contains: " + Data, 
+                    Status.PASS);
+            } else {
+                Report.updateTestLog(Action, 
+                    "Response body does not contain: " + Data, 
+                    Status.FAIL);
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "Error validating response body: " + ex.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Assert JSON element equals expected value
+     */
+    @Action(object = ObjectType.WEBSERVICE, 
+            desc = "Assert JSON Element [<Condition>] equals [<Data>]", 
+            input = InputType.YES, 
+            condition = InputType.YES)
+    public void assertJSONElementEquals() {
+        try {
+            String currentResponseBody = gen.ResponseBody();
+            String jsonpath = Condition;
+            String value = JsonPath.read(currentResponseBody, jsonpath).toString();
+            
+            if (value.equals(Data)) {
+                Report.updateTestLog(Action, 
+                    "JSON element [" + value + "] equals expected value", 
+                    Status.PASS);
+            } else {
+                Report.updateTestLog(Action, 
+                    "JSON element is [" + value + "] but expected [" + Data + "]",
+                    Status.FAIL);
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "Error validating JSON element: " + ex.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    /**
+     * Example: Get driver property from API configuration
+     */
+    @Action(object = ObjectType.WEBSERVICE, 
+            desc = "Get Driver Property [<Data>]", 
+            input = InputType.YES, 
+            condition = InputType.OPTIONAL)
+    public void getDriverProperty() {
+        try {
+            String propertyKey = Data;
+            
+            if (propertyKey == null || propertyKey.trim().isEmpty()) {
+                Report.updateTestLog(Action, 
+                    "Property key is required", 
+                    Status.FAIL);
+                return;
+            }
+            
+            String propertyValue = gen.getDriverProperty(propertyKey);
+            
+            if (propertyValue != null && !propertyValue.isEmpty()) {
+                if (Condition != null && !Condition.trim().isEmpty()) {
+                    if (Condition.matches("%.*%")) {
+                        gen.addVar(Condition, propertyValue);
+                        Report.updateTestLog(Action, 
+                            "Property [" + propertyKey + "] = [" + propertyValue + 
+                            "] stored in " + Condition, 
+                            Status.DONE);
+                    } else {
+                        Report.updateTestLog(Action, 
+                            "Property [" + propertyKey + "] = [" + propertyValue + 
+                            "]. Variable format invalid (use %variableName%)", 
+                            Status.FAIL);
+                    }
+                } else {
+                    Report.updateTestLog(Action, 
+                        "Property [" + propertyKey + "] = [" + propertyValue + "]", 
+                        Status.DONE);
+                }
+            } else {
+                Report.updateTestLog(Action, 
+                    "Property [" + propertyKey + "] not found", 
+                    Status.FAIL);
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(this.getClass().getName()).log(Level.OFF, null, ex);
+            Report.updateTestLog(Action, 
+                "Error retrieving driver property: " + ex.getMessage(), 
+                Status.FAIL);
+        }
+    }
+
+    // ========== Helper Methods ==========
+
+    /**
+     * Process datasheet variables in format {sheetName:columnName}
+     */
+    private String processDatasheetVariables(String text) {
+        if (text == null) return text;
+        
+        Pattern pattern = Pattern.compile("\\{([^:]+):([^}]+)\\}");
+        Matcher matcher = pattern.matcher(text);
+        
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            String sheetName = matcher.group(1);
+            String columnName = matcher.group(2);
+            try {
+                String value = userData.getData(sheetName, columnName);
+                if (value != null) {
+                    matcher.appendReplacement(result, 
+                        Matcher.quoteReplacement(value));
+                }
+            } catch (Exception e) {
+                // Keep original if not found
+            }
+        }
+        matcher.appendTail(result);
+        return result.toString();
+    }
+
+    /**
+     * Process runtime variables in format %variableName%
+     */
+    private String processRuntimeVariables(String text) {
+        if (text == null) return text;
+        
+        Pattern pattern = Pattern.compile("%\\w+%");
+        Matcher matcher = pattern.matcher(text);
+        
+        String result = text;
+        while (matcher.find()) {
+            String variable = matcher.group();
+            String value = gen.getVar(variable);
+            if (value != null) {
+                result = result.replaceAll(Pattern.quote(variable), 
+                    Matcher.quoteReplacement(value));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Get stored headers for current context
+     */
+    public List<String> getHeaders() {
+        return headers.getOrDefault(key, new ArrayList<>());
+    }
+
+    /**
+     * Get stored endpoint for current context
+     */
+    public String getStoredEndpoint() {
+        return endPoints.getOrDefault(key, "");
+    }
+}
+```
+
+---
+
 ### Using the Templates
 
 1. **Choose the appropriate template** based on your plugin type:
@@ -1812,6 +2285,7 @@ public class MobileTestPlugin {
    - **DatabasePlugin**: For database testing
    - **TextAssertsPlugin**: For general purpose operations
    - **MobileTestPlugin**: For mobile app testing
+   - **WebserviceTestPlugin**: For REST API and web service testing
 
 2. **Customize the package name** to match your project structure
 
@@ -1876,6 +2350,7 @@ Before deploying your plugin, verify:
 - **Browser Plugin**: `browser-test-plugin` in `P33148-INGenious-Playwright-Framework-Plugins`
 - **Database Plugin**: `general-test-plugin` (DatabasePlugin class)
 - **Mobile Plugin**: `mobile-test-plugin` in `P33148-INGenious-Playwright-Framework-Plugins`
+- **Webservice Plugin**: `webservice-test-plugin` in `P33148-INGenious-Playwright-Framework-Plugins`
 - **Text Assertions**: `general-test-plugin` (TextAsserts class)
 
 **API Documentation:**
