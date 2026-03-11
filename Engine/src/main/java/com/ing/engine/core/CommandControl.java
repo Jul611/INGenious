@@ -25,6 +25,10 @@ import java.util.Stack;
 import com.ing.engine.drivers.WebDriverCreation;
 import com.ing.engine.drivers.MobileObject;
 import com.ing.engine.drivers.MobileObject.FindmType;
+import com.ing.engine.drivers.SAPObject;
+import com.ing.engine.drivers.SAPSessionCreation;
+import com.jacob.com.Dispatch;
+import com.ing.engine.drivers.SAPObject.SAPFindType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -60,20 +64,31 @@ public abstract class CommandControl {
     public WebDriverCreation webDriver;
     public WebElement Element;
 
-    public CommandControl(PlaywrightDriverCreation playwright, PlaywrightDriverCreation page, PlaywrightDriverCreation browserContext ,WebDriverCreation driver,TestCaseReport report) {
+    //For SAPTesting
+    public SAPObject SAPObject;
+    public Dispatch SAPElement;
+    public SAPSessionCreation SAPsession;
+    public Process SAPProcess;
+
+    public CommandControl(PlaywrightDriverCreation playwright, PlaywrightDriverCreation page, PlaywrightDriverCreation browserContext ,WebDriverCreation driver, SAPSessionCreation session, TestCaseReport report) {
         Playwright = playwright;
         BrowserContext = browserContext;
         Page = page;
         webDriver = driver;
+        SAPsession = session;
         userData = new UserDataAccess() {
             @Override
             public TestCaseRunner context() {
                 return (TestCaseRunner) CommandControl.this.context();
             }
         };
-        if(webDriver==null)
+        if(webDriver==null && SAPsession==null)
         {
            AObject = new AutomationObject(Page.page); 
+        }
+        else if(SAPsession!=null)
+        {
+           SAPObject=new SAPObject(SAPsession.session); 
         }
         else if(webDriver!=null)
         {
@@ -87,10 +102,12 @@ public abstract class CommandControl {
         Data = ObjectName = Condition = Description = Input = Reference = Action = "";
         Locator = null;
         imageObjectGroup = null;
+        //For SAPTesting
+        SAPElement = null;
     }
 
     public void sync(Step curr) throws UnCaughtException {
-        if(webDriver==null)
+        if(webDriver==null && SAPsession==null)
         {
         refresh();
         //AObject.setDriver(seDriver.driver);
@@ -118,6 +135,33 @@ public abstract class CommandControl {
                         Locator = AObject.findElement(ObjectName, Reference, FindType.fromString(Condition));
                         
                     }
+                }
+            }
+        }
+    }
+    else if(SAPsession!=null)
+    {
+        refresh();
+        this.Description = curr.Description;
+        this.Action = curr.Action;
+        this.Input = curr.Input;
+        this.Data = curr.Data;
+
+        /********** Updates the Action for NLP_locator****************/
+        SAPObject.Action = this.Action;
+        /**************************************************************/
+        
+        if (curr.Condition != null && curr.Condition.length() > 0) {
+            this.Condition = curr.Condition;
+        }
+
+        if (curr.ObjectName != null && curr.ObjectName.length() > 0) {
+            this.ObjectName = curr.ObjectName.trim();
+
+            if (!(ObjectName.matches("(?i:app|browser|execute|executeclass)"))) {
+                this.Reference = curr.Reference;
+                if (curr.Action.startsWith("sap")) {
+                    SAPElement = SAPObject.findSAPElement(ObjectName, Reference, SAPFindType.fromString(Condition));
                 }
             }
         }
