@@ -103,6 +103,7 @@ public class TestStepRunner {
             Scenario scn = context.project().getReusableScenarioByName(scenario);
             if (scn != null) {
                 TestCase stc = scn.getTestCaseByName(testcase);
+                stc.setParentTestCase(context.getTestCase());
                 if (stc != null) {
                     executeTestCase(context, stc);
                     return;
