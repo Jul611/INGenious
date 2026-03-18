@@ -8,7 +8,7 @@ import com.ing.engine.core.CommandControl;
 import com.ing.ingenious.api.status.Status;
 import com.ing.util.encryption.Encryption;
 import com.ing.engine.core.Control;
-import com.ing.ingenious.api.contract.GeneralDbApi;
+import com.ing.ingenious.api.contract.DatabasePluginApi;
 import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
 import java.util.Collection;
 import java.sql.*;
@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
  *
  *
  */
-public class General extends Command implements GeneralDbApi {
+public class General extends Command implements DatabasePluginApi {
 
     public static Connection dbconnection;
     static Statement statement;
