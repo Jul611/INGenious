@@ -627,7 +627,7 @@ public class ProjectTree implements ActionListener {
         }
     }
 
-    private void sort() {
+    public void sort() {
         if (tree.getSelectionPath() != null) {
             getTreeModel().sort(tree.getSelectionPath().getLastPathComponent());
         }

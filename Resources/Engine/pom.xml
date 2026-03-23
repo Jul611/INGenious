@@ -435,7 +435,6 @@
         </dependency>
         
         
-        
         <dependency>
             <groupId>com.galenframework</groupId>
             <artifactId>galen-core</artifactId>

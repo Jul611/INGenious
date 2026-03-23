@@ -160,6 +160,7 @@ public final class INGIcons {
         register("down",                MaterialDesignA.ARROW_DOWN,                    CLR_SEARCH);
         register("tag",                 MaterialDesignT.TAG,                           CLR_DATA);
         register("upOneLevel",          MaterialDesignA.ARROW_UP_BOLD,                 CLR_NAV);
+        register("sort",                MaterialDesignS.SORT_ALPHABETICAL_ASCENDING,   CLR_NAV);
         register("reload",              MaterialDesignR.RELOAD,                        CLR_TOOL);
         register("openwithsystemeditor", MaterialDesignO.OPEN_IN_NEW,                  CLR_TOOL);
 

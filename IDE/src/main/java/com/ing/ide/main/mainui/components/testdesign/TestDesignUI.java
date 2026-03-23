@@ -230,6 +230,11 @@ public class TestDesignUI extends JPanel {
 
         FXPanelHeader header = new FXPanelHeader(labelText,
                 new FXPanelHeader.HeaderAction(
+                        "Sort",
+                        "sort",
+                        () -> SwingUtilities.invokeLater(() ->
+                                testDesign.getProjectTree().sort())),
+                new FXPanelHeader.HeaderAction(
                         "Go to Previous TestCase",
                         "upOneLevel",
                         () -> SwingUtilities.invokeLater(() ->
