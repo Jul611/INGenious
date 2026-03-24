@@ -146,7 +146,7 @@ public class TestStep {
         for (int i = 0; i < record.size(); i++) {
             stepDetails.add(record.get(i));
         }
-        while (stepDetails.size() != HEADERS.values().length) {
+        while (stepDetails.size() < HEADERS.values().length) {
             stepDetails.add("");
         }
     }
