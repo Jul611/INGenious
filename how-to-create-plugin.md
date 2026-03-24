@@ -2,6 +2,7 @@
 ## Table of Contents
 
 - [INGenious Plugin system](#ingenious-plugin-system)
+- [Quick Start: Creating Plugins with Copilot](#quick-start-creating-plugins-with-copilot)
 - [Plugin Directory Structure](#plugin-directory-structure)
 - [How to Create Your Plugin](#how-to-create-your-plugin)
 - [Working with Playwright Objects](#working-with-playwright-objects)
@@ -29,6 +30,181 @@ The INGenious Framework uses a sophisticated plugin architecture with:
 - **Parent-First Delegation**: Critical packages (Playwright, API) loaded from parent classloader
 
 This architecture ensures plugins can be developed independently while maintaining compatibility with the framework.
+
+---
+
+## Quick Start: Creating Plugins with Copilot
+
+**NEW: Automated Plugin Creation with AI Assistance**
+
+You can now leverage the **INGenious Copilot skill** to automatically analyze your customizations and generate plugins. This AI-powered approach significantly reduces the time and effort required to create plugins from existing code modifications.
+
+> **⚠️ Beta Feature**  
+> This feature is currently in the **test phase**. While functional, it may undergo improvements and refinements based on user feedback and testing results.
+
+> **💡 Best Performance**  
+> This feature works best when used in **agent mode with Claude Sonnet 4.5** (based on development experience). For optimal results, ensure you're using this configuration in GitHub Copilot.
+
+### Overview
+
+The INGenious Copilot skill provides intelligent assistance for:
+- **Detecting customizations** in your INGenious installation
+- **Analyzing modifications** compared to the official release
+- **Generating plugin structure** with proper Maven configuration
+- **Converting custom code** into plugin-compatible format
+- **Creating documentation** and configuration files
+
+### Prerequisites & Requirements
+
+Before using the Copilot skill to create plugins, ensure:
+
+**✅ Required:**
+- **Internet Access**: Required to download the official INGenious repository for comparison analysis (when analyzing customizations)
+- **GitHub Copilot**: Active GitHub Copilot subscription with access to skills
+- **Workspace Access**: Your project workspace accessible in VS Code
+
+**⚠️ Important:**
+- When analyzing customizations, the skill requires internet connectivity to access the official [INGenious repository](https://github.com/ing-bank/INGenious) for version comparison
+- Customization analysis may take 1-2 minutes depending on the number of modifications detected
+- The skill can also create plugins from scratch without needing an existing customization
+
+### How to Use the Skill
+
+The Copilot skill responds to specific keywords and prompts. Use these example prompts to activate the plugin creation workflow:
+
+#### Example Prompts by Task
+
+**1. Analyze Customizations:**
+```
+Check my INGenious customization
+Analyze my INGenious modifications
+Detect customizations in my INGenious installation
+Compare my INGenious version with official release
+```
+
+**2. Create Plugin from Customizations:**
+```
+Create a plugin from my INGenious customization
+Convert my INGenious customizations to a plugin
+Generate INGenious plugin from my custom code
+Extract my customizations as an INGenious plugin
+```
+
+**3. Combined Analysis and Creation:**
+```
+Check my INGenious customization and create a plugin from it
+Analyze my INGenious modifications and convert them to plugins
+```
+
+### Detection Keywords
+
+The Copilot skill activates when your prompt contains these **important keywords**:
+
+**Primary Keywords:**
+- `ingenious` or `INGenious`
+- `customization` or `customizations`
+- `plugin` or `plugins`
+- `modification` or `modifications`
+
+**Action Keywords:**
+- `check`, `analyze`, `detect`, `compare`
+- `create`, `generate`, `convert`, `extract`
+- `build`, `make`, `develop`
+
+**Trigger Examples:**
+- "Check my **INGenious customization**"
+- "**Create** an **INGenious plugin**"
+- "**Analyze** my **INGenious modifications**"
+- "**Convert customizations** to **plugin**"
+
+### What to Expect
+
+The Copilot skill will guide you through an **interactive workflow**:
+
+**Step 1: Installation Selection**
+- Detects all INGenious installations in your workspace
+- Presents options for which installation to analyze
+- Waits for your confirmation before proceeding
+
+**Step 2: Version Detection**
+- Identifies the INGenious version (e.g., v2.3)
+- Determines if it's a build copy or source code copy
+- Downloads the matching official release for comparison
+
+**Step 3: Customization Analysis**
+- Compares your code against the official release
+- Identifies new files, modified files, and deleted files
+- Groups customizations by functionality
+
+**Step 4: Plugin Candidate Identification**
+- Evaluates which customizations are suitable for plugins
+- Generates plugin specifications
+- Provides recommendations
+
+**Step 5: Plugin Creation** (if requested)
+- Asks for plugin source code directory
+- Asks for INGenious installation (deployment target)
+- Generates complete plugin structure:
+  - `pom.xml` with dependencies and auto-deployment
+  - Plugin entry class(es)
+  - Utility classes
+  - README.md with documentation
+  - `.env.example` for configuration
+  - `.gitignore` for security
+
+**Step 6: Build Instructions**
+- Provides build command (`mvn package`)
+- Explains deployment process
+- Offers testing guidance
+
+### Generated Output
+
+The skill creates a **complete, production-ready plugin** including:
+
+```
+your-plugin/
+├── pom.xml                    # Maven config with auto-deploy
+├── README.md                  # Complete documentation
+├── .env.example              # Configuration template
+├── .gitignore                # Security protection
+└── src/main/java/com/ing/plugin/
+    ├── YourPlugin.java       # Main plugin class
+    └── UtilityClass.java     # Helper classes (if needed)
+```
+
+**Key Features of Generated Plugins:**
+- ✅ Proper Maven configuration with correct dependencies
+- ✅ Auto-deployment to your INGenious installation
+- ✅ Complete constructor initialization pattern
+- ✅ Error handling and logging
+- ✅ @Action annotations with correct parameters
+- ✅ Documentation with usage examples
+- ✅ Configuration templates for secrets/settings
+
+### Important Disclaimer
+
+**⚠️ Generated Plugin Limitations:**
+
+While the Copilot skill creates functional plugin structures, please note:
+
+**Testing Required:**
+- Generated plugins are **not guaranteed to be 100% complete**
+- **Compilation errors** may occur due to:
+  - Missing imports
+  - API mismatches
+  - Complex custom logic requiring refactoring
+- **Runtime issues** may arise from:
+  - Incorrect dependency versions
+  - API contract misunderstandings
+  - Edge cases not covered in analysis
+
+
+
+---
+
+**Ready to create plugins the traditional way?** Continue reading the sections below for detailed manual plugin creation guidance, templates, and best practices.
+
+---
 
 ## Plugin Directory Structure
 
@@ -178,7 +354,7 @@ To automatically copy your JAR and dependencies to the plugin directory, use the
 
 ### 5. Implement Entry Classes
 
-Create your entry class(es) with action methods. Entry classes receive the contract interface (such as `GeneralBrApi` or `GeneralDbApi`) via constructor injection. All framework functionalities are accessed through this contract instance, which is provided to your entry class by the framework at runtime.
+Create your entry class(es) with action methods. Entry classes receive the contract interface (such as `BrowserPluginApi` or `DatabasePluginApi`) via constructor injection. All framework functionalities are accessed through this contract instance, which is provided to your entry class by the framework at runtime.
 
 **Basic Plugin Example:**
 
@@ -186,7 +362,7 @@ Create your entry class(es) with action methods. Entry classes receive the contr
 package com.ing.plugin.browser;
 
 import com.ing.ingenious.api.annotation.Action;
-import com.ing.ingenious.api.contract.GeneralBrApi;
+import com.ing.ingenious.api.contract.BrowserPluginApi;
 import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
 import com.ing.ingenious.api.types.ObjectType;
 import com.ing.ingenious.api.types.InputType;
@@ -218,7 +394,7 @@ import com.ing.samp.dependency.SampDependency;
  */
 public class BrowserTestPlugin {
 
-    GeneralBrApi gen;
+    BrowserPluginApi gen;
 
     public String Data;
     public String Action;
@@ -232,8 +408,8 @@ public class BrowserTestPlugin {
     public Page Page;
     public Locator Locator;
 
-    public BrowserTestPlugin(GeneralBrApi gen) {
-        System.out.println("BrowserTestPlugin initialized with GeneralBrApi: " + gen);
+    public BrowserTestPlugin(BrowserPluginApi gen) {
+        System.out.println("BrowserTestPlugin initialized with BrowserPluginApi: " + gen);
         this.gen = gen;
         this.Data = gen.getData();
         this.Action = gen.getAction();
@@ -298,7 +474,7 @@ Launch INGenious Playwright Studio. Your plugin actions will appear in the sugge
 
 ## Working with Playwright Objects
 
-The framework provides access to Playwright objects (Page, Locator, BrowserContext, etc.) through the `GeneralBrApi` interface. Due to the classloader architecture, these objects are returned as `Object` type to maintain version independence.
+The framework provides access to Playwright objects (Page, Locator, BrowserContext, etc.) through the `BrowserPluginApi` interface. Due to the classloader architecture, these objects are returned as `Object` type to maintain version independence.
 
 ### Accessing Playwright Objects
 
@@ -306,9 +482,9 @@ Refer to the **BrowserTestPlugin** example in [Step 5](#5-implement-entry-classe
 
 Key points demonstrated in that example:
 
-1. **Constructor Pattern**: Accept `GeneralBrApi` as a constructor parameter
+1. **Constructor Pattern**: Accept `BrowserPluginApi` as a constructor parameter
    ```java
-   public BrowserTestPlugin(GeneralBrApi gen) {
+   public BrowserTestPlugin(BrowserPluginApi gen) {
        this.gen = gen;
        this.Data = gen.getData();
        this.report = gen.getReport();
@@ -338,7 +514,7 @@ Key points demonstrated in that example:
 **1. Cast-Once in Constructor Pattern** (as shown in BrowserTestPlugin):
 ```java
 // ✅ Best Practice - Cast once in constructor, use everywhere
-public BrowserTestPlugin(GeneralBrApi gen) {
+public BrowserTestPlugin(BrowserPluginApi gen) {
     this.Page = (Page) gen.getPage();      // Cast once
     this.Locator = (Locator) gen.getLocator(); // Cast once
 }
@@ -370,9 +546,9 @@ try {
 }
 ```
 
-### Additional GeneralBrApi Methods
+### Additional BrowserPluginApi Methods
 
-Beyond Playwright objects, `GeneralBrApi` provides access to:
+Beyond Playwright objects, `BrowserPluginApi` provides access to:
 - `getData()` - Test data input
 - `getAction()` - Current action name
 - `getInput()` - Input parameter
