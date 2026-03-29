@@ -1,7 +1,7 @@
-
 ## Table of Contents
 
 - [INGenious Plugin system](#ingenious-plugin-system)
+- [How to Setup INGenious Framework](#how-to-setup-ingenious-framework)
 - [Quick Start: Creating Plugins with Copilot](#quick-start-creating-plugins-with-copilot)
 - [Plugin Directory Structure](#plugin-directory-structure)
 - [How to Create Your Plugin](#how-to-create-your-plugin)
@@ -30,6 +30,154 @@ The INGenious Framework uses a sophisticated plugin architecture with:
 - **Parent-First Delegation**: Critical packages (Playwright, API) loaded from parent classloader
 
 This architecture ensures plugins can be developed independently while maintaining compatibility with the framework.
+
+---
+
+## How to Setup INGenious Framework
+
+What you currently have is a release package containing the core INGenious JARs, but to keep the download size small, third-party dependencies are not bundled. Before you can use the framework or develop plugins, you must download all required dependencies. This section guides you through setting up a complete working environment for a release distribution.
+
+### Prerequisites
+
+- **Maven**: Installed and configured on your system
+- **INGenious Core JARs**: Located in `INGenious-jars/` directory:
+  - `ingenious-engine-<version>.jar`
+  - `ingenious-datalib-<version>.jar`
+  - `ingenious-testdata-csv-<version>.jar`
+  - `ingenious-api-<version>.jar` (if separate)
+
+### Release Package Structure
+
+```
+INGenious-plugins-LR/
+├── pom.xml                    # Dependency management POM
+├── lib/                       # Dependencies (empty initially)
+├── INGenious-jars/           # Core framework JARs
+│   ├── ingenious-engine-2.3.jar
+│   ├── ingenious-datalib-2.3.jar
+│   ├── ingenious-testdata-csv-2.3.jar
+│   └── ingenious-api-3.0.jar
+├── Configuration/
+├── Projects/
+└── Tools/
+```
+
+### Setup Instructions
+
+**Step 1: Navigate to Release Directory**
+
+```bash
+cd /path/to/INGenious-plugins-LR
+```
+
+**Step 2: Download Dependencies**
+
+Run Maven to download all dependencies and copy core JARs:
+
+```bash
+mvn clean package
+```
+
+This command will:
+1. Clean the `lib/` folder (remove any old JARs)
+2. Download all Maven dependencies declared in `pom.xml`
+3. Copy dependencies to the `lib/` folder
+4. Copy core INGenious JARs from `INGenious-jars/` to `lib/`
+
+**Step 3: Verify Setup**
+
+Check that the `lib/` folder now contains:
+- All Playwright dependencies
+- All third-party libraries (Apache POI, Jackson, Jetty, etc.)
+- INGenious core JARs
+
+```bash
+ls -la lib/ | wc -l  # Should show 100+ JAR files
+```
+
+**Step 4: Launch the Framework**
+
+After verifying that all dependencies are properly set up, you can launch the INGenious Playwright Framework:
+
+**On macOS/Linux:**
+1. Make the script executable (if not already):
+   ```bash
+   chmod +x Run.command
+   ```
+2. Double-click `Run.command` in Finder, or run it from the terminal:
+   ```bash
+   ./Run.command
+   ```
+
+**On Windows:**
+- Double-click `Run.bat` to start the framework.
+
+This will launch the INGenious Playwright Studio interface where you can create and run your test projects.
+
+### POM Configuration Details
+
+The release `pom.xml` is configured specifically for dependency management:
+
+**Packaging Type:**
+```xml
+<packaging>pom</packaging>
+```
+This indicates the POM is used only for dependency management, not for building code.
+
+**Dependency Download Plugin:**
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-dependency-plugin</artifactId>
+    <executions>
+        <execution>
+            <id>copy-dependencies</id>
+            <phase>package</phase>
+            <goals>
+                <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+                <outputDirectory>lib</outputDirectory>
+                <overWriteReleases>true</overWriteReleases>
+                <overWriteSnapshots>true</overWriteSnapshots>
+                <overWriteIfNewer>true</overWriteIfNewer>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+This plugin downloads all declared dependencies from Maven Central and other repositories.
+
+**Core JAR Copy Plugin:**
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-resources-plugin</artifactId>
+    <version>3.3.0</version>
+    <executions>
+        <execution>
+            <id>copy-ingenious-jars</id>
+            <phase>package</phase>
+            <goals>
+                <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+                <outputDirectory>lib</outputDirectory>
+                <resources>
+                    <resource>
+                        <directory>INGenious-jars</directory>
+                        <includes>
+                            <include>**/*.jar</include>
+                        </includes>
+                    </resource>
+                </resources>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+This plugin copies INGenious core JARs from `INGenious-jars/` to the `lib/` folder during the package phase.
+
 
 ---
 
