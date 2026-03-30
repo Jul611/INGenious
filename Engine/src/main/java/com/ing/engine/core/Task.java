@@ -183,11 +183,7 @@ public class Task implements Runnable {
     }
 
     private void closePlaywrightDriver() {
-<<<<<<< HEAD
-        if (playwrightDriver != null && !getRunSettings().useExistingDriver() && isLocalExecution()) {
-=======
         if (playwrightDriver != null && !getRunSettings().useExistingDriver() && !Control.exe.getExecSettings().getRunSettings().isGridExecution()) {
->>>>>>> 3374172 (feat: Add Lambda Test cloud execution support)
             try {
                 playwrightDriver.closeBrowser();
             } catch (Exception ex) {
