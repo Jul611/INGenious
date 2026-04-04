@@ -2,6 +2,7 @@
 name: ingenious-plugin-creation
 description: 'Expert guidance for creating INGenious Playwright Framework plugins. USE FOR: creating new plugins, fixing plugin errors, configuring maven POMs, implementing action methods, working with Playwright objects, troubleshooting classloader issues, version compatibility problems, extending the framework with custom actions, converting customizations into plugins. INCLUDES: complete templates, architecture patterns, dependency management, best practices. INTEGRATES WITH: ingenious-customization-detection skill for extracting customizations as plugins.'
 argument-hint: 'Describe the plugin to create or issue to fix'
+allowed-tools: shell
 ---
 
 # INGenious Plugin Creation Skill
@@ -291,60 +292,23 @@ ${INGENIOUS_INSTALL_DIR}/plugins/[plugin-name]/
     └── [dependency].jar
 ```
 
-**Validation Checks:**
+**Validation Checklist:**
 
-After confirming both directories, verify:
+After user confirms both directories:
 
-```bash
-# Validation for Source Code Directory
-SOURCE_CODE_DIR="[user-provided-path]"
-PLUGIN_NAME="[plugin-name]"
+**Source Code Directory:**
+- ✅ Path exists or can be created
+- ✅ Write permissions available
+- ✅ No plugin name conflicts
+- ⚠️ If exists: Prompt for different name/location or confirm overwrite
 
-# 1. Check if source code path exists or parent exists for creation
-[ -d "$SOURCE_CODE_DIR" ] || [ -d "$(dirname "$SOURCE_CODE_DIR")" ]
+**INGenious Installation (if auto-deploy):**
+- ✅ Valid INGenious structure (Engine/, Configuration/ present)
+- ✅ plugins/ directory accessible
+- ✅ Write permissions available
+- ⚠️ If invalid: Request correct path or skip auto-deployment
 
-# 2. Check write permissions
-[ -w "$SOURCE_CODE_DIR" ] || [ -w "$(dirname "$SOURCE_CODE_DIR")" ]
-
-# 3. Check if plugin already exists
-if [ -d "$SOURCE_CODE_DIR/$PLUGIN_NAME" ]; then
-    echo "⚠️ Warning: Plugin '$PLUGIN_NAME' already exists at this location"
-    echo "Options:"
-    echo "  1. Choose a different name"
-    echo "  2. Choose a different location"
-    echo "  3. Overwrite existing plugin (will backup first)"
-    # STOP and wait for user choice
-fi
-
-# Validation for INGenious Installation Directory (if provided)
-if [ "$DEPLOY_ENABLED" = "true" ]; then
-    INGENIOUS_DIR="[user-provided-ingenious-path]"
-    
-    # 4. Verify it's a valid INGenious installation
-    if [ ! -d "$INGENIOUS_DIR/Engine" ] || [ ! -d "$INGENIOUS_DIR/Configuration" ]; then
-        echo "⚠️ Warning: '$INGENIOUS_DIR' doesn't appear to be a valid INGenious installation"
-        echo "Expected to find: Engine/ and Configuration/ directories"
-        echo "Options:"
-        echo "  1. Provide a different path"
-        echo "  2. Skip auto-deployment (configure manually later)"
-        # STOP and wait for user choice
-    fi
-    
-    # 5. Check if plugins directory exists or can be created
-    DEPLOY_DIR="$INGENIOUS_DIR/plugins/$PLUGIN_NAME"
-    if [ ! -d "$INGENIOUS_DIR/plugins" ]; then
-        echo "Creating plugins directory: $INGENIOUS_DIR/plugins/"
-        mkdir -p "$INGENIOUS_DIR/plugins"
-    fi
-    
-    # 6. Check write permissions for deployment
-    [ -w "$INGENIOUS_DIR/plugins" ] || {
-        echo "⚠️ Warning: No write permission to $INGENIOUS_DIR/plugins/"
-        echo "Auto-deployment may fail. Continue anyway? (yes/no)"
-        # STOP and wait for user choice
-    }
-fi
-```
+**Agent Implementation:** Use `list_dir` and file operations to verify. Display clear warnings and options if validation fails.
 
 **What NOT to do:**
 
@@ -467,87 +431,16 @@ The POM should be created at: `${SOURCE_CODE_DIR}/${plugin-name}/pom.xml`
 - Keeps plugin JAR small (~10KB vs ~10MB)
 - Framework controls versions for compatibility
 
-### 2. Build Configuration
+**For complete POM template** with all plugins (maven-dependency-plugin, maven-jar-plugin, maven-antrun-plugin), see [reference/pom-complete-template.xml](reference/pom-complete-template.xml)
 
-```xml
-<build>
-    <plugins>
-        <!-- Copy compile-scoped dependencies to lib folder -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>3.6.0</version>
-            <executions>
-                <execution>
-                    <id>copy-dependencies</id>
-                    <phase>package</phase>
-                    <goals>
-                        <goal>copy-dependencies</goal>
-                    </goals>
-                    <configuration>
-                        <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                        <includeScope>compile</includeScope>
-                        <excludeTransitive>false</excludeTransitive>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-        
-        <!-- Declare entry classes in JAR manifest -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <version>3.3.0</version>
-            <configuration>
-                <archive>
-                    <manifestEntries>
-                        <!-- Single line, comma-separated class names -->
-                        <pluginEntryClasses>com.example.plugin.MyPlugin</pluginEntryClasses>
-                        <Implementation-Version>${project.version}</Implementation-Version>
-                    </manifestEntries>
-                </archive>
-            </configuration>
-        </plugin>
-        
-        <!-- Optional: Auto-deploy to INGenious plugins directory -->
-        <!-- NOTE: This is configured based on the deployment path from Step 0, Question 2 -->
-        <!-- If user selected "Skip auto-deployment", omit this plugin entirely -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>3.1.0</version>
-            <executions>
-                <execution>
-                    <id>copy-artifacts</id>
-                    <phase>package</phase>
-                    <configuration>
-                        <target>
-                            <!-- deploy.dir should be set to: ${INGENIOUS_INSTALL_DIR}/plugins/${project.artifactId} -->
-                            <!-- Example: /Users/qs01nn/.../Neil-ingenious-playwright-2.3/plugins/custom-actions -->
-                            <property name="deploy.dir" 
-                                      value="/path/to/INGenious/plugins/${project.artifactId}"/>
-                            <mkdir dir="${deploy.dir}"/>
-                            <mkdir dir="${deploy.dir}/lib"/>
-                            <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                  tofile="${deploy.dir}/${project.artifactId}.jar"
-                                  overwrite="true"/>
-                            <copy todir="${deploy.dir}/lib" overwrite="true">
-                                <fileset dir="${project.build.directory}/lib"/>
-                            </copy>
-                            
-                            <!-- Optional: Display deployment confirmation -->
-                            <echo message="Plugin deployed to: ${deploy.dir}"/>
-                        </target>
-                    </configuration>
-                    <goals>
-                        <goal>run</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
-```
+### 2. Build Configuration Summary
+
+Required Maven plugins:
+- **maven-dependency-plugin**: Copy dependencies to lib/
+- **maven-jar-plugin**: Declare entry classes in manifest
+- **maven-antrun-plugin**: Auto-deploy to INGenious (optional)
+
+See complete configuration in [reference/pom-complete-template.xml](reference/pom-complete-template.xml)
 
 ### 3. Plugin Entry Class Pattern
 
@@ -631,49 +524,15 @@ The constructor shown above is the **COMPLETE pattern** - always copy/follow thi
 
 **🔴 CRITICAL: Complete Constructor Pattern Required**
 
-**ALWAYS use the complete constructor pattern shown above. DO NOT simplify or omit any initialization steps.**
+See the complete constructor pattern in section 3 above (line 586). **DO NOT simplify or omit any initialization steps.**
 
-**Why this matters:**
-- ✅ Ensures full API compatibility if plugin is extended later
-- ✅ All framework features remain accessible for future enhancements
-- ✅ Users can add new actions without rewriting initialization
-- ✅ Prevents runtime errors from missing field initialization
-- ✅ Maintains consistency across all plugins
+**Key Requirements:**
+- Initialize ALL fields from API contract
+- Store API instance
+- Cast Playwright/Appium objects once
+- Never skip fields even if unused initially
 
-**Complete initialization pattern (MANDATORY):**
-```java
-public BrowserTestPlugin(BrowserPluginApi gen) {
-    // 1. Store the API contract instance
-    this.gen = gen;
-    
-    // 2. Initialize ALL test data fields (even if not used immediately)
-    this.Data = gen.getData();
-    this.Action = gen.getAction();
-    this.Input = gen.getInput();
-    this.Condition = gen.getCondition();
-    this.ObjectName = gen.getObjectName();
-    
-    // 3. Initialize Report API
-    this.Report = gen.getReport();
-    
-    // 4. Initialize UserDataAccess API (if available)
-    this.userData = gen.getUserData();  // For BrowserPluginApi
-    
-    // 5. Cast Playwright/Appium objects once (if applicable)
-    this.Page = (Page) gen.getPage();
-    this.Locator = (Locator) gen.getLocator();
-}
-```
-
-**❌ DO NOT do this (incomplete pattern):**
-```java
-// Bad - missing fields, will break if plugin is extended
-public BrowserTestPlugin(BrowserPluginApi gen) {
-    this.gen = gen;
-    this.Page = (Page) gen.getPage();  // Only initializes what's needed now
-    // Missing: Data, Action, Input, Condition, Report, etc.
-}
-```
+This ensures plugin extensibility and prevents runtime errors.
 
 **Key Pattern Elements:**
 1. **Constructor Injection**: Receive API contract via constructor
@@ -711,238 +570,36 @@ report.updateTestLog(action, message, Status.DONE);
 // Variable management
 gen.addVar("%myVar%", "value");
 String value = gen.getVar("%myVar%");
-
-// Data sheet access (BrowserPluginApi)
-UserDataAccessApi userData = gen.getUserData();
-String value = userData.getData("SheetName", "ColumnName");
-userData.putData("SheetName", "ColumnName", "Value");
-
-// Playwright objects (BrowserPluginApi)
-Page page = (Page) gen.getPage();
-Locator locator = (Locator) gen.getLocator();
 ```
+
+**For complete API reference** including Browser (Playwright), Mobile (Appium), Webservice, Database methods, usage examples, and common patterns, see [reference/api-methods-quick-ref.md](reference/api-methods-quick-ref.md)
 
 ## Common Patterns
 
-### Pattern 1: Element Interaction with Highlighting
+Load specific pattern examples as needed from `examples/` directory:
 
-```java
-@Action(object = ObjectType.PLAYWRIGHT, 
-        desc = "Click on [<Object>]")
-public void Click() {
-    try {
-        highlightElement();
-        Locator.click();
-        Report.updateTestLog(Action, 
-            "Clicked on '" + ObjectName + "'", 
-            Status.DONE);
-    } catch (PlaywrightException e) {
-        Report.updateTestLog(Action, 
-            "Element not found: " + e.getMessage(), 
-            Status.FAIL);
-    } finally {
-        removeHighlightFromElement();
-    }
-}
+**Available Patterns:**
+- **Element Interaction:** [examples/pattern-element-interaction.java](examples/pattern-element-interaction.java) - Click with highlighting
+- **Variable Storage:** [examples/pattern-variable-storage.java](examples/pattern-variable-storage.java) - Store text in variables
+- **Timeout Handling:** [examples/pattern-timeout-handling.java](examples/pattern-timeout-handling.java) - Optional timeout with navigation
+- **Webservice Request:** [examples/pattern-webservice-request.java](examples/pattern-webservice-request.java) - POST request handling
+- **Mobile Interaction:** [examples/pattern-mobile-interaction.java](examples/pattern-mobile-interaction.java) - Tap with validation
 
-private void highlightElement() {
-    Locator.scrollIntoViewIfNeeded();
-    Locator.evaluate("element => element.style.outline = '2px solid red'");
-}
-
-private void removeHighlightFromElement() {
-    Locator.evaluate("element => element.style.outline = ''");
-}
-```
-
-### Pattern 2: Variable Storage
-
-```java
-@Action(object = ObjectType.PLAYWRIGHT, 
-        desc = "Store [<Object>] text in variable [<Data>]", 
-        input = InputType.YES)
-public void storeElementTextinVariable() {
-    try {
-        String text = Locator.textContent();
-        String variableName = Data;
-        
-        if (!variableName.matches("%.*%")) {
-            Report.updateTestLog(Action, 
-                "Variable format incorrect. Expected: %variableName%", 
-                Status.FAIL);
-            return;
-        }
-        
-        gen.addVar(variableName, text);
-        Report.updateTestLog(Action, 
-            "Stored text '" + text + "' in variable " + variableName, 
-            Status.DONE);
-    } catch (PlaywrightException e) {
-        Report.updateTestLog(Action, 
-            "Error: " + e.getMessage(), 
-            Status.FAIL);
-    }
-}
-```
-
-### Pattern 3: Timeout Handling
-
-```java
-@Action(object = ObjectType.BROWSER, 
-        desc = "Open URL [<Data>] with optional timeout [<Condition>]", 
-        input = InputType.YES, 
-        condition = InputType.OPTIONAL)
-public void Open() {
-    try {
-        Page.NavigateOptions options = new Page.NavigateOptions();
-        
-        // Optional timeout from Condition field
-        if (Condition != null && !Condition.isEmpty() && Condition.matches("[0-9]+")) {
-            options.setTimeout(Double.parseDouble(Condition) * 1000);
-        }
-        
-        Page.navigate(Data, options);
-        Report.updateTestLog(Action, "Opened " + Data, Status.DONE);
-        
-    } catch (TimeoutError e) {
-        if (Condition != null && !Condition.isEmpty()) {
-            Report.updateTestLog(Action, 
-                "Opened URL but cancelled after " + Condition + " seconds", 
-                Status.DONE);
-        } else {
-            Report.updateTestLog(Action, "Page load timed out", Status.FAIL);
-        }
-    }
-}
-```
-
-### Pattern 4: Webservice Request
-
-```java
-@Action(object = ObjectType.WEBSERVICE, 
-        desc = "POST Rest Request", 
-        input = InputType.YES)
-public void postRestRequest() {
-    try {
-        gen.createHttpRequest(RequestMethod.POST);
-        
-        // Update local fields with response
-        this.responseCode = gen.ResponseCode();
-        this.responseBody = gen.ResponseBody();
-        
-        // createHttpRequest already logs, this is optional
-        // Report.updateTestLog(Action, "POST successful", Status.DONE);
-        
-    } catch (Exception e) {
-        Report.updateTestLog(Action,
-            "Error: " + e.getMessage(),
-            Status.FAIL);
-    }
-}
-```
-
-### Pattern 5: Mobile Element Interaction
-
-```java
-@Action(object = ObjectType.APP, desc = "Tap on [<Object>]")
-public void Tap() {
-    if (gen.elementEnabled()) {
-        Element.click();
-        Report.updateTestLog(Action, 
-            "Tapped on " + ObjectName, 
-            Status.DONE);
-    } else {
-        throw new ElementException(
-            ExceptionType.Element_Not_Enabled, 
-            ObjectName);
-    }
-}
-```
+**Agent Loading Instructions:** Load pattern files only when user requests specific functionality. Each pattern is self-contained with complete working code.
 
 ## Troubleshooting Guide
 
-### Error: ClassCastException
+Common errors with quick solutions. Load detailed guides from `troubleshooting/` for specific issues:
 
-**Symptom:**
-```
-java.lang.ClassCastException: cannot cast com.microsoft.playwright.Page to com.microsoft.playwright.Page
-```
+| Error | Symptom | Quick Fix | Details |
+|-------|---------|-----------|---------|  
+| ClassCastException | Cannot cast Playwright.Page | Use `provided` scope | [Guide](troubleshooting/classcastexception.md) |
+| UnsupportedClassVersionError | Compiled by newer Java | Set Java 17 in POM | [Guide](troubleshooting/unsupported-class-version.md) |
+| NoSuchMethodError | Method not found at runtime | Match Playwright 1.50.0 | [Guide](troubleshooting/nosuchmethoderror.md) |
+| Duplicate Actions | Action name already exists | Rename with unique suffix | [Guide](troubleshooting/duplicate-actions.md) |
+| Invalid Manifest | manifest format error | Single-line entry classes | [Guide](troubleshooting/manifest-errors.md) |
 
-**Causes & Solutions:**
-1. **Wrong scope**: Playwright dependency must be `<scope>provided</scope>`
-2. **Missing dependency**: Add Playwright with `provided` scope to POM
-3. **Version mismatch**: Use exact version 1.50.0 to match framework
-
-### Error: UnsupportedClassVersionError
-
-**Symptom:**
-```
-java.lang.UnsupportedClassVersionError: has been compiled by a more recent version
-```
-
-**Solution:**
-```xml
-<properties>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-</properties>
-```
-
-### Error: NoSuchMethodError
-
-**Symptom:**
-```
-java.lang.NoSuchMethodError: com.microsoft.playwright.Page.someMethod()
-```
-
-**Cause**: Using Playwright API not available in framework's version (1.50.0)
-
-**Solution**: Update plugin's Playwright version to match:
-```xml
-<dependency>
-    <groupId>com.microsoft.playwright</groupId>
-    <artifactId>playwright</artifactId>
-    <version>1.50.0</version>
-    <scope>provided</scope>
-</dependency>
-```
-
-### Error: Duplicate Action Names
-
-**Symptom:**
-```
-Duplicate action 'Click' for object type 'PLAYWRIGHT' detected
-```
-
-**Solution**: Ensure unique action method names within each object type. Rename your action:
-```java
-// Before (conflicts with core)
-public void Click() { }
-
-// After (unique name)
-public void ClickWithDelay() { }
-```
-
-### Error: Invalid Manifest Format
-
-**Symptom:**
-```
-invalid manifest format (line 12)
-```
-
-**Cause**: Multi-line `pluginEntryClasses` in manifest
-
-**Solution**: Keep entry classes on single line:
-```xml
-<!-- ✅ Correct - single line -->
-<pluginEntryClasses>com.ing.plugin.A,com.ing.plugin.B</pluginEntryClasses>
-
-<!-- ❌ Wrong - multi-line -->
-<pluginEntryClasses>
-    com.ing.plugin.A,
-    com.ing.plugin.B
-</pluginEntryClasses>
-```
+**Agent Loading:** Load specific troubleshooting guide only when user reports matching error.
 
 ## Version Compatibility
 
@@ -981,23 +638,24 @@ invalid manifest format (line 12)
 
 **⚠️ Always use the complete constructor pattern - never simplify**
 
-```java
-// ✅ CORRECT - Complete initialization (use this pattern)
-public BrowserTestPlugin(BrowserPluginApi gen) {
-    this.gen = gen;
-    this.Data = gen.getData();
-    this.Action = gen.getAction();
-    this.Input = gen.getInput();
-    this.Condition = gen.getCondition();
-    this.Report = gen.getReport();
-    this.ObjectName = gen.getObjectName();
-    this.userData = gen.getUserData();  // For BrowserPluginApi
-    
-    // Cast Playwright objects
-    this.Page = (Page) gen.getPage();
-    this.Locator = (Locator) gen.getLocator();
-}
+See the canonical constructor pattern in Quick Start section (line 586).
 
+**Required initialization sequence:**
+1. Store API contract: `this.gen = gen;`
+2. Initialize ALL test data fields (Data, Action, Input, Condition, ObjectName)
+3. Initialize Report API
+4. Initialize userData (if available)
+5. Cast Playwright/Appium objects once
+
+**Why this matters:**
+- Future-proofs plugin for extensions
+- Prevents NullPointerException
+- Maintains framework consistency
+- Enables all API features
+
+**Anti-patterns to avoid:**
+
+```java
 // ❌ WRONG - Incomplete initialization (will break if extended)
 public BrowserTestPlugin(BrowserPluginApi gen) {
     this.gen = gen;
@@ -1011,13 +669,6 @@ public BrowserTestPlugin(BrowserPluginApi gen) {
     this.Page = (Page) gen.getPage();  // Missing: Action, Input, Condition, Report, etc.
 }
 ```
-
-**Why complete initialization matters:**
-- Future-proofs the plugin for additional actions
-- Prevents NullPointerException when accessing fields
-- Maintains consistency with framework patterns
-- Makes plugin extendable without constructor changes
-- All API features remain accessible
 
 ### Action Naming Conventions
 
@@ -1145,16 +796,19 @@ target/
 4. **Verify**: Your actions appear in the Object type dropdown
 5. **Test**: Create test case using your plugin actions
 
-## Example: Complete Plugin Template
+## Example: Complete Plugin Templates
 
-See the full templates in `how-to-create-plugin.md`:
-- Browser Plugin Template (lines 838-1055)
-- Database Plugin Template (lines 1056-1232)
-- General Plugin Template (lines 1234-1341)
-- Mobile Plugin Template (lines 1343-1465)
-- Webservice Plugin Template (lines 1467-1796)
+Load production-ready templates as needed from `templates/` directory:
 
-Each template provides production-ready code with proper error handling, reporting, and best practices.
+| Template | Use Case | Features | File |
+|----------|----------|----------|------|
+| **Browser** | Playwright web automation | Navigation, assertions, variable storage, highlighting | [templates/browser-plugin-template.java](templates/browser-plugin-template.java) |
+| **Database** | SQL operations | Query execution, variable substitution, result extraction | [templates/database-plugin-template.java](templates/database-plugin-template.java) |
+| **General** | Utility operations | Text validation, custom assertions | [templates/general-plugin-template.java](templates/general-plugin-template.java) |
+| **Mobile** | Appium mobile testing | Tap, scroll (Android/iOS), element validation | [templates/mobile-plugin-template.java](templates/mobile-plugin-template.java) |
+| **Webservice** | REST API testing | GET/POST/PUT, JSON parsing, headers, assertions | [templates/webservice-plugin-template.java](templates/webservice-plugin-template.java) |
+
+**Agent Loading Instructions:** Load specific template only when user requests code for that plugin type. Each template includes complete constructor pattern, action examples, and helper methods.
 
 ## Quick Reference: Status Values
 
