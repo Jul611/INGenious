@@ -840,6 +840,7 @@ public abstract class ObjectTree implements ActionListener {
         ORRootInf root = getOR();
         boolean isWeb = (root instanceof com.ing.datalib.or.web.WebOR);
         boolean isMobile = (root instanceof com.ing.datalib.or.mobile.MobileOR);
+        boolean isSap = (root instanceof com.ing.datalib.or.sap.SapOR);
 
         if (obj == null && group == null && selectedPage != null) {
             if (isWeb) {
@@ -876,10 +877,31 @@ public abstract class ObjectTree implements ActionListener {
                     }
                 }
                 return;
+            } else if (isSap) {
+                String newName = repo.copySapPage(page.getName(), page.getName());
+                if (newName != null) {
+                    com.ing.ide.util.Notification.show("Copied Page '" + page.getName() + "' to Shared SAP Object successfully as '" + newName + "'.");
+                } else {
+                    com.ing.ide.util.Notification.show("Copy failed. Could not copy Page '" + page.getName() + "' to Shared SAP Objects.");
+                }
+                if (newName != null) {
+                    if (this instanceof com.ing.ide.main.mainui.components.testdesign.or.sap.SapObjectTree) {
+                        com.ing.ide.main.mainui.components.testdesign.or.sap.SapORPanel panel =
+                            ((com.ing.ide.main.mainui.components.testdesign.or.sap.SapObjectTree) this).getORPanel();
+                        panel.getSharedTree().load();
+                    } else {
+                        reload();
+                    }
+                }
+                return;
             }
         }
 
-        String objectName = (obj != null) ? obj.getName() : group.getName();
+        String objectName = (obj != null) ? obj.getName() : (group != null ? group.getName() : null);
+        if (objectName == null) {
+            com.ing.ide.util.Notification.show("Unable to determine object name.");
+            return;
+        }
 
         if (isWeb) {
             ResolvedWebObject resolved =
@@ -931,6 +953,35 @@ public abstract class ObjectTree implements ActionListener {
                 if (this instanceof com.ing.ide.main.mainui.components.testdesign.or.mobile.MobileObjectTree) {
                     com.ing.ide.main.mainui.components.testdesign.or.mobile.MobileORPanel panel =
                         ((com.ing.ide.main.mainui.components.testdesign.or.mobile.MobileObjectTree) this).getORPanel();
+                    panel.getSharedTree().load();
+                } else {
+                    reload();
+                }
+            }
+        } else if (isSap) {
+            com.ing.datalib.or.sap.ResolvedSapObject sresolved =
+                repo.resolveSapObject(
+                    new com.ing.datalib.or.sap.ResolvedSapObject.PageRef(
+                        page.getName(),
+                        com.ing.datalib.or.sap.SapOR.ORScope.PROJECT
+                    ),
+                    objectName
+                );
+            if (sresolved == null) {
+                com.ing.ide.util.Notification.show("Object '" + objectName + "' not found in Project SAP OR (Page '" + page.getName() + "').");
+                return;
+            }
+
+            String copiedName = repo.copySapObject(sresolved, page.getName());
+            if (copiedName != null) {
+                com.ing.ide.util.Notification.show("Copied Object '" + copiedName + "' from Page '" + page.getName() + "' to Shared SAP Object successfully.");
+            } else {
+                com.ing.ide.util.Notification.show("Copy failed. Could not copy Object '" + objectName + "' to Shared SAP Object (Page '" + page.getName() + "').");
+            }
+            if (copiedName != null) {
+                if (this instanceof com.ing.ide.main.mainui.components.testdesign.or.sap.SapObjectTree) {
+                    com.ing.ide.main.mainui.components.testdesign.or.sap.SapORPanel panel =
+                        ((com.ing.ide.main.mainui.components.testdesign.or.sap.SapObjectTree) this).getORPanel();
                     panel.getSharedTree().load();
                 } else {
                     reload();
