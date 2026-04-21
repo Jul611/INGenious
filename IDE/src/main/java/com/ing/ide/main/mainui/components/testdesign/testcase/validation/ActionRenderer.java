@@ -3,6 +3,7 @@ package com.ing.ide.main.mainui.components.testdesign.testcase.validation;
 import com.ing.datalib.component.Scenario;
 import com.ing.datalib.component.TestStep;
 import com.ing.datalib.or.web.ResolvedWebObject;
+import com.ing.datalib.or.structureddata.ResolvedStructuredDataObject;
 import com.ing.datalib.or.mobile.ResolvedMobileObject;
 import com.ing.engine.support.methodInf.MethodInfoManager;
 import com.ing.engine.support.methodInf.ObjectType;
@@ -122,6 +123,8 @@ public class ActionRenderer extends AbstractRenderer {
                     valid = MethodInfoManager.getMethodListFor(ObjectType.PLAYWRIGHT, ObjectType.WEB).contains(action);
                 } else if (isMobileObject(step)) {
                     valid = MethodInfoManager.getMethodListFor(ObjectType.APP).contains(action);
+                } else if (isStructuredDataObject(step)) {
+                    valid = MethodInfoManager.getMethodListFor(ObjectType.STRUCTUREDDATA).contains(action);
                 }
                 break;
         }
@@ -153,6 +156,19 @@ public class ActionRenderer extends AbstractRenderer {
         ResolvedMobileObject r = (ref != null && ref.name != null && ref.scope != null)
             ? repo.resolveMobileObject(ref, objectName)
             : repo.resolveMobileObjectWithScope(pageToken, objectName);
+
+        return r != null && r.isPresent();
+    }
+
+    private boolean isStructuredDataObject(TestStep step) {
+        var repo = step.getProject().getObjectRepository();
+        String pageToken = step.getReference();
+        String objectName = step.getObject();
+
+        ResolvedStructuredDataObject.PageRef ref = ResolvedStructuredDataObject.PageRef.parse(pageToken);
+        ResolvedStructuredDataObject r = (ref != null && ref.name != null && ref.scope != null)
+            ? repo.resolveStructuredDataObject(ref, objectName)
+            : repo.resolveStructuredDataObjectWithScope(pageToken, objectName);
 
         return r != null && r.isPresent();
     }
