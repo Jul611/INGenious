@@ -24,6 +24,7 @@ import java.util.Stack;
 
 import com.ing.engine.drivers.WebDriverCreation;
 import com.ing.engine.drivers.MobileObject;
+import com.ing.engine.drivers.StructuredDataObject;
 import java.io.File;
 import java.util.List;
 import java.util.Properties;
@@ -51,6 +52,7 @@ public class Command {
     public BrowserContext BrowserContext;
     public AutomationObject AObject;
     public MobileObject MObject;
+    public StructuredDataObject SObject;
     public PlaywrightDriverCreation Driver;
     public String Data;
     public String ObjectName;
@@ -205,6 +207,7 @@ public class Command {
             Playwright = Commander.Playwright.playwright;
             BrowserContext = Commander.BrowserContext.browserContext;
             AObject = Commander.AObject;
+            SObject = Commander.SObject;
             Driver = Commander.Page;
             Data = Commander.Data;
             ObjectName = Commander.ObjectName;
