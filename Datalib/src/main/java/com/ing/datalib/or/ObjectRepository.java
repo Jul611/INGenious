@@ -1,29 +1,6 @@
 
 package com.ing.datalib.or;
 
-import com.ing.datalib.component.Project;
-import com.ing.datalib.or.api.APIOR;
-import com.ing.datalib.or.common.ORPageInf;
-import com.ing.datalib.or.common.ObjectGroup;
-import com.ing.datalib.or.mobile.MobileOR;
-import com.ing.datalib.or.mobile.MobileORObject;
-import com.ing.datalib.or.mobile.MobileORPage;
-import com.ing.datalib.or.web.WebOR;
-import com.ing.datalib.or.yaml.YamlORReader;
-import com.ing.datalib.or.yaml.YamlORWriter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import com.ing.datalib.or.mobile.ResolvedMobileObject;
-import com.ing.datalib.or.sap.ResolvedSapObject;
-import com.ing.datalib.or.sap.SapOR;
-import com.ing.datalib.or.sap.SapORObject;
-import com.ing.datalib.or.sap.SapORPage;
-import com.ing.datalib.or.web.ResolvedWebObject;
-import com.ing.datalib.or.web.WebOR.ORScope;
-import com.ing.datalib.or.web.WebORObject;
-import com.ing.datalib.or.web.WebORPage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,6 +11,30 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import com.ing.datalib.component.Project;
+import com.ing.datalib.or.api.APIOR;
+import com.ing.datalib.or.common.ORPageInf;
+import com.ing.datalib.or.common.ObjectGroup;
+import com.ing.datalib.or.mobile.MobileOR;
+import com.ing.datalib.or.mobile.MobileORObject;
+import com.ing.datalib.or.mobile.MobileORPage;
+import com.ing.datalib.or.mobile.ResolvedMobileObject;
+import com.ing.datalib.or.sap.ResolvedSapObject;
+import com.ing.datalib.or.sap.SapOR;
+import com.ing.datalib.or.sap.SapORObject;
+import com.ing.datalib.or.sap.SapORPage;
+import com.ing.datalib.or.web.ResolvedWebObject;
+import com.ing.datalib.or.web.WebOR;
+import com.ing.datalib.or.web.WebOR.ORScope;
+import com.ing.datalib.or.web.WebORObject;
+import com.ing.datalib.or.web.WebORPage;
+import com.ing.datalib.or.yaml.YamlORReader;
+import com.ing.datalib.or.yaml.YamlORWriter;
 
 /**
  * Manages all Object Repository types (Web Project OR, Web Shared OR, Mobile OR)
@@ -433,20 +434,6 @@ public class ObjectRepository {
                 mProjectsChanged = (mCurrent == null) || !new LinkedHashSet<>(mCurrent).equals(mMerged);
                 if (mProjectsChanged) {
                     mobileSharedOR.setSharedProjects(mList);
-                }
-            }
-            
-            java.util.List<String> sapExisting = (sapSharedOR != null) ? sapSharedOR.getProjects() : java.util.List.of();
-            java.util.LinkedHashSet<String> sapMerged = new java.util.LinkedHashSet<>();
-            if (sapExisting != null) sapMerged.addAll(sapExisting);
-            sapMerged.addAll(sharedUsageProjects);
-            boolean sapProjectsChanged = false;
-            if (sapSharedOR != null) {
-                java.util.ArrayList<String> sapList = new java.util.ArrayList<>(sapMerged);
-                java.util.List<String> sapCurrent = sapSharedOR.getProjects();
-                sapProjectsChanged = (sapCurrent == null) || !new java.util.LinkedHashSet<>(sapCurrent).equals(sapMerged);
-                if (sapProjectsChanged) {
-                    sapSharedOR.setProjects(sapList);
                 }
             }
             
