@@ -1,6 +1,6 @@
 package com.ing.datalib.or.yaml;
 
-import com.ing.datalib.or.structureddata.StructuredData;
+import com.ing.datalib.or.structureddata.StructuredDataOR;
 import com.ing.datalib.or.structureddata.StructuredDataORPage;
 import com.ing.datalib.or.mobile.MobileOR;
 import com.ing.datalib.or.mobile.MobileORPage;
@@ -9,6 +9,7 @@ import com.ing.datalib.or.web.WebORPage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import com.ing.datalib.or.ObjectRepository;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +45,8 @@ public class YamlORReader {
     
     private final ObjectMapper yamlMapper;
     
+    private ObjectRepository objectRepository;
+    
     public YamlORReader() {
         YAMLFactory factory = new YAMLFactory();
         factory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
@@ -51,12 +54,20 @@ public class YamlORReader {
         // Configure for clean YAML
         this.yamlMapper.findAndRegisterModules();
     }
+
+    public YamlORReader(ObjectRepository objectRepository) {
+        this.objectRepository = objectRepository;
+        YAMLFactory factory = new YAMLFactory();
+        factory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
+        this.yamlMapper = new ObjectMapper(factory);
+        this.yamlMapper.findAndRegisterModules();
+    }
     
     /**
      * Check if a YAML-based Web OR exists.
      */
     public boolean webORExists(File orLocation) {
-        File webPagesDir = new File(orLocation, "Web/pages");
+        File webPagesDir = new File(orLocation, "Web");
         return webPagesDir.exists() && webPagesDir.isDirectory();
     }
     
@@ -64,7 +75,7 @@ public class YamlORReader {
      * Check if a YAML-based Mobile OR exists.
      */
     public boolean mobileORExists(File orLocation) {
-        File mobilePagesDir = new File(orLocation, "Mobile/pages");
+        File mobilePagesDir = new File(orLocation, "Mobile");
         return mobilePagesDir.exists() && mobilePagesDir.isDirectory();
     }
     
@@ -84,7 +95,13 @@ public class YamlORReader {
      */
     public WebOR readWebOR(File orLocation) throws IOException {
         WebOR webOR = new WebOR();
-        File webPagesDir = new File(orLocation, "Web/pages");
+        File webPagesDir = new File(orLocation, "Web");
+        
+        if (orLocation.getPath().contains(File.separator + "Shared" + File.separator)) {
+            webOR.setScope(WebOR.ORScope.SHARED);
+        } else {
+            webOR.setScope(WebOR.ORScope.PROJECT);
+        }
         
         if (!webPagesDir.exists()) {
             LOGGER.info("No Web OR YAML directory found at: " + webPagesDir.getAbsolutePath());
@@ -116,8 +133,14 @@ public class YamlORReader {
      */
     public MobileOR readMobileOR(File orLocation) throws IOException {
         MobileOR mobileOR = new MobileOR();
-        File mobilePagesDir = new File(orLocation, "Mobile/pages");
+        File mobilePagesDir = new File(orLocation, "Mobile");
         
+        if (orLocation.getPath().contains(File.separator + "Shared" + File.separator)) {
+            mobileOR.setScope(MobileOR.ORScope.SHARED);
+        } else {
+            mobileOR.setScope(MobileOR.ORScope.PROJECT);
+        }
+
         if (!mobilePagesDir.exists()) {
             LOGGER.info("No Mobile OR YAML directory found at: " + mobilePagesDir.getAbsolutePath());
             return mobileOR;
@@ -162,8 +185,8 @@ public class YamlORReader {
      * @param orLocation The ObjectRepository directory
      * @return StructuredDataOR populated with pages from YAML files
      */
-    public StructuredData readStructuredDataOR(File orLocation) throws IOException {
-        StructuredData structuredDataOR = new StructuredData();
+    public StructuredDataOR readStructuredDataOR(File orLocation) throws IOException {
+        StructuredDataOR structuredDataOR = new StructuredDataOR();
         File StructuredDataPagesDir = new File(orLocation, "StructuredData/pages");
         
         if (!StructuredDataPagesDir.exists()) {
@@ -191,7 +214,7 @@ public class YamlORReader {
     /**
      * Read a single Structured Data page from a YAML file.
      */
-    public StructuredDataORPage readStructuredDataPage(File yamlFile, StructuredData root) throws IOException {
+    public StructuredDataORPage readStructuredDataPage(File yamlFile, StructuredDataOR root) throws IOException {
         YamlStructuredDataPageDefinition pageDef = yamlMapper.readValue(yamlFile, YamlStructuredDataPageDefinition.class);
         return pageDef.toStructuredDataORPage(root);
     }

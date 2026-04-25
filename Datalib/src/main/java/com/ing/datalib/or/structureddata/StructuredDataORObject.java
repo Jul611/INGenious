@@ -52,9 +52,9 @@ public class StructuredDataORObject extends UndoRedoModel implements ORObjectInf
     @JsonIgnore
     public final void setDefaultStructuredDataAttributes() {
         attributes = new ArrayList<>();
-        for (int i = 0; i < StructuredData.OBJECT_PROPS.size(); i++) {
+        for (int i = 0; i < StructuredDataOR.OBJECT_PROPS.size(); i++) {
             StructuredDataAttribute attr = new StructuredDataAttribute();
-            attr.setName(StructuredData.OBJECT_PROPS.get(i));
+            attr.setName(StructuredDataOR.OBJECT_PROPS.get(i));
             attr.setValue("");
             attributes.add(attr);
         }
@@ -86,7 +86,9 @@ public class StructuredDataORObject extends UndoRedoModel implements ORObjectInf
             group.removeFromParent();
         }
         group.getObjects().remove(this);
-        FileUtils.deleteFile(getRepLocation());
+        if (!group.getParent().getRoot().getObjectRepository().isUsingYamlFormat()) {
+            FileUtils.deleteFile(getRepLocation());
+        } 
     }
 
     @JsonIgnore
@@ -187,7 +189,7 @@ public class StructuredDataORObject extends UndoRedoModel implements ORObjectInf
     @JsonIgnore
     private Boolean isNotDefault(int rowIndex) {
         String value = getValueAt(rowIndex, 0).toString();
-        return StructuredData.OBJECT_PROPS.indexOf(value) == -1;
+        return StructuredDataOR.OBJECT_PROPS.indexOf(value) == -1;
     }
 
     @JsonIgnore

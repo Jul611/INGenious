@@ -1,6 +1,6 @@
 package com.ing.datalib.or.yaml;
 
-import com.ing.datalib.or.structureddata.StructuredData;
+import com.ing.datalib.or.structureddata.StructuredDataOR;
 import com.ing.datalib.or.structureddata.StructuredDataORObject;
 import com.ing.datalib.or.structureddata.StructuredDataORPage;
 import com.ing.datalib.or.common.ObjectGroup;
@@ -101,7 +101,7 @@ public class YamlStructuredDataPageDefinition {
     /**
      * Convert YamlStructuredDataPageDefinition to an StructuredDataORPage.
      */
-    public StructuredDataORPage toStructuredDataORPage(StructuredData root) {
+    public StructuredDataORPage toStructuredDataORPage(StructuredDataOR root) {
         StructuredDataORPage page = new StructuredDataORPage(this.page, root);
         
         // Convert each element to StructuredDataORObject using direct list manipulation

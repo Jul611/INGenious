@@ -21,7 +21,7 @@ import javax.swing.tree.TreeNode;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JacksonXmlRootElement(localName = "Root")
-public class StructuredData implements ORRootInf<StructuredDataORPage> {
+public class StructuredDataOR implements ORRootInf<StructuredDataORPage> {
 
     public final static List<String> OBJECT_PROPS
             = new ArrayList<>(Arrays.asList(
@@ -44,11 +44,11 @@ public class StructuredData implements ORRootInf<StructuredDataORPage> {
     @JsonIgnore
     private Boolean saved = true;
 
-    public StructuredData() {
+    public StructuredDataOR() {
         this.pages = new ArrayList<>();
     }
 
-    public StructuredData(String name) {
+    public StructuredDataOR(String name) {
         this.name = name;
         this.type = "StructuredDataOR";
         this.pages = new ArrayList<>();
