@@ -1,6 +1,7 @@
 package com.ing.engine.cli.commands;
 
 import com.ing.engine.cli.INGeniousCLI;
+import com.ing.engine.constants.AppResourcePath;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -111,7 +112,7 @@ public class ReportCommand implements Callable<Integer> {
                 }
 
                 if (openReport) {
-                    File reportFile = new File(latestRun, "summary.html");
+                    File reportFile = new File(latestRun, AppResourcePath.getSummaryHTMLPathV2());
                     if (!reportFile.exists()) {
                         reportFile = new File(latestRun, "index.html");
                     }

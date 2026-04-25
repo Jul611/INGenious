@@ -1,6 +1,7 @@
 
 package com.ing.ide.main.mainui.components;
 
+import com.ing.engine.constants.AppResourcePath;
 import com.ing.engine.support.DesktopApi;
 import com.ing.ide.main.mainui.components.testexecution.TestExecution;
 import com.ing.ide.main.mainui.components.testexecution.tree.model.TestSetNode;
@@ -53,7 +54,7 @@ public class DashBoard extends javax.swing.JPanel {
     String getDetailedSummary() {
         return getPrefix() + File.separator + release + File.separator + testSet
                 + File.separator + "Latest"
-                + File.separator + "summary.html";
+                + File.separator + AppResourcePath.SUMMARY_HTML_V2;
     }
 
     String getHistory() {
@@ -250,7 +251,7 @@ public class DashBoard extends javax.swing.JPanel {
             String url = browser.getUrl();
             url = url.substring(0, url.indexOf(".html") + 5);
             if (url.endsWith("detailed.html")) {
-                url = url.replace("detailed.html", "summary.html");
+                url = url.replace("detailed.html", AppResourcePath.SUMMARY_HTML_V2);
             }
             if (url.endsWith(".html")) {
                 DesktopApi.browse(new URI(url));
