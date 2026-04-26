@@ -5,6 +5,7 @@ import com.ing.datalib.component.Scenario;
 import com.ing.datalib.component.TestCase;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.GroupNode;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.ProjectTreeModel;
+import com.ing.ide.main.mainui.components.testdesign.tree.model.ReusableNode;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.ScenarioNode;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.TestCaseNode;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.TestPlanNode;
@@ -207,29 +208,17 @@ public class ProjectDnD extends TransferHandler {
     private void addScenario(Scenario scenario, GroupNode gNode) {
         String newName = scenario.getName();
         int i = 1;
-        if (pTree.getTreeModel().getRoot() instanceof TestPlanNode) {
-            while (scenario.getProject().getScenarioByName(newName) != null) {
-                newName = scenario.getName() + " Copy(" + i++ + ")";
-            }
-            ScenarioNode sNode = pTree.getTreeModel().addScenario(gNode,
-                    scenario.getProject().addScenario(newName));
-            copyTestCases(sNode, scenario, true);
-        } else {
-            while (scenario.getProject().getReusableScenarioByName(newName) != null) {
-                newName = scenario.getName() + " Copy(" + i++ + ")";
-            }
-            ScenarioNode sNode = pTree.getTreeModel().addScenario(gNode,
-                    scenario.getProject().addReusableScenario(newName));
-            copyTestCases(sNode, scenario, false);
+        while (scenario.getProject().getScenarioByName(newName) != null) {
+            newName = scenario.getName() + " Copy(" + i++ + ")";
         }
-    }
-
-    private void copyTestCases(ScenarioNode sNode, Scenario scenario, boolean useTestPlan) {
+        ScenarioNode sNode = pTree.getTreeModel().addScenario(gNode, scenario.getProject().addScenario(newName));
         List<TestCase> testcases;
-        if (useTestPlan) {
+        if (pTree.getTreeModel().getRoot() instanceof TestPlanNode) {
             testcases = scenario.getTestcasesAlone();
-        } else {
+        } else if (pTree.getTreeModel().getRoot() instanceof ReusableNode) {
             testcases = scenario.getReusables();
+        } else {
+            testcases = scenario.getTestCases(); // SharedReusableNode case
         }
         for (TestCase testcase : testcases) {
             testcase.loadTableModel();

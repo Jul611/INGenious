@@ -27,7 +27,7 @@ public class TestDesignUI extends JPanel {
 
     TestDesign testDesign;
 
-    JSplitPane projectNReusableTreeSplitPane;
+    JSplitPane treesSplitPane;
 
     JSplitPane testCaseNTestDataSplitPane;
 
@@ -36,6 +36,7 @@ public class TestDesignUI extends JPanel {
     JSplitPane oneThree;
 
     JPanel appReusablePanel;
+    JPanel sharedReusablePanel;
     JPanel testPlanPanel;
 
     JButton reusableSwitch;
@@ -47,15 +48,25 @@ public class TestDesignUI extends JPanel {
 
     private void init() {
         setLayout(new BorderLayout());
-        projectNReusableTreeSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        projectNReusableTreeSplitPane.setOneTouchExpandable(true);
-        projectNReusableTreeSplitPane.setResizeWeight(0.5);
+        
+        // Create three-way split for TestPlan, Reusable, and Shared Reusable
+        JSplitPane reusablesSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        reusablesSplitPane.setOneTouchExpandable(true);
+        reusablesSplitPane.setResizeWeight(0.5);
+        
+        appReusablePanel = getRTreeInPanel("Reusable Component", testDesign.getReusableTree().getTree());
+        reusablesSplitPane.setTopComponent(appReusablePanel);
+        
+        sharedReusablePanel = getRTreeInPanel("Shared Reusable Component", testDesign.getSharedReusableTree().getTree());
+        reusablesSplitPane.setBottomComponent(sharedReusablePanel);
+        
+        treesSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        treesSplitPane.setOneTouchExpandable(true);
+        treesSplitPane.setResizeWeight(0.5);
 
         testPlanPanel = getTreeInPanel("Test Plan", testDesign.getProjectTree().getTree());
-        projectNReusableTreeSplitPane.setTopComponent(testPlanPanel);
-
-        appReusablePanel = getRTreeInPanel("Reusable Component", testDesign.getReusableTree().getTree());
-        projectNReusableTreeSplitPane.setBottomComponent(appReusablePanel);
+        treesSplitPane.setTopComponent(testPlanPanel);
+        treesSplitPane.setBottomComponent(reusablesSplitPane);
 
         testCaseNTestDataSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         testCaseNTestDataSplitPane.setOneTouchExpandable(true);
@@ -68,7 +79,7 @@ public class TestDesignUI extends JPanel {
         oneTwo.setOneTouchExpandable(true);
         oneTwo.setResizeWeight(0.25);
 
-        oneTwo.setLeftComponent(projectNReusableTreeSplitPane);
+        oneTwo.setLeftComponent(treesSplitPane);
         oneTwo.setRightComponent(testCaseNTestDataSplitPane);
 
         oneThree = new JSplitPane();
@@ -117,6 +128,9 @@ public class TestDesignUI extends JPanel {
         if (appReusablePanel != null) {
             applyBackgroundRecursively(appReusablePanel, sidebarColor, dividerColor);
         }
+        if (sharedReusablePanel != null) {
+            applyBackgroundRecursively(sharedReusablePanel, sidebarColor, dividerColor);
+        }
         
         // Object Repository pane (dark black in dark mode)
         applyBackgroundRecursively(testDesign.getObjectRepo(), sidebarColor, dividerColor);
@@ -128,7 +142,7 @@ public class TestDesignUI extends JPanel {
         applyBackgroundRecursively(testDesign.getTestCaseComponent(), editorColor, dividerColor);
         
         // Split pane dividers
-        projectNReusableTreeSplitPane.setBackground(dividerColor);
+        treesSplitPane.setBackground(dividerColor);
         testCaseNTestDataSplitPane.setBackground(dividerColor);
         oneTwo.setBackground(dividerColor);
         oneThree.setBackground(dividerColor);
@@ -280,7 +294,7 @@ public class TestDesignUI extends JPanel {
         oneTwo.setDividerLocation(0.25);
         oneThree.setDividerLocation(0.8);
         oneTwo.setDividerLocation(0.25);
-        projectNReusableTreeSplitPane.setDividerLocation(0.5);
+        treesSplitPane.setDividerLocation(0.5);
         testCaseNTestDataSplitPane.setDividerLocation(0.5);
         testDesign.getObjectRepo().adjustUI();
         

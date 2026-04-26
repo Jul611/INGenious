@@ -90,34 +90,170 @@ public class TestStepRunner {
 
     /**
      * parse the Execute action to reusable testcase and executes in the current
-     * testcase context
+     * testcase context.
+     * 
+     * Supported formats:
+     * 1. Execute Scenario:TestCase (default: check project first, then shared)
+     * 2. Execute Project:Scenario:TestCase (explicit project reusables)
+     * 3. Execute Shared:Scenario:TestCase (explicit shared reusables)
      *
      * @param context - current testcase context to run the reusable
      * @throws DataNotFoundException, ForcedException
      */
     private void execute(TestCaseRunner context) throws DataNotFoundException, ForcedException {
         if (getStep().isReusableStep()) {
-            String[] rData = getStep().getReusableData();
-            String scenario = rData[0];
-            String testcase = rData[1];
-            Scenario scn = context.project().getReusableScenarioByName(scenario);
-            if (scn != null) {
-                TestCase stc = scn.getTestCaseByName(testcase);
+            String action = getStep().getAction();
+            String reference = getStep().getReference();
+            
+            // Parse the action to extract source, scenario, and testcase
+            ReusableReference ref = parseReusableReference(action, reference);
+            
+            // Resolve the reusable test case based on source
+            TestCase stc = resolveReusableTestCase(context, ref);
+            
+            if (stc != null) {
                 stc.setParentTestCase(context.getTestCase());
-                if (stc != null) {
-                    executeTestCase(context, stc);
-                    return;
-                } else {
-                    throw new ForcedException(format("reusable testcase [//%s/%s] not found",
-                            scenario, testcase));
-                }
+                executeTestCase(context, stc);
+                return;
             } else {
-                throw new ForcedException(format("reusable scenario [%s] not found", scenario));
+                throw new ForcedException(buildReusableNotFoundMessage(ref));
             }
         }
         throw new ForcedException(
-                format("invalid reusable [%s], expected format [scenario:reusable]",
+                format("invalid reusable [%s], expected format [Scenario:TestCase] or [Source:Scenario:TestCase]",
                         getStep().getAction()));
+    }
+
+    /**
+     * Parses the reusable reference from action and reference column.
+     */
+    private ReusableReference parseReusableReference(String action, String reference) {
+        ReusableReference ref = new ReusableReference();
+        
+        // Check reference column for source specification
+        if (reference != null && !reference.trim().isEmpty()) {
+            String refLower = reference.trim().toLowerCase();
+            if (refLower.equals("project")) {
+                ref.source = ReusableSource.PROJECT;
+            } else if (refLower.equals("shared")) {
+                ref.source = ReusableSource.SHARED;
+            }
+        }
+        
+        // Parse action column
+        String[] parts = action.split(":");
+        
+        if (parts.length == 2) {
+            // Format: Scenario:TestCase
+            ref.scenario = parts[0].trim();
+            ref.testCase = parts[1].trim();
+        } else if (parts.length == 3) {
+            // Format: Source:Scenario:TestCase (legacy support or explicit)
+            String sourcePart = parts[0].trim().toLowerCase();
+            if (sourcePart.equals("project")) {
+                ref.source = ReusableSource.PROJECT;
+            } else if (sourcePart.equals("shared")) {
+                ref.source = ReusableSource.SHARED;
+            }
+            ref.scenario = parts[1].trim();
+            ref.testCase = parts[2].trim();
+        } else {
+            ref.scenario = parts[0].trim();
+            ref.testCase = parts.length > 1 ? parts[1].trim() : "";
+        }
+        
+        // Default to AUTO if no source specified
+        if (ref.source == null) {
+            ref.source = ReusableSource.AUTO;
+        }
+        
+        return ref;
+    }
+
+    /**
+     * Resolves the reusable test case based on source specification.
+     */
+    private TestCase resolveReusableTestCase(TestCaseRunner context, ReusableReference ref) {
+        switch (ref.source) {
+            case PROJECT:
+                return findInProjectReusables(context, ref.scenario, ref.testCase);
+                
+            case SHARED:
+                return findInSharedReusables(context, ref.scenario, ref.testCase);
+                
+            case AUTO:
+            default:
+                // Default behavior: check project first, then shared
+                TestCase tc = findInProjectReusables(context, ref.scenario, ref.testCase);
+                if (tc == null) {
+                    tc = findInSharedReusables(context, ref.scenario, ref.testCase);
+                }
+                return tc;
+        }
+    }
+
+    /**
+     * Finds reusable in project-level reusable components.
+     */
+    private TestCase findInProjectReusables(TestCaseRunner context, String scenario, String testCase) {
+        Scenario scn = context.project().getReusableScenarioByName(scenario);
+        if (scn != null) {
+            return scn.getTestCaseByName(testCase);
+        }
+        return null;
+    }
+
+    /**
+     * Finds reusable in shared reusable components.
+     */
+    private TestCase findInSharedReusables(TestCaseRunner context, String scenario, String testCase) {
+        Scenario scn = context.project().getSharedReusableScenarioByName(scenario);
+        if (scn != null) {
+            return scn.getTestCaseByName(testCase);
+        }
+        return null;
+    }
+
+    /**
+     * Builds an appropriate error message for missing reusables.
+     */
+    private String buildReusableNotFoundMessage(ReusableReference ref) {
+        StringBuilder msg = new StringBuilder();
+        msg.append(format("Reusable test case not found: '%s:%s'\n", ref.scenario, ref.testCase));
+        
+        switch (ref.source) {
+            case PROJECT:
+                msg.append("Searched in: Project reusable components only");
+                break;
+            case SHARED:
+                msg.append("Searched in: Shared reusable components only");
+                break;
+            case AUTO:
+                msg.append("Searched in:\n");
+                msg.append("  - Project reusable components\n");
+                msg.append("  - Shared reusable components");
+                break;
+        }
+        
+        return msg.toString();
+    }
+
+    /**
+     * Enum for reusable source specification.
+     */
+    private enum ReusableSource {
+        PROJECT,  // Project-level reusables only
+        SHARED,   // Shared reusables only
+        AUTO      // Check project first, then shared
+    }
+
+    /**
+     * Container for parsed reusable reference.
+     */
+    private static class ReusableReference {
+        ReusableSource source;
+        String scenario;
+        String testCase;
     }
 
     private void executeTestCase(TestCaseRunner context, TestCase stc) throws DataNotFoundException {

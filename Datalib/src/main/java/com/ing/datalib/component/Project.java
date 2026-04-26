@@ -1,30 +1,32 @@
 
 package com.ing.datalib.component;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import static java.util.stream.Collectors.toList;
+import java.util.stream.Stream;
+
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ing.datalib.component.utils.FileUtils;
 import static com.ing.datalib.component.utils.FileUtils.DIR_FILTER;
 import com.ing.datalib.model.DataItem;
 import com.ing.datalib.model.Meta;
 import com.ing.datalib.model.ProjectInfo;
 import com.ing.datalib.or.ObjectRepository;
+import com.ing.datalib.or.web.WebOR.ORScope;
 import com.ing.datalib.settings.ProjectSettings;
 import com.ing.datalib.util.data.FileScanner;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ing.datalib.or.web.WebOR.ORScope;
-import java.io.File;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import static java.util.stream.Collectors.toList;
-import java.util.stream.Stream;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
 
 /**
  * Represents an automation project and acts as the central entry point for loading, managing,
@@ -51,9 +53,13 @@ public class Project {
 
     public static final String REUSABLE_COMPONENTS_DIR = "ReusableComponents";
 
+    public static final String SHARED_REUSABLE_DIR = "SharedReusableComponents";
+
     private List<Scenario> scenarios = new ArrayList<>();
 
     private final List<Scenario> reusableScenarios = new ArrayList<>();
+
+    private final List<Scenario> sharedReusableScenarios = new ArrayList<>();
 
     private final List<Release> releases = new ArrayList<>();
 
@@ -107,6 +113,7 @@ public class Project {
         migrateReusableComponentXmlIfPresent();
         loadScenariosFromTestPlan();
         loadScenariosFromReusableComponents();
+        loadScenariosFromSharedReusableComponents();
         loadTestDatas();
         projectSettings = new ProjectSettings(this);
         objectRepository = new ObjectRepository(this);
@@ -125,9 +132,15 @@ public class Project {
         return reusableScenarios;
     }
 
+    public List<Scenario> getSharedReusableScenarios() {
+        return sharedReusableScenarios;
+    }
+
     public List<Scenario> getAllScenarios() {
-        return Stream.concat(scenarios.stream(), reusableScenarios.stream())
-                .collect(toList());
+        return Stream.concat(
+                Stream.concat(scenarios.stream(), reusableScenarios.stream()),
+                sharedReusableScenarios.stream()
+        ).collect(toList());
     }
 
     public List<Release> getReleases() {
@@ -145,6 +158,15 @@ public class Project {
 
     public Scenario getReusableScenarioByName(String name) {
         for (Scenario scenario : reusableScenarios) {
+            if (scenario.getName().equalsIgnoreCase(name)) {
+                return scenario;
+            }
+        }
+        return null;
+    }
+
+    public Scenario getSharedReusableScenarioByName(String name) {
+        for (Scenario scenario : sharedReusableScenarios) {
             if (scenario.getName().equalsIgnoreCase(name)) {
                 return scenario;
             }
@@ -195,10 +217,29 @@ public class Project {
         return getLocation() + File.separator + REUSABLE_COMPONENTS_DIR;
     }
 
+    public String getSharedReusableComponentsPath() {
+        // Shared reusables are at workspace root level, one level up from Projects folder
+        File projectLocation = new File(getLocation());
+        File projectsFolder = projectLocation.getParentFile();
+        if (projectsFolder != null) {
+            File workspaceRoot = projectsFolder.getParentFile();
+            if (workspaceRoot != null) {
+                return workspaceRoot.getAbsolutePath() + File.separator + SHARED_REUSABLE_DIR;
+            }
+        }
+        // Fallback: use user.dir as workspace root
+        return System.getProperty("user.dir") + File.separator + SHARED_REUSABLE_DIR;
+    }
+
     public String getScenarioPath(Scenario.Source source, String scenarioName) {
-        String base = source == Scenario.Source.REUSABLE_COMPONENTS
-                ? getReusableComponentsPath()
-                : getTestPlanPath();
+        String base;
+        if (source == Scenario.Source.SHARED_REUSABLE_COMPONENTS) {
+            base = getSharedReusableComponentsPath();
+        } else if (source == Scenario.Source.REUSABLE_COMPONENTS) {
+            base = getReusableComponentsPath();
+        } else {
+            base = getTestPlanPath();
+        }
         return base + File.separator + scenarioName;
     }
 
@@ -240,7 +281,8 @@ public class Project {
 
     public boolean hasTestCaseInAnyScenario(String scenarioName, String testCaseName) {
         return hasTestCaseInScenario(testCaseName, getScenarioByName(scenarioName))
-                || hasTestCaseInScenario(testCaseName, getReusableScenarioByName(scenarioName));
+                || hasTestCaseInScenario(testCaseName, getReusableScenarioByName(scenarioName))
+                || hasTestCaseInScenario(testCaseName, getSharedReusableScenarioByName(scenarioName));
     }
 
     private boolean hasTestCaseInScenario(String tc, Scenario scnobj) {
@@ -308,6 +350,18 @@ public class Project {
         return false;
     }
 
+    private Boolean loadScenariosFromSharedReusableComponents() {
+        sharedReusableScenarios.clear();
+        File sharedRoot = new File(getSharedReusableComponentsPath());
+        if (sharedRoot.exists() && sharedRoot.isDirectory() && sharedRoot.list() != null) {
+            for (String scenario : sharedRoot.list(DIR_FILTER)) {
+                sharedReusableScenarios.add(new Scenario(this, scenario, Scenario.Source.SHARED_REUSABLE_COMPONENTS));
+            }
+            return true;
+        }
+        return false;
+    }
+
     private void migrateReusableComponentXmlIfPresent() {
         File xmlFile = new File(getLocation(), "ReusableComponent.xml");
         if (!xmlFile.exists()) {
@@ -337,6 +391,10 @@ public class Project {
 
     public boolean moveTestCaseToTestPlan(TestCase testCase) {
         return moveTestCaseFile(testCase, Scenario.Source.TEST_PLAN);
+    }
+
+    public boolean moveTestCaseToSharedReusable(TestCase testCase) {
+        return moveTestCaseFile(testCase, Scenario.Source.SHARED_REUSABLE_COMPONENTS);
     }
 
     private boolean moveTestCaseFile(TestCase testCase, Scenario.Source targetSource) {
@@ -410,11 +468,22 @@ public class Project {
         return null;
     }
 
+    public Scenario addSharedReusableScenario(String scenarioName) {
+        if (getSharedReusableScenarioByName(scenarioName) == null) {
+            Scenario scn = new Scenario(this, scenarioName, Scenario.Source.SHARED_REUSABLE_COMPONENTS);
+            sharedReusableScenarios.add(scn);
+            return scn;
+        }
+        return null;
+    }
+
     public void removeScenario(Scenario scenario) {
         if (scenario == null) {
             return;
         }
-        if (scenario.isReusableScenario()) {
+        if (scenario.isSharedReusableScenario()) {
+            sharedReusableScenarios.remove(scenario);
+        } else if (scenario.isReusableScenario()) {
             reusableScenarios.remove(scenario);
         } else {
             scenarios.remove(scenario);
@@ -446,6 +515,9 @@ public class Project {
             scenario.save();
         }
         for (Scenario scenario : reusableScenarios) {
+            scenario.save();
+        }
+        for (Scenario scenario : sharedReusableScenarios) {
             scenario.save();
         }
         testData.save();

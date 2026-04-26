@@ -12,6 +12,7 @@ public class FilePath extends AppResourcePath {
     private final static String FORMAT = ".csv";
     private final static String DESIGN = "TestPlan";
     private final static String REUSABLE = "ReusableComponents";
+    private final static String SHARED_REUSABLE = "SharedReusableComponents";
     private final static String EXECUTION = "TestLab";
     private final static String IOR_DATA = "ImageObjectRepository";
     private final static String OR_DATA = "ObjectRepository";
@@ -72,6 +73,21 @@ public class FilePath extends AppResourcePath {
 
     public static String getReusableComponentsPath() {
         return RunManager.getGlobalSettings().getProjectPath() + File.separatorChar + REUSABLE;
+    }
+
+    public static String getSharedReusableComponentsPath() {
+        // Shared reusables are at workspace root level
+        String projectPath = RunManager.getGlobalSettings().getProjectPath();
+        File projectLocation = new File(projectPath);
+        File projectsFolder = projectLocation.getParentFile();
+        if (projectsFolder != null) {
+            File workspaceRoot = projectsFolder.getParentFile();
+            if (workspaceRoot != null) {
+                return workspaceRoot.getAbsolutePath() + File.separatorChar + SHARED_REUSABLE;
+            }
+        }
+        // Fallback: use user.dir as workspace root
+        return System.getProperty("user.dir") + File.separatorChar + SHARED_REUSABLE;
     }
 
     public static String getReleasePath() {

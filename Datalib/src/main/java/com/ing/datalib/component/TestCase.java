@@ -49,6 +49,8 @@ public class TestCase extends DataModel {
 
     private Reusable reusable = null;
     
+    private SharedReusable sharedReusable = null;
+    
     private TestCase parentTestCase = null;
     
     private Boolean exitParamLoop = false;
@@ -211,6 +213,22 @@ public class TestCase extends DataModel {
         addStep(index, step);
     }
 
+    public void addSharedReusableStep(String reusable) {
+        TestStep step = new TestStep(this);
+        step.setObject("Execute");
+        step.setAction(reusable);
+        testSteps.add(step);
+        rowAdded(testSteps.size() - 1);
+        fireTableRowsInserted(testSteps.size() - 1, testSteps.size() - 1);
+    }
+
+    public void addSharedReusableStep(int index, String reusable) {
+        TestStep step = new TestStep(this);
+        step.setObject("Execute");
+        step.setAction(reusable);
+        addStep(index, step);
+    }
+
     public void addObjectStep(int index, String objectName, String pageName) {
         TestStep step = new TestStep(this).asObjectStep(objectName, pageName);
         addStep(index, step);
@@ -251,6 +269,34 @@ public class TestCase extends DataModel {
             reusable = new Reusable();
         } else {
             reusable = null;
+        }
+    }
+
+    public TestCase createAsSharedReusable(String reusableName, int fromStep, int toStep) {
+        TestCase newTestcase = getScenario().addTestCase(reusableName);
+        if (newTestcase != null) {
+            for (int i = fromStep; i <= toStep; i++) {
+                testSteps.get(i).copyValuesTo(newTestcase.addNewStep());
+            }
+            startGroupEdit();
+            addSharedReusableStep(fromStep,
+                    getScenario().getName() + ":" + reusableName);
+            for (int i = toStep + 1; i >= fromStep + 1; i--) {
+                rowDeleted(i);
+                testSteps.remove(i);
+            }
+            stopGroupEdit();
+            fireTableRowsDeleted(fromStep + 1, toStep);
+            return newTestcase;
+        }
+        return null;
+    }
+
+    public void toggleAsSharedReusable() {
+        if (sharedReusable == null) {
+            sharedReusable = new SharedReusable();
+        } else {
+            sharedReusable = null;
         }
     }
 
@@ -465,12 +511,24 @@ public class TestCase extends DataModel {
         return getReusable() != null || (scenario != null && scenario.isReusableScenario());
     }
 
+    public boolean isSharedReusable() {
+        return getSharedReusable() != null || (scenario != null && scenario.isSharedReusableScenario());
+    }
+
     public Reusable getReusable() {
         return reusable;
     }
 
     public void setReusable(Reusable reusable) {
         this.reusable = reusable;
+    }
+
+    public SharedReusable getSharedReusable() {
+        return sharedReusable;
+    }
+
+    public void setSharedReusable(SharedReusable sharedReusable) {
+        this.sharedReusable = sharedReusable;
     }
     
     public void setParentTestCase(TestCase parentTestCase){

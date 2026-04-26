@@ -26,7 +26,8 @@ public class Scenario extends DataModel {
 
     public enum Source {
         TEST_PLAN,
-        REUSABLE_COMPONENTS
+        REUSABLE_COMPONENTS,
+        SHARED_REUSABLE_COMPONENTS
     }
 
     private final Project project;
@@ -60,14 +61,28 @@ public class Scenario extends DataModel {
         if (base == null) {
             return "";
         }
-        String dir = source == Source.REUSABLE_COMPONENTS
-                ? Project.REUSABLE_COMPONENTS_DIR
-                : Project.TEST_PLAN_DIR;
+        String dir;
+        if (source == Source.SHARED_REUSABLE_COMPONENTS) {
+            // Shared reusables are stored at workspace root level
+            return project.getSharedReusableComponentsPath() + File.separator + name;
+        } else if (source == Source.REUSABLE_COMPONENTS) {
+            dir = Project.REUSABLE_COMPONENTS_DIR;
+        } else {
+            dir = Project.TEST_PLAN_DIR;
+        }
         return base + File.separator + dir + File.separator + name;
     }
 
     public boolean isReusableScenario() {
         return source == Source.REUSABLE_COMPONENTS;
+    }
+
+    public boolean isSharedReusableScenario() {
+        return source == Source.SHARED_REUSABLE_COMPONENTS;
+    }
+
+    public boolean isAnyReusableScenario() {
+        return source == Source.REUSABLE_COMPONENTS || source == Source.SHARED_REUSABLE_COMPONENTS;
     }
 
     public Source getSource() {

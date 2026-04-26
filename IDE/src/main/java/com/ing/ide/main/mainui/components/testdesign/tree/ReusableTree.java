@@ -131,13 +131,7 @@ public class ReusableTree extends ProjectTree {
 
     @Override
     void makeAsReusableRTestCase(TestCase testCase) {
-        if (getProject().moveTestCaseToTestPlan(testCase)) {
-            getProject().reload();
-            getTestDesign().getProjectTree().load();
-            load();
-        } else {
-            Notification.show("Unable to move test case to TestPlan");
-        }
+        getTestDesign().getProjectTree().getTreeModel().addTestCase(testCase);
     }
 
     private void addGroup() {
@@ -276,6 +270,7 @@ public class ReusableTree extends ProjectTree {
             addSeparator();
             super.init();
             toggleReusable.setText("Make As TestCase");
+            toggleSharedReusable.setText("Make As Shared Reusable");
         }
 
         @Override

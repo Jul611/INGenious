@@ -340,11 +340,21 @@ public class TestCaseAutoSuggest {
 
         private List<String> getReusables() {
             List<String> reusableList = new ArrayList<>();
+            
+            // Add project reusable scenarios
             for (Scenario scenario : sProject.getReusableScenarios()) {
                 for (TestCase testCase : scenario.getTestCases()) {
                     reusableList.add(scenario.getName() + ":" + testCase.getName());
                 }
             }
+            
+            // Add shared reusable scenarios with "Shared:" prefix for clarity
+            for (Scenario scenario : sProject.getSharedReusableScenarios()) {
+                for (TestCase testCase : scenario.getTestCases()) {
+                    reusableList.add("Shared:" + scenario.getName() + ":" + testCase.getName());
+                }
+            }
+            
             return reusableList;
         }
 
