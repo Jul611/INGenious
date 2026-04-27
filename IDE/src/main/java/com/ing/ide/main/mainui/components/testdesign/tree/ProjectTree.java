@@ -33,8 +33,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -323,8 +325,8 @@ public class ProjectTree implements ActionListener {
             case "Make As Reusable/TestCase":
                 makeAsReusableRTestCase();
                 break;
-            case "Make As Shared Reusable":
-                makeAsSharedReusableRTestCase();
+            case "Copy As Shared Reusable":
+                copyAsSharedReusableRTestCase();
                 break;
             case "Details":
                 showDetails();
@@ -472,12 +474,26 @@ public class ProjectTree implements ActionListener {
         TestCase loadedTestCase = testDesign.getTestCaseComp().getCurrentTestCase();
         Boolean shouldRemove = false;
 
+        // Track scenarios that might become empty
+        Set<ScenarioNode> scenariosToCheck = new HashSet<>();
+        
         for (TestCaseNode testcaseNode : testcaseNodes) {
             if (!shouldRemove) {
                 shouldRemove = Objects.equals(loadedTestCase, testcaseNode.getTestCase());
             }
+            // Track the parent scenario before deleting
+            if (testcaseNode.getParent() instanceof ScenarioNode) {
+                scenariosToCheck.add((ScenarioNode) testcaseNode.getParent());
+            }
             testcaseNode.getTestCase().delete();
             getTreeModel().removeNodeFromParent(testcaseNode);
+        }
+
+        // Clean up empty scenarios
+        for (ScenarioNode scenarioNode : scenariosToCheck) {
+            if (scenarioNode.getChildCount() == 0) {
+                getTreeModel().removeNodeFromParent(scenarioNode);
+            }
         }
 
         if (shouldRemove) {
@@ -616,18 +632,17 @@ public class ProjectTree implements ActionListener {
         getTestDesign().getReusableTree().getTreeModel().addTestCase(testCase);
     }
 
-    private void makeAsSharedReusableRTestCase() {
+    private void copyAsSharedReusableRTestCase() {
         if (!getSelectedTestCaseNodes().isEmpty()) {
             for (TestCaseNode testCaseNode : getSelectedTestCaseNodes()) {
-                testCaseNode.getTestCase().toggleAsSharedReusable();
-                getTreeModel().removeNodeFromParent(testCaseNode);
-                makeAsSharedReusableRTestCase(testCaseNode.getTestCase());
+                TestCase testCase = testCaseNode.getTestCase();
+                // Copy the test case file to shared reusables
+                if (getProject().copyTestCaseToSharedReusable(testCase)) {
+                    // Reload shared reusable tree to pick up the new file
+                    getTestDesign().getSharedReusableTree().load();
+                }
             }
         }
-    }
-    
-    void makeAsSharedReusableRTestCase(TestCase testCase) {
-        getTestDesign().getSharedReusableTree().getTreeModel().addTestCase(testCase);
     }
 
     private void convertToManual() throws IOException {
@@ -819,8 +834,8 @@ public class ProjectTree implements ActionListener {
             add(menu);
             add(toggleReusable = create("Make As Reusable/TestCase", null));
             toggleReusable.setText("Make As Reusable");
-            add(toggleSharedReusable = create("Make As Shared Reusable", null));
-            toggleSharedReusable.setText("Make As Shared Reusable");
+            add(toggleSharedReusable = create("Copy As Shared Reusable", null));
+            toggleSharedReusable.setText("Copy As Shared Reusable");
             addSeparator();
             setCCP();
             addSeparator();

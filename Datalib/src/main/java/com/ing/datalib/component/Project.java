@@ -397,6 +397,15 @@ public class Project {
         return moveTestCaseFile(testCase, Scenario.Source.SHARED_REUSABLE_COMPONENTS);
     }
 
+    /**
+     * Copies a test case to shared reusable components (does not remove original).
+     * @param testCase the test case to copy
+     * @return true if successful, false otherwise
+     */
+    public boolean copyTestCaseToSharedReusable(TestCase testCase) {
+        return copyTestCaseFile(testCase, Scenario.Source.SHARED_REUSABLE_COMPONENTS);
+    }
+
     private boolean moveTestCaseFile(TestCase testCase, Scenario.Source targetSource) {
         if (testCase == null || testCase.getScenario() == null) {
             return false;
@@ -416,6 +425,29 @@ public class Project {
             return true;
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Failed moving test case file", ex);
+            return false;
+        }
+    }
+
+    private boolean copyTestCaseFile(TestCase testCase, Scenario.Source targetSource) {
+        if (testCase == null || testCase.getScenario() == null) {
+            return false;
+        }
+        File source = new File(testCase.getLocation());
+        if (!source.exists()) {
+            return false;
+        }
+        File targetDir = new File(getScenarioPath(targetSource, testCase.getScenario().getName()));
+        targetDir.mkdirs();
+        File target = new File(targetDir, testCase.getName() + ".csv");
+        if (target.exists()) {
+            return false;
+        }
+        try {
+            Files.copy(source.toPath(), target.toPath());
+            return true;
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "Failed copying test case file", ex);
             return false;
         }
     }

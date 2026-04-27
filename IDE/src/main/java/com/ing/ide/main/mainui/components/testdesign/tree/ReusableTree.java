@@ -270,7 +270,7 @@ public class ReusableTree extends ProjectTree {
             addSeparator();
             super.init();
             toggleReusable.setText("Make As TestCase");
-            toggleSharedReusable.setText("Make As Shared Reusable");
+            toggleSharedReusable.setText("Copy As Shared Reusable");
         }
 
         @Override

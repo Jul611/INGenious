@@ -15,6 +15,7 @@ import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -35,6 +36,8 @@ public class TestDesignUI extends JPanel {
 
     JSplitPane oneThree;
 
+    JPanel reusableComponentPanel;
+    JTabbedPane reusableTabs;
     JPanel appReusablePanel;
     JPanel sharedReusablePanel;
     JPanel testPlanPanel;
@@ -49,16 +52,22 @@ public class TestDesignUI extends JPanel {
     private void init() {
         setLayout(new BorderLayout());
         
-        // Create three-way split for TestPlan, Reusable, and Shared Reusable
-        JSplitPane reusablesSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        reusablesSplitPane.setOneTouchExpandable(true);
-        reusablesSplitPane.setResizeWeight(0.5);
+        // Create tabbed pane for Reusable Components (Project and Shared)
+        reusableTabs = new JTabbedPane();
         
-        appReusablePanel = getRTreeInPanel("Reusable Component", testDesign.getReusableTree().getTree());
-        reusablesSplitPane.setTopComponent(appReusablePanel);
+        // Create panels without individual headers (tabs provide the labels)
+        appReusablePanel = getTreePanelWithoutHeader(testDesign.getReusableTree().getTree());
+        sharedReusablePanel = getTreePanelWithoutHeader(testDesign.getSharedReusableTree().getTree());
         
-        sharedReusablePanel = getRTreeInPanel("Shared Reusable Component", testDesign.getSharedReusableTree().getTree());
-        reusablesSplitPane.setBottomComponent(sharedReusablePanel);
+        // Add tabs with "Project" and "Shared" labels
+        reusableTabs.addTab("Project", appReusablePanel);
+        reusableTabs.addTab("Shared", sharedReusablePanel);
+        
+        // Wrap tabs in a panel with "Reusable Component" header
+        reusableComponentPanel = new JPanel(new BorderLayout());
+        FXPanelHeader reusableHeader = new FXPanelHeader("Reusable Component");
+        reusableComponentPanel.add(reusableHeader, BorderLayout.NORTH);
+        reusableComponentPanel.add(reusableTabs, BorderLayout.CENTER);
         
         treesSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         treesSplitPane.setOneTouchExpandable(true);
@@ -66,7 +75,7 @@ public class TestDesignUI extends JPanel {
 
         testPlanPanel = getTreeInPanel("Test Plan", testDesign.getProjectTree().getTree());
         treesSplitPane.setTopComponent(testPlanPanel);
-        treesSplitPane.setBottomComponent(reusablesSplitPane);
+        treesSplitPane.setBottomComponent(reusableComponentPanel);
 
         testCaseNTestDataSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         testCaseNTestDataSplitPane.setOneTouchExpandable(true);
@@ -124,6 +133,9 @@ public class TestDesignUI extends JPanel {
         // Sidebar panes (dark black in dark mode)
         if (testPlanPanel != null) {
             applyBackgroundRecursively(testPlanPanel, sidebarColor, dividerColor);
+        }
+        if (reusableComponentPanel != null) {
+            applyBackgroundRecursively(reusableComponentPanel, sidebarColor, dividerColor);
         }
         if (appReusablePanel != null) {
             applyBackgroundRecursively(appReusablePanel, sidebarColor, dividerColor);
@@ -275,6 +287,16 @@ public class TestDesignUI extends JPanel {
 
         FXPanelHeader header = new FXPanelHeader(labelText);
         panel.add(header, BorderLayout.NORTH);
+        panel.add(TreeSearch.installFor(tree), BorderLayout.CENTER);
+        return panel;
+    }
+
+    /**
+     * Creates a tree panel without a header (for use in tabs).
+     */
+    private JPanel getTreePanelWithoutHeader(JTree tree) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
         panel.add(TreeSearch.installFor(tree), BorderLayout.CENTER);
         return panel;
     }
