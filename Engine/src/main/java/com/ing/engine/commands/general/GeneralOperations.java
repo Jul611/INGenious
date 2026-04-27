@@ -8,6 +8,8 @@ import com.ing.engine.support.Status;
 import com.ing.engine.support.methodInf.Action;
 import com.ing.engine.support.methodInf.InputType;
 import com.ing.engine.support.methodInf.ObjectType;
+
+import java.time.Instant;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -401,4 +403,23 @@ public class GeneralOperations extends General {
             System.out.println("Incorrect input format " + Condition);
         }
     }
+
+    @Action(object = ObjectType.GENERAL, desc = "get Timestamp In Epoch seconds", input = InputType.YES)
+    public void storeEpochTimestampInVariable() {
+        if (Data == null || Data.isBlank() || Data.equals("%%")) {
+            Report.updateTestLog(Action, "Variable name is required. Please provide a valid variable name in the Input field.", Status.FAIL);
+            return;
+        }
+        
+        try {
+            String notBefore = String.valueOf(Instant.now().getEpochSecond());
+            addVar(Data, notBefore);
+            Report.updateTestLog(Action, "Timestamp added in variable with value '" + notBefore, Status.DONE);
+        } catch (Exception e) {
+            Report.updateTestLog(Action, e.getMessage(), Status.FAIL);
+            Logger.getLogger(CommonMethods.class.getName()).log(Level.SEVERE, null, e);
+        }
+
+    }
+ 
 }
