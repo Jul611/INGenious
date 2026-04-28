@@ -136,8 +136,8 @@ public class AppResourcePathTest {
 
     @Test
     public void testGetSummaryHTMLPath() {
-        String path = AppResourcePath.getSummaryHTMLPath();
-        assertThat(path).endsWith("summary.html");
+        String path = AppResourcePath.getSummaryHTMLPathV2();
+        assertThat(path).endsWith(AppResourcePath.SUMMARY_HTML_V2);
         assertThat(path).contains("ReportTemplate");
     }
 

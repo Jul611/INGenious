@@ -23,7 +23,6 @@ public class AppResourcePath {
 
     private final static String EXTERNAL_COMMANDS_CONFIG = "commands";
 
-    private final static String SUMMARY_HTML = "summary.html";
     private final static String EXTENT_HTML = "extent.html";
     private final static String AZURE_XML = "azure.xml";
     private final static String EXTENT_PDF = "extent.pdf";
@@ -36,7 +35,7 @@ public class AppResourcePath {
     private final static String REPORT_HISTORY_DATA = "reportHistory.js";
 
     // Modern v2 report templates (Alpine.js, Tailwind CSS, Chart.js)
-    private final static String SUMMARY_HTML_V2 = "summary-v2.html";
+    public final static String SUMMARY_HTML_V2 = "summary-v2.html";
     private final static String DETAILED_HTML_V2 = "detailed-v2.html";
     private final static String TC_REPORT_HTML_V2 = "testCase-v2.html";
     private final static String PERF_HTML_V2 = "perfReport-v2.html";
@@ -127,7 +126,7 @@ public class AppResourcePath {
     }
 
     public static String getSummaryHTMLPath() {
-        return getReportTemplatePath() + File.separator + SUMMARY_HTML;
+        return getReportTemplatePath() + File.separator + SUMMARY_HTML_V2;
     }
 
     public static String getDetailedHTMLPath() {
@@ -201,11 +200,11 @@ public class AppResourcePath {
     }
 
     public static String getCurrentSummaryHTMLPath() {
-        return getCurrentResultsPath() + File.separator + SUMMARY_HTML;
+        return getCurrentResultsPath() + File.separator + SUMMARY_HTML_V2;
     }
 
     public static String getCurrentSummaryHTMLPathRelative() {
-        return getCurrentReportFolderName() + File.separator + SUMMARY_HTML;
+        return getCurrentReportFolderName() + File.separator + SUMMARY_HTML_V2;
     }
 
     public static String getCurrentReportFolderName() {

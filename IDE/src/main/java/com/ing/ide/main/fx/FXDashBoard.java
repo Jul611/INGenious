@@ -1,5 +1,7 @@
 package com.ing.ide.main.fx;
 
+import com.ing.engine.constants.AppResourcePath;
+import static com.ing.engine.constants.AppResourcePath.SUMMARY_HTML_V2;
 import com.ing.engine.support.DesktopApi;
 import com.ing.ide.main.mainui.components.testexecution.TestExecution;
 import com.ing.ide.main.mainui.components.testexecution.tree.model.ReleaseNode;
@@ -277,7 +279,7 @@ public class FXDashBoard extends javax.swing.JPanel {
     private String getDetailedSummary() {
         return getPrefix() + File.separator + release + File.separator + testSet
                 + File.separator + "Latest"
-                + File.separator + "summary.html";
+                + File.separator + SUMMARY_HTML_V2;
     }
 
     private String getHistory() {
@@ -312,7 +314,7 @@ public class FXDashBoard extends javax.swing.JPanel {
             if (url != null && url.contains(".html")) {
                 url = url.substring(0, url.indexOf(".html") + 5);
                 if (url.endsWith("detailed.html")) {
-                    url = url.replace("detailed.html", "summary.html");
+                    url = url.replace("detailed.html", AppResourcePath.SUMMARY_HTML_V2);
                 }
                 DesktopApi.browse(new URI(url));
             }
