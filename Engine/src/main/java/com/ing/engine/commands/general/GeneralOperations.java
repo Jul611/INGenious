@@ -440,22 +440,22 @@ public class GeneralOperations extends General {
      * 
      * <p><b>Usage Examples:</b></p>
      * <pre>
-     * Input (Data): Seconds
+     * Input (Data): @seconds
      * Condition: %EpochSeconds%
      * Result: Variable %EpochSeconds% contains epoch seconds (e.g., 1714176000)
      * 
-     * Input (Data): Milliseconds
+     * Input (Data): @milliseconds
      * Condition: %EpochMillis%
      * Result: Variable %EpochMillis% contains epoch milliseconds (e.g., 1714176000000)
      * 
-     * Input (Data): Seconds+Milliseconds
+     * Input (Data): @seconds+milliseconds
      * Condition: %EpochPrecise%
      * Result: Variable %EpochPrecise% contains seconds with 3 decimal places (e.g., 1714176000.123)
      * </pre>
      * 
      * <p><b>Validation:</b></p>
      * <ul>
-     *     <li>Data must be one of: "Seconds", "Milliseconds", or "Seconds+Milliseconds" (case-insensitive)</li>
+     *     <li>Data must be one of: "seconds", "milliseconds", or "seconds+milliseconds" (case-insensitive)</li>
      *     <li>Condition must contain a valid variable name</li>
      *     <li>If validation fails, reports error with Status.FAIL and does not continue</li>
      * </ul>
@@ -463,9 +463,9 @@ public class GeneralOperations extends General {
      * <p><b>Behavior:</b></p>
      * <ul>
      *     <li>Uses {@link Instant#now()} to get current system time</li>
-     *     <li>"Seconds" - Converts to epoch seconds using {@link Instant#getEpochSecond()}</li>
-     *     <li>"Milliseconds" - Converts to epoch milliseconds using {@link Instant#toEpochMilli()}</li>
-     *     <li>"Seconds+Milliseconds" - Provides decimal representation with 3 decimal places</li>
+     *     <li>"seconds" - Converts to epoch seconds using {@link Instant#getEpochSecond()}</li>
+     *     <li>"milliseconds" - Converts to epoch milliseconds using {@link Instant#toEpochMilli()}</li>
+     *     <li>"seconds+milliseconds" - Provides decimal representation with 3 decimal places</li>
      *     <li>Stores value in variable accessible via {@code addVar()}</li>
      *     <li>Reports success with Status.DONE or failure with Status.FAIL</li>
      * </ul>
@@ -478,37 +478,37 @@ public class GeneralOperations extends General {
         }
         
         if (Data == null || Data.isBlank()) {
-            Report.updateTestLog(Action, "Format option is required. Use: 'Seconds', 'Milliseconds', or 'Seconds+Milliseconds'.", Status.FAIL);
+            Report.updateTestLog(Action, "Format option is required. Use: 'seconds', 'milliseconds', or 'seconds+milliseconds'.", Status.FAIL);
             return;
         }
         
         try {
-            String timestamp = "";
+            String epochTimestamp = "";
             String option = Data.trim().toLowerCase();
 
             switch (option) {
                 case "seconds":
-                    timestamp = String.valueOf(Instant.now().getEpochSecond());
+                    epochTimestamp = String.valueOf(Instant.now().getEpochSecond());
                     break;
 
                 case "milliseconds":
-                    timestamp = String.valueOf(Instant.now().toEpochMilli());
+                    epochTimestamp = String.valueOf(Instant.now().toEpochMilli());
                     break;
 
                 case "seconds+milliseconds":
                     DecimalFormat df = new DecimalFormat("0.000");
                     df.setMaximumFractionDigits(3);
                     double epochWithMs = Instant.now().toEpochMilli() / 1000.0;
-                    timestamp = df.format(epochWithMs);
+                    epochTimestamp = df.format(epochWithMs);
                     break;
 
                 default:
-                    Report.updateTestLog(Action, "Invalid input. Use: 'Seconds', 'Milliseconds', or 'Seconds+Milliseconds'.", Status.FAIL);
+                    Report.updateTestLog(Action, "Invalid input. Use: 'seconds', 'milliseconds', or 'seconds+milliseconds'.", Status.FAIL);
                     return;
             }
 
-            addVar(Condition, timestamp);
-            Report.updateTestLog(Action, "Timestamp added in variable with value '" + timestamp + "'", Status.DONE);
+            addVar(Condition, epochTimestamp);
+            Report.updateTestLog(Action, "Timestamp added in variable with value '" + epochTimestamp + "'", Status.DONE);
 
         } catch (Exception e) {
             Report.updateTestLog(Action, e.getMessage(), Status.FAIL);
