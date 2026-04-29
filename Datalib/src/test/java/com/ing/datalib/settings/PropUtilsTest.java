@@ -1,16 +1,18 @@
 package com.ing.datalib.settings;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import com.ing.datalib.util.data.LinkedProperties;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import com.ing.datalib.util.data.LinkedProperties;
 
 /**
  * Tests for PropUtils — load/save of properties files.
@@ -132,5 +134,39 @@ public class PropUtilsTest {
         assertThat(new File(filename)).exists();
         LinkedProperties loaded = PropUtils.load(new File(filename));
         assertThat(loaded).isEmpty();
+    }
+
+    @Test
+    public void testSaveAndLoadPropertiesWithColon() {
+        String filename = tempDir.resolve("colon.properties").toString();
+        LinkedProperties original = new LinkedProperties();
+        original.setProperty("appium:deviceName", "iPhone 14");
+        original.setProperty("appium:platformName", "iOS");
+        original.setProperty("normal", "value");
+
+        PropUtils.save(original, filename);
+        LinkedProperties loaded = PropUtils.load(new File(filename));
+
+        assertThat(loaded.getProperty("appium:deviceName")).isEqualTo("iPhone 14");
+        assertThat(loaded.getProperty("appium:platformName")).isEqualTo("iOS");
+        assertThat(loaded.getProperty("normal")).isEqualTo("value");
+    }
+
+    @Test
+    public void testSaveAndLoadPropertiesWithMixedSpecialChars() {
+        String filename = tempDir.resolve("mixed.properties").toString();
+        LinkedProperties original = new LinkedProperties();
+        original.setProperty("appium:options", "value with spaces");
+        original.setProperty("key with space", "value");
+        original.setProperty("path", "C:\\Users\\test");
+        original.setProperty("appium:automationName", "XCUITest");
+
+        PropUtils.save(original, filename);
+        LinkedProperties loaded = PropUtils.load(new File(filename));
+
+        assertThat(loaded.getProperty("appium:options")).isEqualTo("value with spaces");
+        assertThat(loaded.getProperty("key with space")).isEqualTo("value");
+        assertThat(loaded.getProperty("path")).isEqualTo("C:\\Users\\test");
+        assertThat(loaded.getProperty("appium:automationName")).isEqualTo("XCUITest");
     }
 }
