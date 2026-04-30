@@ -410,10 +410,6 @@ public abstract class AbstractDataModel<T extends List<String>> extends UndoRedo
         setSaved(true);
     }
     
-    
-        
-    
-
 
     public abstract Set<String> loadColumns(File location);
 

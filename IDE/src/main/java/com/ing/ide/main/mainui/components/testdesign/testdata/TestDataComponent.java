@@ -978,14 +978,6 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
             stopCellEditing();
             
             if (!isGlobalData && frozenScrollPane != null) {
-                // Check if focus is on fixed table - don't allow deleting those columns
-                JTable fixedTable = frozenScrollPane.getFixedTable();
-                int fixedSelectedCol = fixedTable.getSelectedColumn();
-                if (fixedSelectedCol >= 0) {
-                    // Fixed column selected - do nothing
-                    Notification.show("Cannot delete the fixed columns (Scenario, Flow, Iteration, SubIteration).");
-                    return;
-                }
                 
                 // Get selected columns from the scrollable table
                 // View column indices need to be converted to model indices (add 4)
@@ -1001,7 +993,7 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
                 }
                 
                 // Sort in reverse order for safe removal
-                modelColList.sort((a, b) -> b - a);
+//                modelColList.sort((a, b) -> b - a);
                 std.removeColumn(modelColList);
             } else {
                 // Global data or no frozen pane - original logic
@@ -1018,6 +1010,7 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
                     std.removeColumn(colList);
                 }
             }
+            load();
         }
 
         private List<String> getSelectedColumns() {
@@ -1222,9 +1215,6 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
             }
         }
         
-
-        
-
         private void saveChanges(TableModel model) {
             System.out.println(std.getLocation());
             try (FileWriter writer = new FileWriter(std.getLocation())) {
