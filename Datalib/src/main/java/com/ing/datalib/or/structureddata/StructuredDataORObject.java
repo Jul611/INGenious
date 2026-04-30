@@ -86,7 +86,9 @@ public class StructuredDataORObject extends UndoRedoModel implements ORObjectInf
             group.removeFromParent();
         }
         group.getObjects().remove(this);
-        FileUtils.deleteFile(getRepLocation());
+        if (!group.getParent().getRoot().getObjectRepository().isUsingYamlFormat()) {
+            FileUtils.deleteFile(getRepLocation());
+        } 
     }
 
     @JsonIgnore
@@ -308,9 +310,8 @@ public class StructuredDataORObject extends UndoRedoModel implements ORObjectInf
     @JsonIgnore
     @Override
     public Boolean rename(String newName) {
-        Boolean flag = true;
-        if (getParent().getChildCount() == 1) {
-            flag = getParent().rename(newName);
+        if (newName == null || newName.isBlank()) {
+            return false;
         }
         ObjectGroup<StructuredDataORObject> parent = getParent();
         String parentName = parent.getName();
@@ -330,8 +331,12 @@ public class StructuredDataORObject extends UndoRedoModel implements ORObjectInf
                     return true;
                 }
             }
+        if (getParent().getObjectByName(newName) != null) {
+            return false;
         }
-        return false;
+        setName(newName);
+        changeSave();
+        return true;
     }
 
     @JsonIgnore

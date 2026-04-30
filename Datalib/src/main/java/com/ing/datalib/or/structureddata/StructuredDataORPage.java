@@ -85,7 +85,11 @@ public class StructuredDataORPage implements ORPageInf<StructuredDataORObject, S
     public void removeFromParent() {
         root.setSaved(false);
         root.getPages().remove(this);
-        FileUtils.deleteFile(getRepLocation());
+        if (root.getObjectRepository().isUsingYamlFormat()) {
+            root.getObjectRepository().deleteWebPageYaml(getName());
+        } else {
+            FileUtils.deleteFile(getRepLocation());
+        }
     }
 
     @JsonIgnore
@@ -281,5 +285,9 @@ public class StructuredDataORPage implements ORPageInf<StructuredDataORObject, S
             }
         }
         return false;
+        getRoot()
+            .getObjectRepository()
+            .renamePage(this, newName);
+        return true;
     }
 }
