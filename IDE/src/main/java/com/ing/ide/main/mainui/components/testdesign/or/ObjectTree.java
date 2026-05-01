@@ -938,7 +938,7 @@ public abstract class ObjectTree implements ActionListener {
                 Notification.show("Mobile Object not found in Project OR");
                 return;
             }
-            String newName = repo.copyMobileObject(resolved, page.getName());
+            String newName = repo.moveMobileObject(resolved, page.getName());
             if (newName != null) {
                 objectRemoved(obj);
                 obj.removeFromParent();

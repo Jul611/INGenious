@@ -1118,6 +1118,40 @@ public class ObjectRepository {
         );
         return uniqueName;
     }
+    
+    public String moveMobileObject(ResolvedMobileObject source, String targetPageName) {
+        if (source == null) return null;
+        MobileOR sharedOR = getMobileSharedOR();
+        if (sharedOR == null) return null;
+        MobileORPage targetPage = getOrCreateMobilePage(sharedOR, targetPageName);
+        if (targetPage == null) return null;
+        ObjectGroup<MobileORObject> originalGroup = source.getGroup();
+        if (originalGroup == null) return null;
+        String originalName = originalGroup.getName();
+        if (targetPage.getObjectGroupByName(originalName) != null) {
+            return null;
+        }
+        ORPageInf sourcePage = originalGroup.getParent();
+        if (sourcePage != null) {
+            sourcePage.getObjectGroups().remove(originalGroup);
+            sourcePage.getRoot().setSaved(false);
+
+            if (useYamlFormat && sourcePage instanceof MobileORPage) {
+                saveMobilePageNow((MobileORPage) sourcePage);
+            }
+        }
+        originalGroup.setParent(targetPage);
+        targetPage.getObjectGroups().add(originalGroup);
+        sharedOR.setSaved(false);
+        if (useYamlFormat) {
+            saveMobilePageNow(targetPage);
+        }
+        LOG.info(
+            "Moved Mobile Object Group '" + originalName +
+            "' to SHARED page '" + targetPageName + "'"
+        );
+        return originalName;
+    }
 
     private String generateUniquePageName(MobileOR mor, String baseName) {
         if (mor == null) return baseName;
