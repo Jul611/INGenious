@@ -108,11 +108,9 @@ public class XTable extends JTable {
         
         setDefaultEditor(Object.class, new CustomTableCellEditor());
         addKeyListeners();
-        
-
 
         putClientProperty("terminateEditOnFocusLost", true);
-        addFocusListener(new FocusListener() {
+        this.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent fe) {
                 searchRenderer.focused = true;
