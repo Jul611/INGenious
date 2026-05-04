@@ -912,9 +912,14 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
 
         private void replicateRow() {
             stopCellEditing();
-            if (table.getSelectedRow() != -1) {
-                std.replicateRecord(table.getSelectedRow());
-            }
+//            int selectedRow = table.getSelectedRow();
+            int[] selectedRows = table.getSelectedRows();
+            int lastIndex = selectedRows[selectedRows.length - 1];
+            int added = 0;
+            for (int row : selectedRows){
+                std.replicateRecord(row, lastIndex+1+added);
+                added++;
+            }            
         }
 
         private void addColumn() {
