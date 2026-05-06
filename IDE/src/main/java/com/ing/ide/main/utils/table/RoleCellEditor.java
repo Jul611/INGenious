@@ -53,7 +53,7 @@ public class RoleCellEditor extends AbstractCellEditor implements TableCellEdito
         
         // Role dropdown
         roleComboBox = new JComboBox<>(ARIA_ROLES);
-        roleComboBox.setPreferredSize(new Dimension(120, 22));
+        roleComboBox.setPreferredSize(new Dimension(80, 22));
         roleComboBox.setEditable(false);
         
         // Name text field with placeholder hint
