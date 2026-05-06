@@ -16,6 +16,8 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Collections;
@@ -39,6 +41,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 /**
  * UI component for viewing and editing Web Object Repository (WebOR) object properties.
@@ -124,26 +127,26 @@ public class WebORTable extends JPanel implements ActionListener, ItemListener {
 
     private void configureColumns() {
         if (table.getColumnCount() >= 3) {
-            // Set resize mode: only resize Value column, keep others fixed
-            table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+            table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
             
             // Column 0: Attribute - narrow width
             TableColumn attrCol = table.getColumnModel().getColumn(0);
             attrCol.setCellRenderer(new PropertyAttributeRenderer());
             attrCol.setPreferredWidth(100);
-            attrCol.setMinWidth(80);
+            attrCol.setMinWidth(60);
             attrCol.setMaxWidth(150);
-            
+
             // Column 1: Value - takes remaining space (flexible)
             TableColumn valueCol = table.getColumnModel().getColumn(1);
-            valueCol.setPreferredWidth(300);
+            valueCol.setPreferredWidth(150);
             valueCol.setMinWidth(50);
+            valueCol.setMaxWidth(350);
             
             // Column 2: Exact - fixed width, centered
             TableColumn exactCol = table.getColumnModel().getColumn(2);
-            exactCol.setPreferredWidth(45);
-            exactCol.setMinWidth(45);
-            exactCol.setMaxWidth(45);
+            exactCol.setPreferredWidth(50);
+            exactCol.setMinWidth(50);
+            exactCol.setMaxWidth(50);
             exactCol.setResizable(false);
             
             // Center-aligned header for Exact column
@@ -530,6 +533,12 @@ public class WebORTable extends JPanel implements ActionListener, ItemListener {
             add(new javax.swing.Box.Filler(new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 0), new java.awt.Dimension(10, 32767)));
             add(frameText);
             frameText.getDocument().addDocumentListener(this);
+            table.addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    adjustColumnsToViewport();
+                }
+            });
         }
 
         @Override
@@ -540,6 +549,34 @@ public class WebORTable extends JPanel implements ActionListener, ItemListener {
 
         @Override
         public void changedUpdate(DocumentEvent de) { changeFrameText(); }
+    }
+
+    private void adjustColumnsToViewport() {
+        if (table.getColumnCount() < 3) return;
+
+        TableColumnModel m = table.getColumnModel();
+
+        TableColumn attr = m.getColumn(0);
+        TableColumn value = m.getColumn(1);
+        TableColumn exact = m.getColumn(2);
+
+        int exactWidth = exact.getMinWidth();
+        int attrMin = attr.getMinWidth(); 
+        int valueMin = value.getMinWidth();
+
+        int viewportWidth = table.getParent().getWidth();
+        int available = viewportWidth - exactWidth;
+
+        if (available > (attrMin + valueMin)) {
+            int attrWidth = Math.min(150, available / 3);
+            int valueWidth = available - attrWidth;
+
+            attr.setPreferredWidth(attrWidth);
+            value.setPreferredWidth(valueWidth);
+        } else {
+            attr.setPreferredWidth(attrMin);
+            value.setPreferredWidth(Math.max(0, available - attrMin));
+        }
     }
 
     class ToolBar extends JToolBar {
