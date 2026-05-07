@@ -12,7 +12,7 @@ import com.ing.ide.main.mainui.components.testdesign.TestDesign;
 import com.ing.ide.main.utils.TabTitleEditListener;
 import com.ing.ide.main.utils.Utils;
 import com.ing.ide.main.utils.table.FrozenColumnScrollPane;
-import com.ing.ide.main.utils.table.JtableUtils;
+import com.ing.ide.main.utils.table.JTableUtils;
 import com.ing.ide.main.utils.table.XTable;
 import com.ing.ide.util.Canvas;
 import com.ing.ide.util.Notification;
@@ -55,6 +55,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import com.ing.ide.main.fx.INGIcons;
+import com.ing.ide.main.utils.table.XTableUtils;
 
 /**
  *
@@ -106,7 +107,6 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
         add(envTab, BorderLayout.CENTER);
 
         saveListener = new SaveListener() {
-
             @Override
             public void onSave(Boolean bln) {
                 changeSave(bln);
@@ -361,6 +361,7 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
                     tdPanel.openWithSystemEditor();
                     break;
                 case "Add Row":
+                    tdPanel.clearFixedTableSelection();
                     tdPanel.insertRowBelow();
                     break;
                 case "Delete Rows":
@@ -742,8 +743,10 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
                 frozenScrollPane = new FrozenColumnScrollPane(table, 4);
                 frozenScrollPane.setBackground(UIManager.getColor("Panel.background"));
                 frozenScrollPane.getViewport().setBackground(UIManager.getColor("Panel.background"));
+                
                 // Apply popup menu to fixed table as well
                 frozenScrollPane.getFixedTable().setComponentPopupMenu(popupMenu);
+                
                 // Set cell editor provider for fixed columns (columns 0-3: Scenario, Flow, Iteration, SubIteration)
                 frozenScrollPane.setCellEditorProvider((row, column, defaultEditor) -> 
                     tDAutoSuggest.getCellEditorFor(column, defaultEditor)
@@ -850,7 +853,8 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
                     table.cut();
                     break;
                 case "Copy":
-                    table.copy();
+//                    table.copy();
+                    XTableUtils.copyToClipboard2(frozenScrollPane, table, false);
                     break;
                 case "Paste":
                     table.paste();
@@ -903,6 +907,10 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
             }
         }
 
+        private void clearFixedTableSelection(){
+            frozenScrollPane.getFixedTable().getSelectionModel().clearSelection();
+        }
+
         private void insertRow() {
             stopCellEditing();
             if (table.getSelectedRow() != -1) {
@@ -912,7 +920,6 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
 
         private void replicateRow() {
             stopCellEditing();
-//            int selectedRow = table.getSelectedRow();
             int[] selectedRows = table.getSelectedRows();
             int lastIndex = selectedRows[selectedRows.length - 1];
             int added = 0;
@@ -1205,6 +1212,9 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
         private void stopCellEditing() {
             if (table.getCellEditor() != null) {
                 table.getCellEditor().stopCellEditing();
+            }
+            if (frozenScrollPane.getFixedTable().getCellEditor() != null){
+                frozenScrollPane.getFixedTable().getCellEditor().stopCellEditing();
             }
         }
 

@@ -61,6 +61,57 @@ public class XTableUtils {
 
         CLIPBOARD.setContents(sel, sel);
     }
+    
+    public static void copyToClipboard2(FrozenColumnScrollPane frozenColumnScrollPane, JTable table, boolean isCut) {
+        
+        JTable mainTable = frozenColumnScrollPane.getMainTable();
+        JTable fixedTable = frozenColumnScrollPane.getFixedTable();
+        
+        int[] mainTableRowsSelected = mainTable.getSelectedRows();
+        int[] mainTableColsSelected = mainTable.getSelectedColumns();
+        
+        int[] fixedTableRowsSelected = fixedTable.getSelectedRows();
+        int[] fixedTableColsSelected = fixedTable.getSelectedColumns();
+        
+        int numCols = table.getSelectedColumnCount();
+        int numRows = table.getSelectedRowCount();
+        int[] rowsSelected = table.getSelectedRows();
+        int[] colsSelected = table.getSelectedColumns();
+        if (numRows != rowsSelected[rowsSelected.length - 1] - rowsSelected[0] + 1 || numRows != rowsSelected.length
+                || numCols != colsSelected[colsSelected.length - 1] - colsSelected[0] + 1 || numCols != colsSelected.length) {
+
+            Logger.getLogger(XTableUtils.class.getName()).info("Invalid Copy Selection");
+            return;
+        }
+        if (table.getModel() instanceof UndoRedoModel) {
+            ((UndoRedoModel) table.getModel()).startGroupEdit();
+        }
+
+        StringBuilder excelStr = new StringBuilder();
+
+        for (int i = 0; i < numRows; i++) {
+            for (int j = 0; j < numCols; j++) {
+                excelStr.append(escape(table.getValueAt(rowsSelected[i], colsSelected[j])));
+                if (isCut) {
+                    table.setValueAt("", rowsSelected[i], colsSelected[j]);
+                }
+                if (j < numCols - 1) {
+                    excelStr.append(CELL_BREAK);
+                }
+            }
+            excelStr.append(LINE_BREAK);
+        }
+
+        if (table.getModel() instanceof UndoRedoModel) {
+            ((UndoRedoModel) table.getModel()).stopGroupEdit();
+        }
+
+        StringSelection sel = new StringSelection(excelStr.toString());
+
+        CLIPBOARD.setContents(sel, sel);
+    }
+    
+    
 
     private static String escape(Object cell) {
         return Objects.toString(cell, "").replace(LINE_BREAK, " ").replace(CELL_BREAK, " ");
