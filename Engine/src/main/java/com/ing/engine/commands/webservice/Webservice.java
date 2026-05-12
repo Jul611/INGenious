@@ -134,12 +134,6 @@ public class Webservice extends General {
      * @see #setEndPoint()
      */
 
-    /**
-     * Previously, the postRestRequest method mandated a payload for executing POST requests.
-     * Since POST requests do not always require a payload, I have modified the implementation to make the payload optional.
-     * This change improves flexibility and ensures the framework aligns more closely with standard API practices.
-     */
-
     @Action(object = ObjectType.WEBSERVICE, desc = "POST Rest Request ", input = InputType.OPTIONAL, condition = InputType.OPTIONAL)
     public void postRestRequest() {
         try {
@@ -1624,13 +1618,6 @@ public class Webservice extends General {
      *
      * @param reqOrRes "request" or "response" to indicate which type of payload to save
      * @param data the payload data to save
-     */
-
-    /**
-     * The existing HTML reporting displayed only the response payload once a request was marked as Complete.
-     * This limitation made debugging challenging, particularly in cases where critical information-such as trace IDs was present exclusively in the response headers.
-     * I have enhanced the reporting to include response headers along with the response payload
-     * Provides greater visibility and significantly aiding effective debugging
      */
 
     private void savePayload(String reqOrRes, String data) {
