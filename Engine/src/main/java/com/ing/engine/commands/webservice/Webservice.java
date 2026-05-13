@@ -121,18 +121,20 @@ public class Webservice extends General {
     }
 
     /**
-     * Sends a POST HTTP request to the configured endpoint with the specified payload.
+     * Sends a POST HTTP request to the configured endpoint with an optional payload.
      * <p>
-     * Executes a POST REST request using the data from the Input field and the endpoint
+     * Executes a POST REST request using the data from the Input field (if provided) and the endpoint
      * previously set with {@code setEndPoint}.
+     * <p>
      * <ul>
-     *   <li>Input: Request payload</li>
+     *   <li>Input: Request payload (optional)</li>
      *   <li>Condition: Optional API configuration alias (e.g., #alias)</li>
      * </ul>
      *
      * @see #setEndPoint()
      */
-    @Action(object = ObjectType.WEBSERVICE, desc = "POST Rest Request ", input = InputType.YES, condition = InputType.OPTIONAL)
+
+    @Action(object = ObjectType.WEBSERVICE, desc = "POST Rest Request ", input = InputType.OPTIONAL, condition = InputType.OPTIONAL)
     public void postRestRequest() {
         try {
             createhttpRequest(RequestMethod.POST);
@@ -551,6 +553,7 @@ public class Webservice extends General {
                     Status.DEBUG);
         }
     }
+
 
     /**
      * Asserts that an XML element value equals the expected value.
@@ -1644,6 +1647,7 @@ public class Webservice extends General {
      * @param reqOrRes "request" or "response" to indicate which type of payload to save
      * @param data the payload data to save
      */
+
     private void savePayload(String reqOrRes, String data) {
         String payloadFileName = "";
         String path = "";
@@ -1663,6 +1667,11 @@ public class Webservice extends General {
                 if (location.createNewFile()) {
                     FileWriter writer = new FileWriter(location);
                     writer.write(data);
+                    // Appending headers when saving response
+                    if (reqOrRes.equals("response")) {
+                        writer.write("\n\n--- Response Headers ---\n");
+                        writer.write(response.get(key).headers().toString());
+                    }
                     writer.close();
                 }
             }
