@@ -197,6 +197,8 @@ public class ScenarioComponent extends JPanel implements ActionListener {
                         TestCase rtestCase = scenario.getTestCaseByName(reusableData[1]);
                         if (rtestCase != null) {
                             testDesign.loadTableModelForSelection(rtestCase);
+                            // Also navigate in the reusable tree to highlight the reusable component
+                            testDesign.getReusableTree().navigateToReusable(reusableData[0], reusableData[1]);
                         } else {
                             Notification.show("TestCase [" + reusableData[1]
                                     + "] not present in the Scenario [" + reusableData[0] + "]");

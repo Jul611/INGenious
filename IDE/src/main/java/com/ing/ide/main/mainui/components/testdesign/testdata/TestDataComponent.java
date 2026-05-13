@@ -660,6 +660,71 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
         return false;
     }
 
+    /**
+     * Navigates to a specific row and column in test data based on scenario, test case, iteration 1, and sub-iteration 1.
+     * Falls back to column-only selection if row matching fails.
+     * @param sheetName name of the test data sheet
+     * @param columnName name of the column to highlight
+     * @param scenarioName name of the scenario
+     * @param testCaseName name of the test case
+     * @return true if found and selected, false otherwise
+     */
+    public Boolean navigateToTestData(String sheetName, String columnName, String scenarioName, String testCaseName) {
+        if (envTab.getSelectedComponent() instanceof JTabbedPane) {
+            JTabbedPane tab = (JTabbedPane) envTab.getSelectedComponent();
+            for (int i = 0; i < tab.getTabCount(); i++) {
+                if (tab.getComponentAt(i) instanceof TestDataTablePanel) {
+                    TestDataTablePanel tdPanel = (TestDataTablePanel) tab.getComponentAt(i);
+                    if (tdPanel.std.getName().equals(sheetName)) {
+                        int colIndex = tdPanel.std.getColumnIndex(columnName);
+                        if (colIndex != -1) {
+                            tab.setSelectedIndex(i);
+                            
+                            // Try to find and select the matching row
+                            int scenarioColIndex = tdPanel.std.getColumnIndex("Scenario");
+                            int testCaseColIndex = tdPanel.std.getColumnIndex("TestCase");
+                            int iterationColIndex = tdPanel.std.getColumnIndex("Iteration");
+                            int subIterationColIndex = tdPanel.std.getColumnIndex("SubIteration");
+                            
+                            if (scenarioColIndex != -1 && testCaseColIndex != -1 && iterationColIndex != -1 && subIterationColIndex != -1) {
+                                int rowIndex = -1;
+                                for (int row = 0; row < tdPanel.table.getRowCount(); row++) {
+                                    Object scenarioVal = tdPanel.table.getValueAt(row, scenarioColIndex);
+                                    Object testCaseVal = tdPanel.table.getValueAt(row, testCaseColIndex);
+                                    Object iterationVal = tdPanel.table.getValueAt(row, iterationColIndex);
+                                    Object subIterationVal = tdPanel.table.getValueAt(row, subIterationColIndex);
+                                    
+                                    if (scenarioVal != null && testCaseVal != null && iterationVal != null && subIterationVal != null) {
+                                        if (scenarioVal.toString().equals(scenarioName) && 
+                                            testCaseVal.toString().equals(testCaseName) &&
+                                            (iterationVal.toString().equals("1") || iterationVal.toString().equals(1)) &&
+                                            (subIterationVal.toString().equals("1") || subIterationVal.toString().equals(1))) {
+                                            rowIndex = row;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (rowIndex != -1) {
+                                    tdPanel.table.setRowSelectionInterval(rowIndex, rowIndex);
+                                    tdPanel.table.setColumnSelectionInterval(colIndex, colIndex);
+                                    tdPanel.table.scrollRectToVisible(tdPanel.table.getCellRect(rowIndex, colIndex, true));
+                                    return true;
+                                }
+                            }
+                            
+                            // Fallback: just select the column if row matching fails
+                            tdPanel.table.selectColumn(colIndex);
+                            return true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public void importTestData(File file) {
         String name = org.apache.commons.io.FilenameUtils.getName(file.getName());
         TestDataModel model = getCurrentEnviromentData().getByName(name);

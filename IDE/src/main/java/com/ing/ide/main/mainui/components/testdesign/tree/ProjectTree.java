@@ -54,6 +54,7 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
@@ -297,6 +298,48 @@ public class ProjectTree implements ActionListener {
         } else {
             popupMenu.setVisible(false);
         }
+    }
+
+    /**
+     * Navigates to a specific reusable component in the tree and highlights it.
+     * @param scenarioName name of the reusable scenario
+     * @param reusableName name of the reusable component
+     * @return true if reusable was found and selected, false otherwise
+     */
+    public boolean navigateToReusable(String scenarioName, String reusableName) {
+        Object root = getTreeModel().getRoot();
+        if (root instanceof TreeNode) {
+            java.util.Enumeration<?> groups = ((TreeNode) root).children();
+            while (groups.hasMoreElements()) {
+                Object groupObj = groups.nextElement();
+                if (groupObj instanceof GroupNode) {
+                    GroupNode groupNode = (GroupNode) groupObj;
+                    java.util.Enumeration<?> scenarios = groupNode.children();
+                    while (scenarios.hasMoreElements()) {
+                        Object scenarioObj = scenarios.nextElement();
+                        if (scenarioObj instanceof ScenarioNode) {
+                            ScenarioNode scenarioNode = (ScenarioNode) scenarioObj;
+                            if (scenarioNode.toString().equals(scenarioName)) {
+                                java.util.Enumeration<?> testCases = scenarioNode.children();
+                                while (testCases.hasMoreElements()) {
+                                    Object testCaseObj = testCases.nextElement();
+                                    if (testCaseObj instanceof TestCaseNode) {
+                                        TestCaseNode testCaseNode = (TestCaseNode) testCaseObj;
+                                        if (testCaseNode.toString().equals(reusableName)) {
+                                            TreePath path = new TreePath(getTreeModel().getPathToRoot(testCaseNode));
+                                            selectAndScrollTo(path);
+                                            loadTableModelForSelection();
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**

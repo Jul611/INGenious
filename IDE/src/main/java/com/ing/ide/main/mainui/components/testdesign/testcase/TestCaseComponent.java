@@ -961,6 +961,8 @@ public class TestCaseComponent extends JPanel implements ActionListener {
                     TestCase testCase = scenario.getTestCaseByName(reusableData[1]);
                     if (testCase != null) {
                         testDesign.loadTableModelForSelection(testCase);
+                        // Also navigate in the reusable tree to highlight the reusable component
+                        testDesign.getReusableTree().navigateToReusable(reusableData[0], reusableData[1]);
                     } else {
                         Notification.show("TestCase [" + reusableData[1]
                                 + "] not present in the Scenario [" + reusableData[0] + "]");
@@ -978,7 +980,10 @@ public class TestCaseComponent extends JPanel implements ActionListener {
             TestStep tStep = getCurrentTestCase().getTestSteps().get(testCaseTable.getSelectedRow());
             String[] tdFromInput = tStep.getTestDataFromInput();
             if (tdFromInput != null) {
-                if (!testDesign.getTestDatacomp().navigateToTestData(tdFromInput[0], tdFromInput[1])) {
+                TestCase currentTestCase = getCurrentTestCase();
+                String scenarioName = currentTestCase.getScenario().getName();
+                String testCaseName = currentTestCase.getName();
+                if (!testDesign.getTestDatacomp().navigateToTestData(tdFromInput[0], tdFromInput[1], scenarioName, testCaseName)) {
                     Notification.show("Test Data [" + tdFromInput[0] + ":" + tdFromInput[1] + "] not found in Test Data");
                 }
             }
