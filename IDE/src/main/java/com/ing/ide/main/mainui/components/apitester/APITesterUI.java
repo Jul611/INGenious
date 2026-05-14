@@ -6,6 +6,7 @@ import com.ing.ide.main.mainui.components.apitester.response.ResponsePanel;
 import com.ing.ide.main.mainui.components.apitester.collections.CollectionTree;
 import com.ing.ide.main.mainui.components.apitester.util.APITesterColors;
 import com.ing.ide.main.fx.INGIcons;
+import com.ing.ide.util.Notification;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -31,13 +32,22 @@ public class APITesterUI extends JPanel implements PropertyChangeListener {
     // Right panel components  
     private RequestPanel requestPanel;
     private ResponsePanel responsePanel;
+    private JLabel editingHeaderLabel; // Shows what collection/request is being edited
     
     // Current state
     private APIRequest currentRequest;
+    private APIRequest sourceRequest;      // Tracks the original request loaded from collection
+    private APICollection sourceCollection; // Tracks which collection the request came from
+    private APICollection sourceFolder;     // Tracks which folder the request came from (null if in collection root)
+    private boolean sourceHistory;          // Tracks if request came from history
     
     public APITesterUI(APITester apiTester) {
         this.apiTester = apiTester;
         this.currentRequest = new APIRequest();
+        this.sourceRequest = null;
+        this.sourceCollection = null;
+        this.sourceFolder = null;
+        this.sourceHistory = false;
         initComponents();
         
         // Listen for L&F changes to refresh colors
@@ -209,7 +219,7 @@ public class APITesterUI extends JPanel implements PropertyChangeListener {
             if (!e.getValueIsAdjusting()) {
                 APIRequest selected = historyList.getSelectedValue();
                 if (selected != null) {
-                    loadRequest(selected.copy());
+                    loadRequestFromHistory(selected);
                 }
             }
         });
@@ -262,6 +272,21 @@ public class APITesterUI extends JPanel implements PropertyChangeListener {
     
     private JPanel createRightPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 0));
+        
+        // Header showing what is being edited
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, 
+            UIManager.getColor("Separator.foreground")));
+        headerPanel.setBackground(APITesterColors.panelBackground());
+        headerPanel.setPreferredSize(new Dimension(0, 35));
+        
+        editingHeaderLabel = new JLabel("No request selected");
+        editingHeaderLabel.setFont(editingHeaderLabel.getFont().deriveFont(Font.BOLD, 12f));
+        editingHeaderLabel.setBorder(new EmptyBorder(8, 12, 8, 12));
+        editingHeaderLabel.setForeground(UIManager.getColor("Label.foreground"));
+        headerPanel.add(editingHeaderLabel, BorderLayout.WEST);
+        
+        panel.add(headerPanel, BorderLayout.NORTH);
         
         // Vertical split: Request builder on top, Response viewer on bottom
         JSplitPane verticalSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -328,6 +353,60 @@ public class APITesterUI extends JPanel implements PropertyChangeListener {
         return currentRequest;
     }
     
+    /**
+     * Auto-saves the current request if it has unsaved changes and came from a collection.
+     * Called automatically when opening a different request.
+     */
+    public void autoSaveCurrentRequest() {
+        // Always save the current request when switching to a different request
+        // This ensures all changes (URL, method, body, headers, params, auth, etc.) are persisted
+        forceSaveCurrentRequest();
+    }
+    
+    /**
+     * Detects if the current request has unsaved changes.
+     */
+    private boolean hasUnsavedChanges() {
+        if (sourceRequest == null) return false;
+        
+        // Check if URL changed
+        String currentUrl = currentRequest.getUrl() != null ? currentRequest.getUrl() : "";
+        String sourceUrl = sourceRequest.getUrl() != null ? sourceRequest.getUrl() : "";
+        if (!currentUrl.equals(sourceUrl)) return true;
+        
+        // Check if method changed
+        if (currentRequest.getMethod() != sourceRequest.getMethod()) return true;
+        
+        // Check if body changed - compare the raw content
+        if (currentRequest.getBody() != null && sourceRequest.getBody() != null) {
+            String currentBodyContent = currentRequest.getBody().getRawContent() != null ? 
+                    currentRequest.getBody().getRawContent() : "";
+            String sourceBodyContent = sourceRequest.getBody().getRawContent() != null ? 
+                    sourceRequest.getBody().getRawContent() : "";
+            if (!currentBodyContent.equals(sourceBodyContent)) return true;
+        } else if ((currentRequest.getBody() == null) != (sourceRequest.getBody() == null)) {
+            // One is null and the other isn't
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Force saves the current request to backend file if it's from a collection.
+     * Called by IDE's save/autosave to persist all edited requests to disk.
+     * This is public so AppMainFrame can call it during project save.
+     */
+    public void forceSaveCurrentRequest() {
+        if (sourceCollection != null && sourceRequest != null && currentRequest != null) {
+            // Update the request with current UI values
+            requestPanel.updateRequest(currentRequest);
+            
+            // Always save to ensure all changes are persisted to backend
+            apiTester.saveRequestToCollection(currentRequest, sourceCollection);
+        }
+    }
+    
     public void setCurrentRequest(APIRequest request) {
         this.currentRequest = request;
         requestPanel.loadRequest(request);
@@ -337,18 +416,86 @@ public class APITesterUI extends JPanel implements PropertyChangeListener {
      * Loads a request into the editor.
      */
     public void loadRequest(APIRequest request) {
+        autoSaveCurrentRequest(); // Auto-save before loading new request
         this.currentRequest = request;
+        this.sourceRequest = null;      // Not from collection
+        this.sourceCollection = null;
+        this.sourceFolder = null;       // Not from folder
+        this.sourceHistory = false;     // Not from history
         requestPanel.loadRequest(request);
         responsePanel.clear();
+        updateEditingHeader();
     }
     
     /**
      * Loads a request from a collection into the editor.
+     * Tracks the source so Save can update instead of creating new.
      */
     public void loadRequest(APIRequest request, APICollection collection) {
+        autoSaveCurrentRequest(); // Auto-save before loading new request
         this.currentRequest = request;
+        this.sourceRequest = request;      // Remember this came from collection
+        this.sourceCollection = collection;
+        this.sourceFolder = null;          // No folder
+        this.sourceHistory = false;        // Not from history
         requestPanel.loadRequest(request);
         responsePanel.clear();
+        updateEditingHeader();
+    }
+    
+    /**
+     * Loads a request from a folder inside a collection into the editor.
+     * Tracks both the collection and folder for proper save behavior.
+     */
+    public void loadRequest(APIRequest request, APICollection collection, APICollection folder) {
+        autoSaveCurrentRequest(); // Auto-save before loading new request
+        this.currentRequest = request;
+        this.sourceRequest = request;      // Remember this came from collection
+        this.sourceCollection = collection;
+        this.sourceFolder = folder;        // Remember which folder
+        this.sourceHistory = false;        // Not from history
+        requestPanel.loadRequest(request);
+        responsePanel.clear();
+        updateEditingHeader();
+    }
+    
+    /**
+     * Loads a request from history into the editor.
+     */
+    public void loadRequestFromHistory(APIRequest request) {
+        autoSaveCurrentRequest(); // Auto-save before loading new request
+        this.currentRequest = request;
+        this.sourceRequest = null;      // Not from collection
+        this.sourceCollection = null;
+        this.sourceFolder = null;
+        this.sourceHistory = true;      // From history
+        requestPanel.loadRequest(request);
+        responsePanel.clear();
+        updateEditingHeader();
+    }
+    
+    /**
+     * Updates the header label to show what is being edited.
+     */
+    private void updateEditingHeader() {
+        if (editingHeaderLabel == null) return;
+        
+        String headerText;
+        if (sourceCollection != null && sourceRequest != null) {
+            // Build path: Collection / [Folder /] Request
+            if (sourceFolder != null) {
+                headerText = sourceCollection.getName() + " / " + sourceFolder.getName() + " / " + currentRequest.getName();
+            } else {
+                headerText = sourceCollection.getName() + " / " + currentRequest.getName();
+            }
+        } else if (currentRequest.getName() != null && !currentRequest.getName().isEmpty()) {
+            headerText = "New Request: " + currentRequest.getName();
+        } else {
+            headerText = "New Request";
+        }
+        
+        editingHeaderLabel.setText(headerText);
+        editingHeaderLabel.setToolTipText(headerText); // Full text in tooltip
     }
     
     /**
@@ -356,8 +503,13 @@ public class APITesterUI extends JPanel implements PropertyChangeListener {
      */
     public void newRequest() {
         this.currentRequest = new APIRequest();
+        this.sourceRequest = null;      // Not from collection
+        this.sourceCollection = null;
+        this.sourceFolder = null;       // Not from folder
+        this.sourceHistory = false;     // Not from history
         requestPanel.loadRequest(currentRequest);
         responsePanel.clear();
+        updateEditingHeader();
     }
     
     /**
@@ -386,16 +538,28 @@ public class APITesterUI extends JPanel implements PropertyChangeListener {
     
     /**
      * Saves the current request to a collection.
+     * 
+     * Implements the Save behavior based on state:
+     * - If current request came from collection: update it (no prompt)
+     * - If current request is new: prompt for collection and name
      */
     public void saveRequest() {
         requestPanel.updateRequest(currentRequest);
         
-        // Show save dialog
+        // Scenario: Editing an existing request from a collection
+        if (sourceRequest != null && sourceCollection != null) {
+            // Update the existing request directly - no prompts needed
+            apiTester.saveRequestToCollection(currentRequest, sourceCollection);
+            Notification.show("Request \"" + currentRequest.getName() + "\" updated in " + sourceCollection.getName());
+            return;
+        }
+        
+        // Scenario: Saving a new request - need to ask for collection and name
         List<APICollection> collections = apiTester.getCollections();
         if (collections.isEmpty()) {
             // Create a default collection
             APICollection defaultCollection = apiTester.createNewCollection("My Collection");
-            saveToCollection(defaultCollection);
+            saveNewRequest(defaultCollection);
         } else {
             // Show collection chooser
             APICollection[] options = collections.toArray(new APICollection[0]);
@@ -409,13 +573,16 @@ public class APITesterUI extends JPanel implements PropertyChangeListener {
                     options[0]
             );
             if (selected != null) {
-                saveToCollection(selected);
+                saveNewRequest(selected);
             }
         }
     }
     
-    private void saveToCollection(APICollection collection) {
-        // Ask for request name
+    /**
+     * Saves a new request to the specified collection.
+     * Prompts user for request name.
+     */
+    private void saveNewRequest(APICollection collection) {
         String name = JOptionPane.showInputDialog(
                 this,
                 "Request name:",
@@ -423,8 +590,14 @@ public class APITesterUI extends JPanel implements PropertyChangeListener {
         );
         if (name != null && !name.trim().isEmpty()) {
             currentRequest.setName(name.trim());
-            apiTester.saveRequestToCollection(currentRequest.copy(), collection);
-            JOptionPane.showMessageDialog(this, "Request saved to " + collection.getName());
+            apiTester.saveRequestToCollection(currentRequest, collection);
+            
+            // Update source tracking so subsequent saves don't prompt
+            this.sourceRequest = currentRequest;
+            this.sourceCollection = collection;
+            
+            updateEditingHeader();
+            Notification.show("Request saved to " + collection.getName());
         }
     }
     
