@@ -2,7 +2,13 @@
 name: ingenious-browser-test-from-specification
 description: 'Create a new INGenious Test project test case from a business flow. Use when user gives checkout/login/order business steps and wants Scenario -> TestCase CSV, reusable component flows, page object YAMLs, and test data sheets wired together.'
 argument-hint: 'Business flow + scenario name + testcase name + expected outcomes'
-user-invocable: true
+version: "0.1.0"
+requires:
+  ingenious: ">=3.0.0 <3.1.0"
+  playwright-cli: "^1.40.0"
+metadata:
+  author: ingenious-team
+  category: test-generation
 ---
 
 ## Key Principles
