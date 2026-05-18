@@ -1,0 +1,13 @@
+# Reusable Component CSV (create customer)
+
+File: `Projects/<ProjectName>/ReusableComponents/API Common/Create Customer.csv`
+```csv
+Step,ObjectName,Description,Action,Input,Condition,Reference
+1,Webservice,Set End Point,setEndPoint,@http://localhost:3000/customers,,
+2,Webservice,Add Header,addHeader,@Content-Type=application/json,,
+3,Webservice,POST Rest Request,postRestRequest,"{ \"name\": \"{API:CustomerName}\", \"country\": \"{API:Country}\" }",,
+4,Webservice,Assert Response Code,assertResponseCode,@201,,
+5,Webservice,Store JSON Element In DataSheet,storeJSONelementInDataSheet,API:CustomerID,$.id,
+```
+- API step rows use `ObjectName=Webservice`.
+- IDs can be persisted using `storeJSONelementInDataSheet`.
