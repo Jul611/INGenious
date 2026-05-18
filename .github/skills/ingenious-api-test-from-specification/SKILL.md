@@ -142,6 +142,13 @@ Run these checks before creating or editing API flow artifacts:
 - Confirm the selected project exists, or scaffold it if user selected `Create new project`.
 
 ## Procedure
+0. Run backup process before making any changes, if available in the workspace, to allow easy rollback in case of issues.
+0.1. Create a hash id for the current session.
+0.2. Run zip backup of the entire `Projects/<ProjectName>` folder with a timestamp and the session hash in the filename, and store it in a `Backups` folder at the workspace root.
+0.3. if backup fails, report the failure and halt further changes to prevent data loss.
+- for example: `Backups/<ProjectName>_backup_<timestamp>_<sessionHash>.zip`
+- For every session, do not overwrite existing backups; create a new one with a unique timestamp and session hash.
+
 1. Run mandatory input interview first
 - Collect Endpoint, Method, Headers, Payload, Expected Status Code, and Assertions as separate inputs for each API step.
 - Confirm the final per-step request matrix back to the user when multi-step flows are involved.
