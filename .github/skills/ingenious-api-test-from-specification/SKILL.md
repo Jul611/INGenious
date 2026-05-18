@@ -75,6 +75,11 @@ Collect these fields before writing files:
   - Method
   - Headers
   - Payload
+    - For POST/PUT/PATCH/DELETE requests, ask user to choose payload pattern:
+      - **Pattern 3A (inline JSON/XML)**: Build JSON/XML inline with embedded `{Sheet:Column}` variables (recommended for small payloads with 1-5 fields)
+      - **Pattern 3B (datasheet column)**: Store entire payload in a datasheet column `{Sheet:RequestBody}` (recommended for complex payloads with 6+ fields or nested structures)
+    - Present both options as selectable choices when collecting Payload input
+    - If user provides raw JSON/XML, clarify which pattern to use and identify which fields should be variables
   - Expected Status Code
   - Assertions
 - Do not merge these into one broad question unless all six are still captured distinctly in the final response map.
@@ -167,13 +172,17 @@ Run these checks before creating or editing API flow artifacts:
 - Never leave an empty `Action` column.
 
 5. Define endpoint and payload parameterization
+- See [input-field-patterns.md](./references/input-field-patterns.md) for comprehensive input field syntax guidance.
 - Use `@` prefix for literal values in Input when project style follows that pattern (for example `@http://localhost:3000/customers`).
-- Use `Sheet:Column` for data-driven values where possible.
+- Use `{Sheet:Column}` format (with braces) for data-driven values consistently.
 - Map mandatory inputs to step columns explicitly:
   - Endpoint -> `setEndPoint` Input
   - Method -> request Action (`getRestRequest`/`postRestRequest`/`putRestRequest`/`patchRestRequest`/`deleteRestRequest`)
   - Headers -> `addHeader` Input (one row per header when multiple headers exist)
   - Payload -> request action Input (blank only when method does not require payload)
+    - **Pattern 3A (inline)**: Build JSON/XML inline with embedded variables: `"{ \"name\": \"{API:CustomerName}\", \"country\": \"{API:Country}\" }"`
+    - **Pattern 3B (datasheet)**: Reference full payload column: `{API:RequestBody}` and populate corresponding TestData column with complete JSON/XML
+    - Choose Pattern 3A for small payloads (1-5 fields); Pattern 3B for complex payloads (6+ fields, nested structures)
   - Expected Status Code -> `assertResponseCode` Input
   - Assertions -> one or more assertion rows (`assertResponsebodycontains`, `assertJSONelementEquals`, `assertJSONelementContains`, `assertXMLelementEquals`, `assertHeaderValueEquals`, etc.)
 - For JSONPath/XPath assertions, use `Condition` for the path expression and `Input` for expected value.
@@ -238,6 +247,9 @@ A change is complete only when all are true:
 8. Baseline testcase runtime is healthy or blocker is explicitly reported before generation.
 9. No unrelated files are modified.
 10. Mandatory input gate was satisfied before authoring (Endpoint, Method, Headers, Payload, Status Code, Assertions captured separately for each API step).
+11. Payload patterns are correctly formatted:
+    - Pattern 3A: Embedded variables use `{Sheet:Column}` with braces inside JSON/XML strings
+    - Pattern 3B: Full payload reference uses `{Sheet:Column}` format and corresponding TestData column exists with complete payload content
 
 ## Testing Strategy
 After creating or updating an API flow, validate it in seven layers.
