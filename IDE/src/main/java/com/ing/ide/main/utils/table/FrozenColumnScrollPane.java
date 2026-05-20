@@ -5,8 +5,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
+import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -314,18 +313,56 @@ public class FrozenColumnScrollPane extends JScrollPane {
         TableModel model = mainTable.getModel();
         int modelColumnCount = model.getColumnCount();
         TableColumnModel mainCM = mainTable.getColumnModel();
-        
-        // Calculate expected column count in main table (all columns beyond fixed)
+
+        // Keep main table column model perfectly aligned with model indexes/headers.
         int expectedMainColumns = Math.max(0, modelColumnCount - fixedColumnCount);
-        
-        // Add any new columns to main table's column model
-        while (mainCM.getColumnCount() < expectedMainColumns) {
-            int newColIndex = fixedColumnCount + mainCM.getColumnCount();
-            if (newColIndex < modelColumnCount) {
-                TableColumn newCol = new TableColumn(newColIndex);
-                newCol.setHeaderValue(model.getColumnName(newColIndex));
-                mainCM.addColumn(newCol);
+        boolean rebuildMain = mainCM.getColumnCount() != expectedMainColumns;
+        if (!rebuildMain) {
+            for (int i = 0; i < mainCM.getColumnCount(); i++) {
+                int expectedModelIndex = fixedColumnCount + i;
+                TableColumn column = mainCM.getColumn(i);
+                if (column.getModelIndex() != expectedModelIndex
+                        || !Objects.equals(column.getHeaderValue(), model.getColumnName(expectedModelIndex))) {
+                    rebuildMain = true;
+                    break;
+                }
             }
+        }
+        if (rebuildMain) {
+            while (mainCM.getColumnCount() > 0) {
+                mainCM.removeColumn(mainCM.getColumn(0));
+            }
+            for (int i = fixedColumnCount; i < modelColumnCount; i++) {
+                TableColumn col = new TableColumn(i);
+                col.setHeaderValue(model.getColumnName(i));
+                mainCM.addColumn(col);
+            }
+        }
+
+        // Also keep fixed table headers aligned if fixed columns are renamed/updated.
+        TableColumnModel fixedCM = fixedTable.getColumnModel();
+        int expectedFixedColumns = Math.min(fixedColumnCount, modelColumnCount);
+        boolean rebuildFixed = fixedCM.getColumnCount() != expectedFixedColumns;
+        if (!rebuildFixed) {
+            for (int i = 0; i < fixedCM.getColumnCount(); i++) {
+                TableColumn column = fixedCM.getColumn(i);
+                if (column.getModelIndex() != i
+                        || !Objects.equals(column.getHeaderValue(), model.getColumnName(i))) {
+                    rebuildFixed = true;
+                    break;
+                }
+            }
+        }
+        if (rebuildFixed) {
+            while (fixedCM.getColumnCount() > 0) {
+                fixedCM.removeColumn(fixedCM.getColumn(0));
+            }
+            for (int i = 0; i < expectedFixedColumns; i++) {
+                TableColumn col = new TableColumn(i);
+                col.setHeaderValue(model.getColumnName(i));
+                fixedCM.addColumn(col);
+            }
+            applyFixedColumnStyling();
         }
         
         revalidate();
