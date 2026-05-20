@@ -974,7 +974,6 @@ public class MobileObjectSpy extends javax.swing.JFrame {
     //    IOSpy.quit();
         addToSelectedPage.setSelected(false);
         addToSelectedPage.setToolTipText("Add Objects to Selected Page");
-        sMainFrame.getTestDesign().getObjectRepo().getMobileORPanel().load();
     }//GEN-LAST:event_formWindowClosing
 
     private void settingsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_settingsItemStateChanged
