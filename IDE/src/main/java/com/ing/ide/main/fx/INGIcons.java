@@ -131,7 +131,7 @@ public final class INGIcons {
         register("SaveProject",         MaterialDesignC.CONTENT_SAVE,                  CLR_SAVE);
         register("RunSettings",         MaterialDesignC.COG,                           CLR_CONFIG);
         register("BrowserConfiguration", MaterialDesignW.WEB,                          CLR_TOOL);
-        register("APITester",           MaterialDesignA.API,                           Color.web("#00B4D8"));
+        register("APITester",           MaterialDesignA.API,                           CLR_DATA);
 
         // ── Common Actions ──
         register("add",                 MaterialDesignP.PLUS,                          CLR_CREATE);
