@@ -38,7 +38,6 @@ public class AppMenuBar extends JMenuBar {
         initShortcut();
         setMargin(new Insets(0,0,0,5));
         add(changeFont(createFileMenu()));
-        add(changeFont(createObjectMenu()));
         add(changeFont(createTestDataMenu()));
         add(changeFont(createConfigurationMenu()));
         add(changeFont(createToolsMenu()));
@@ -56,15 +55,6 @@ public class AppMenuBar extends JMenuBar {
                 KeyEvent.VK_S, SHORTCUT | KeyEvent.SHIFT_DOWN_MASK));
         shortcuts.put("Quit", KeyStroke.getKeyStroke(
                 KeyEvent.VK_X, KeyEvent.ALT_MASK));
-
-        shortcuts.put("Object Spy", KeyStroke.getKeyStroke(
-                KeyEvent.VK_P, SHORTCUT | KeyEvent.ALT_DOWN_MASK));
-        shortcuts.put("Object Heal", KeyStroke.getKeyStroke(
-                KeyEvent.VK_H, SHORTCUT | KeyEvent.ALT_DOWN_MASK));
-        shortcuts.put("Image Spy", KeyStroke.getKeyStroke(
-                KeyEvent.VK_I, SHORTCUT | KeyEvent.ALT_DOWN_MASK));
-        shortcuts.put("Mobile Spy", KeyStroke.getKeyStroke(
-                KeyEvent.VK_M, SHORTCUT | KeyEvent.ALT_DOWN_MASK));
 
         shortcuts.put("Run Settings", KeyStroke.getKeyStroke(
                 KeyEvent.VK_S, SHORTCUT | KeyEvent.ALT_DOWN_MASK));
@@ -136,37 +126,6 @@ public class AppMenuBar extends JMenuBar {
                 Utils.createMenuItem("Quit", sActionListener)));
 
         return file;
-    }
-
-    private JMenu createObjectMenu() {
-        JMenu object = new JMenu("Automation");
-        object.setMnemonic('A');
-
-        object.add(withMnemonics(
-                withShortCut(
-                        withIcon(
-                                Utils.createMenuItem("Object Spy", sActionListener))), 'S'));
-        object.add(withMnemonics(
-                withShortCut(
-                        withIcon(
-                                Utils.createMenuItem("Object Heal", sActionListener))), 'H'));
-        object.addSeparator();
-        object.add(withMnemonics(
-                withShortCut(
-                        withIcon(
-                                Utils.createMenuItem("Image Spy", sActionListener))), 'I'));
-        object.add(withMnemonics(
-                withShortCut(
-                        withIcon(
-                                Utils.createMenuItem("Mobile Spy", sActionListener))), 'M'));
-        object.addSeparator();
-      //  object.add(
-      //          withMnemonics(
-      //                  withIcon(
-      //                          Utils.createMenuItem("Inject Script", sActionListener)), 'n'));
-      //  object.add(
-      //          withMnemonics(Utils.createMenuItem("Create CM Project", sActionListener), 'C'));
-        return object;
     }
 
     private JMenu createTestDataMenu() {
