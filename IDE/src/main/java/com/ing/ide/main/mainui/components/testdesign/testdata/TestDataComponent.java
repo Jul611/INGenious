@@ -446,27 +446,23 @@ public class TestDataComponent extends JPanel implements ChangeListener, ActionL
 
     private void makeAsGlobalData(TestDataTablePanel tdPanel) {
         int[] columns = tdPanel.table.getSelectedColumns();
-        if (columns != null && columns.length > 0) {
+        int[] rows = tdPanel.table.getSelectedRows();
+        if (columns != null && columns.length > 0 && rows != null && rows.length > 0) {
             GlobalDataModel gdModel = getCurrentEnviromentData().getGlobalData();
             Object[] data = addAndGetKeyForGlobalData(gdModel);
-            int row = (int) data[1];
-            String[] columnNames = new String[columns.length];
-            for (int i = 0; i < columns.length; i++) {
-                columnNames[i] = tdPanel.table.getColumnName(columns[i]);
-            }
-            for (String columnName : columnNames) {
+            int globalRow = (int) data[1];
+            
+            // Copy values from the first selected row in test data to global data
+            int sourceRow = rows[0];
+            for (int viewCol : columns) {
+                String columnName = tdPanel.table.getColumnName(viewCol);
                 gdModel.addColumn(columnName);
-                if (Objects.toString(gdModel.getValueAt(row,
-                        gdModel.getColumnIndex(columnName)), "").isEmpty()) {
-
-                    gdModel.setValueAt(
-                            tdPanel.table.getValueAt(
-                                    tdPanel.table.getSelectedRow(),
-                                    tdPanel.std.getColumnIndex(columnName)),
-                            row, gdModel.getColumnIndex(columnName));
-
-                }
+                // Get value using VIEW column index (table.getValueAt uses view indices)
+                Object value = tdPanel.table.getValueAt(sourceRow, viewCol);
+                // Copy value from test data to global data, overwriting if necessary
+                gdModel.setValueAt(value, globalRow, gdModel.getColumnIndex(columnName));
             }
+            // Replace all selected cells with global data reference
             tdPanel.makeAsGlobalData(data[0].toString());
         }
     }
