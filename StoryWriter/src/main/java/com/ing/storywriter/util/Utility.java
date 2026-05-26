@@ -13,7 +13,7 @@ public class Utility {
     static final SimpleDateFormat DATA_FORMAT = new SimpleDateFormat("MM/dd/yyyy"),
             TIME_FORMAT = new SimpleDateFormat("hh:mm:ss a"),
             DATE_FILE_FORMAT = new SimpleDateFormat("MM-dd-yyyy"),
-            TIME_FILE_FORMAT = new SimpleDateFormat("hh-mm-ssa"),
+            TIME_FILE_FORMAT = new SimpleDateFormat("hh-mm-ss a"),
             LIC_DATE_FORMAT = new SimpleDateFormat("ddMMyyyy");
 
     static Path path;
