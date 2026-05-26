@@ -229,13 +229,11 @@ public final class INGIcons {
         register("testExecution.pull",   MaterialDesignA.ARROW_LEFT,                   CLR_SAVE);
 
         // ── Debug ──
-       
-        register("debug.console",        MaterialDesignC.CONSOLE,                      CLR_NAV);
-        register("debug.stepover",       MaterialDesignD.DEBUG_STEP_OVER,              CLR_TOOL);
-        register("debug.stepinto",       MaterialDesignD.DEBUG_STEP_INTO,              CLR_DEBUG); // unused
-        register("debug.stepout",        MaterialDesignD.DEBUG_STEP_OUT,               CLR_DEBUG); // unused
+        register("debug.stepover",       MaterialDesignD.DEBUG_STEP_OVER,              CLR_DEBUG);
+        register("debug.stepinto",       MaterialDesignD.DEBUG_STEP_INTO,              CLR_DEBUG);
+        register("debug.stepout",        MaterialDesignD.DEBUG_STEP_OUT,               CLR_DEBUG);
         register("debug.continue",       MaterialDesignP.PLAY,                         CLR_RUN);
-        register("debug.pause",          MaterialDesignP.PAUSE,                        CLR_OPEN);
+        register("debug.pause",          MaterialDesignP.PAUSE,                        Color.web("#D4880F"));
 
         // ── StartUp / Project ──
         register("startup.recent",       MaterialDesignH.HISTORY,                      CLR_NAV);

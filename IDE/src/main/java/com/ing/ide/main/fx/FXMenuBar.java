@@ -23,6 +23,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+
 /**
  * JavaFX-based MenuBar wrapped in a JFXPanel for embedding in Swing.
  * Provides CSS-styled modern menus with the same actions as the Swing AppMenuBar.
@@ -54,6 +62,7 @@ public class FXMenuBar extends JFXPanel {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        registerSwingAccelerators();
     }
 
     private void initFX() {
@@ -86,6 +95,17 @@ public class FXMenuBar extends JFXPanel {
         FXTheme.registerScene(scene);
         setScene(scene);
     }
+
+
+    private void registerSwingAccelerators() {
+        setFocusable(true);
+
+        int shortcutMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, shortcutMask))
+
+    }
+
 
     private void setMenuGraphic(Menu menu, String iconName, int size) {
         org.kordamp.ikonli.javafx.FontIcon icon = INGIcons.fxColored(iconName, size);

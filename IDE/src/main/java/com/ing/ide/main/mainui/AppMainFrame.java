@@ -142,6 +142,8 @@ public class AppMainFrame extends JFrame {
         spyHealReco = new SHR(this);
         progressed(70);
         menuBar = new AppMenuBar(sActionListener);
+
+
        // toolBar = new AppToolBar(sActionListener);
         stepMap = new StepMap();
         loader = new LoaderScreen();

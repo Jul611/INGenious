@@ -84,7 +84,7 @@ public class Utility {
 	 * @return the TIME_FILE_FORMAT
 	 */
 	public static SimpleDateFormat getTIME_FILE_FORMAT() {
-		return new SimpleDateFormat("hh-mm-ss a");
+		return new SimpleDateFormat("hh-mm-ssa");
 	}
 
 	/**

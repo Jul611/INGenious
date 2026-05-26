@@ -101,7 +101,7 @@ public class UtilityTest {
         assertThat(dt).isNotNull();
         assertThat(dt).contains("_");
         // Format: MM-dd-yyyy_hh-mm-ssAM/PM
-        assertThat(dt).matches("\\d{2}-\\d{2}-\\d{4}_\\d{2}-\\d{2}-\\d{2}\\s?[aApP][mM]");
+        assertThat(dt).matches("\\d{2}-\\d{2}-\\d{4}_\\d{2}-\\d{2}-\\d{2}[AP]M");
     }
 
     @Test
