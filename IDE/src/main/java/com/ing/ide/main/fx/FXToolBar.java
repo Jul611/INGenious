@@ -20,6 +20,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+
 /**
  * JavaFX-based ToolBar wrapped in a JFXPanel for embedding in Swing.
  * Provides CSS-styled modern toolbar buttons with the same actions as AppToolBar.

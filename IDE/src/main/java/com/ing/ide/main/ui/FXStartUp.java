@@ -28,6 +28,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+
+
 /**
  * Beautiful JavaFX-based StartUp screen for INGenious Playwright Studio.
  * Replaces the old Swing StartUp dialog with a modern, visually appealing UI.

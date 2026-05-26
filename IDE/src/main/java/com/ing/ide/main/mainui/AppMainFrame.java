@@ -63,6 +63,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import org.apache.commons.codec.binary.Base64;
 
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+
 public class AppMainFrame extends JFrame {
 
     private final SlideShow slideShow;
@@ -142,6 +146,11 @@ public class AppMainFrame extends JFrame {
         spyHealReco = new SHR(this);
         progressed(70);
         menuBar = new AppMenuBar(sActionListener);
+
+
+        
+
+
        // toolBar = new AppToolBar(sActionListener);
         stepMap = new StepMap();
         loader = new LoaderScreen();
@@ -767,4 +776,6 @@ public class AppMainFrame extends JFrame {
     public AppActionListener getsActionListener() {
         return sActionListener;
     }
+
+    
 }
