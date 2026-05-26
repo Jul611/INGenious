@@ -1039,13 +1039,17 @@ public class TestCaseComponent extends JPanel implements ActionListener {
             JToolBar toolBar = new JToolBar();
             toolBar.setFloatable(false);
             JButton drag = new JButton("   ");
+
+            
             toolBar.add(drag);
             registerDrag(drag);
-            toolBar.add(create("Show Console", "cmd"));
+            
+            toolBar.add(create("Show Console", "console"));
             toolBar.add(create("Continue Execution", "continue"));
-            toolBar.add(create("Go to Next Step", "next"));
+            toolBar.add(create("Go to Next Step", "stepover")); 
             toolBar.add(create("Pause the Execution", "pause"));
             toolBar.add(create("Stop the Execution", "stop"));
+            
             add(toolBar);
         }
 
