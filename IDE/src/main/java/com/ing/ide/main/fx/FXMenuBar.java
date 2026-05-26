@@ -15,7 +15,14 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.VBox;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +61,7 @@ public class FXMenuBar extends JFXPanel {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        registerSwingAccelerators();
     }
 
     private void initFX() {
@@ -83,6 +91,45 @@ public class FXMenuBar extends JFXPanel {
         Scene scene = new Scene(root);
         FXTheme.registerScene(scene);
         setScene(scene);
+    }
+
+    private void registerSwingAccelerators() {
+        setFocusable(true);
+        int shortcutMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, shortcutMask | InputEvent.SHIFT_DOWN_MASK), "New Project");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, shortcutMask | InputEvent.SHIFT_DOWN_MASK), "Open Project");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutMask | InputEvent.SHIFT_DOWN_MASK), "Save Project");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.ALT_DOWN_MASK), "Quit");
+
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, shortcutMask | InputEvent.ALT_DOWN_MASK), "Object Spy");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, shortcutMask | InputEvent.ALT_DOWN_MASK), "Object Heal");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, shortcutMask | InputEvent.ALT_DOWN_MASK), "Image Spy");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, shortcutMask | InputEvent.ALT_DOWN_MASK), "Mobile Spy");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutMask | InputEvent.ALT_DOWN_MASK), "Run Settings");
+
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, shortcutMask | InputEvent.SHIFT_DOWN_MASK), "Exploratory");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H, shortcutMask | InputEvent.SHIFT_DOWN_MASK), "Har Compare");
+
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK), "Test Design");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK), "Test Execution");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK), "Dashboard");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK), "API Tester");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK), "AdjustUI");
+
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), "Help");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0), "About");
+        bindAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0), "Show Log");
+    }
+
+    private void bindAccelerator(KeyStroke keyStroke, String command) {
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, command);
+        getActionMap().put(command, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                fireSwingAction(command);
+            }
+        });
     }
 
     private void setMenuGraphic(Menu menu, String iconName, int size) {
