@@ -98,8 +98,9 @@ public class FXDashBoard extends javax.swing.JPanel {
         Label treeHeader = new Label("Test Lab");
         treeHeader.getStyleClass().add("panel-header-label");
 
-        VBox treeContainer = new VBox(treeHeader, treeView);
         VBox.setVgrow(treeView, Priority.ALWAYS);
+        VBox treeContainer = new VBox(treeHeader, treeView);
+        treeContainer.setMinWidth(200);
         treeContainer.getStyleClass().add("panel-container");
         treeContainer.setMinWidth(200);
 
@@ -110,8 +111,8 @@ public class FXDashBoard extends javax.swing.JPanel {
 
         navToolBar = createNavToolBar();
 
-        VBox browserContainer = new VBox(navToolBar, webView);
         VBox.setVgrow(webView, Priority.ALWAYS);
+        VBox browserContainer = new VBox(navToolBar, webView);
         browserContainer.getStyleClass().add("panel-container");
 
         // ── SplitPane ──
