@@ -41,6 +41,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 public class Utils {
 
     public static final Image FAVICON = new ImageIcon(Utils.class.getResource("/ui/resources/favicon.png")).getImage();
+    public static final Image FAVICON_OUTLINE = new ImageIcon(Utils.class.getResource("/ui/resources/favicon-outline.png")).getImage();
     private static final FileFilter JAVAC_FILTER = new JavaCFilter();
 
     public static List<Integer> getReverseSorted(int[] array) {
@@ -163,6 +164,22 @@ public class Utils {
         JMenuItem btn = new JMenuItem();
         btn.setActionCommand(action);
         btn.setText(action);
+        btn.addActionListener(actionlistener);
+        btn.setFont(UIManager.getFont("TableMenu.font"));
+        return btn;
+    }
+
+    /**
+     * Creates a menu item with separate text and action command.
+     * @param text Display text for the menu item
+     * @param actionlistener Action listener
+     * @param actionCommand Action command to be sent when clicked
+     * @return JMenuItem
+     */
+    public static JMenuItem createMenuItem(String text, ActionListener actionlistener, String actionCommand) {
+        JMenuItem btn = new JMenuItem();
+        btn.setActionCommand(actionCommand);
+        btn.setText(text);
         btn.addActionListener(actionlistener);
         btn.setFont(UIManager.getFont("TableMenu.font"));
         return btn;

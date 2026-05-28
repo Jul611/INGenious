@@ -1,21 +1,26 @@
 
 package com.ing.ide.main.mainui.components.testdesign.or;
 
-import com.ing.ide.main.fx.FXPanelHeader;
-import com.ing.ide.main.fx.INGIcons;
-import com.ing.ide.main.mainui.components.testdesign.TestDesign;
-import com.ing.ide.main.mainui.components.testdesign.or.api.APIORPanel;
-import com.ing.ide.main.mainui.components.testdesign.or.mobile.MobileORPanel;
-import com.ing.ide.main.mainui.components.testdesign.or.web.WebORPanel;
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
+import javax.swing.text.Highlighter.Highlight;
+
+import com.ing.ide.main.fx.FXPanelHeader;
+import com.ing.ide.main.fx.INGIcons;
+import com.ing.ide.main.mainui.components.testdesign.TestDesign;
+import com.ing.ide.main.mainui.components.testdesign.or.mobile.MobileORPanel;
+import com.ing.ide.main.mainui.components.testdesign.or.sap.SapORPanel;
+import com.ing.ide.main.mainui.components.testdesign.or.structureddata.StructuredDataORPanel;
+import com.ing.ide.main.mainui.components.testdesign.or.web.WebORPanel;
 
 /**
  * Main UI container for managing the Object Repository within Test Design.
@@ -45,7 +50,11 @@ public class ObjectRepo extends JPanel implements ItemListener {
 
     private final MobileORPanel mobileOR;
 
-    private final APIORPanel apiOR;
+    private final StructuredDataORPanel structuredDataOR;
+
+    private final SapORPanel sapOR;
+
+    FXPanelHeader header = new FXPanelHeader("Object Repository");
 
     public ObjectRepo(TestDesign testDesign) {
         this.testDesign = testDesign;
@@ -53,7 +62,8 @@ public class ObjectRepo extends JPanel implements ItemListener {
         repos = new JPanel();
         webOR = new WebORPanel(testDesign);
         mobileOR = new MobileORPanel(testDesign);
-        apiOR = new APIORPanel(testDesign);
+        structuredDataOR = new StructuredDataORPanel(testDesign);
+        sapOR = new SapORPanel(testDesign);
         init();
     }
 
@@ -64,7 +74,7 @@ public class ObjectRepo extends JPanel implements ItemListener {
         // Create header panel with FXPanelHeader + SwitchToolBar
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
-        FXPanelHeader header = new FXPanelHeader("Object Repository");
+        header = new FXPanelHeader("Object Repository");
         headerPanel.add(header, BorderLayout.NORTH);
         headerPanel.add(switchToolBar, BorderLayout.CENTER);
         
@@ -78,7 +88,8 @@ public class ObjectRepo extends JPanel implements ItemListener {
         repos.setOpaque(false);
         repos.add(webOR, "Web");
         repos.add(mobileOR, "Mobile");
-        repos.add(apiOR, "API");
+        repos.add(structuredDataOR, "Structured Data");
+        repos.add(sapOR, "SAP");
         switchToolBar.bgroup.getElements().nextElement().setSelected(true);
     }
 
@@ -97,8 +108,11 @@ public class ObjectRepo extends JPanel implements ItemListener {
                     case "Mobile":
                         mobileOR.adjustUI();
                         break;
-                    case "API":
-                        apiOR.adjustUI();
+                    case "Structured Data":
+                        structuredDataOR.adjustUI();
+                        break;
+                    case "SAP":
+                        sapOR.adjustUI();
                         break;
                 }
             });
@@ -108,13 +122,15 @@ public class ObjectRepo extends JPanel implements ItemListener {
     public void load() {
         webOR.load();
         mobileOR.load();
-        apiOR.load();
+        structuredDataOR.load();
+        sapOR.load();
     }
 
     public void adjustUI() {
         webOR.adjustUI();
         mobileOR.adjustUI();
-        apiOR.adjustUI();
+        structuredDataOR.adjustUI();
+        sapOR.adjustUI();
     }
 
     public WebORPanel getWebOR() {
@@ -125,8 +141,12 @@ public class ObjectRepo extends JPanel implements ItemListener {
         return mobileOR;
     }
 
-    public APIORPanel getAPIOR() {
-        return apiOR;
+    public StructuredDataORPanel getStructuredDataOR() {
+        return structuredDataOR;
+    }
+
+    public SapORPanel getSapOR() {
+        return sapOR;
     }
 
     public Boolean navigateToObject(String objectName, String pageName) {
@@ -136,8 +156,11 @@ public class ObjectRepo extends JPanel implements ItemListener {
         } else if (mobileOR.navigateToObject(objectName, pageName)) {
             switchToolBar.mobileButton.setSelected(true);
             return true;
-        } else if (apiOR.navigateToObject(objectName, pageName)) {
-            switchToolBar.apiButton.setSelected(true);
+        } else if (structuredDataOR.navigateToObject(objectName, pageName)) {
+            switchToolBar.structuredDataButton.setSelected(true);
+            return true;
+        } else if (sapOR.navigateToObject(objectName, pageName)) {
+            switchToolBar.sapButton.setSelected(true);
             return true;
         }
         return false;
@@ -150,7 +173,8 @@ public class ObjectRepo extends JPanel implements ItemListener {
         private JToggleButton webButton;
         //private JToggleButton imageButton;
         private JToggleButton mobileButton;
-        private JToggleButton apiButton;
+        private JToggleButton structuredDataButton;
+        private JToggleButton sapButton;
 
         public SwitchToolBar() {
             init();
@@ -168,21 +192,30 @@ public class ObjectRepo extends JPanel implements ItemListener {
             add(webButton = create("Web", "or.Web"));
             //add(imageButton = create("Image"));
             add(mobileButton = create("Mobile", "or.Mobile"));
-            add(apiButton = create("API", "or.API"));
+
+            add(structuredDataButton = create("Structured Data", "or.StructuredData"));
+            add(sapButton = create("SAP", "or.SAP"));
         }
 
         private JToggleButton create(String text, String iconKey) {
-            JToggleButton togg = new JToggleButton();
-            togg.setIcon(INGIcons.swingColored(iconKey, 18));
-            togg.setToolTipText(text + " Object Repository");
-            togg.setActionCommand(text);
-            togg.addItemListener(ObjectRepo.this);
+            JToggleButton toggleButton = new JToggleButton();
+            toggleButton.setIcon(INGIcons.swingColored(iconKey, 18));
+            toggleButton.setToolTipText(text + " Object Repository");
+            toggleButton.setActionCommand(text);
+            toggleButton.addItemListener(ObjectRepo.this);
             // Remove hover/focus background effect
-            togg.setContentAreaFilled(false);
-            togg.setFocusPainted(false);
-            togg.setBorderPainted(false);
-            bgroup.add(togg);
-            return togg;
+            toggleButton.setContentAreaFilled(false);
+            toggleButton.setFocusPainted(false);
+            toggleButton.setBorderPainted(false);
+            toggleButton.addItemListener(e -> {
+                if (toggleButton.isSelected()) {
+                    toggleButton.setIcon(INGIcons.swingColored(iconKey+".selected", 18));
+                } else {
+                    toggleButton.setIcon(INGIcons.swingColored(iconKey, 18));
+                }
+            });
+            bgroup.add(toggleButton);
+            return toggleButton;
         }
     }
 }

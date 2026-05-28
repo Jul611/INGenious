@@ -131,6 +131,8 @@ public class HtmlSummaryHandler extends SummaryHandler implements PrimaryHandler
             testSetData.put(RDS.TestSet.MAX_THREADS, Control.exe.getExecSettings().getRunSettings().getThreadCount());
             testSetData.put(RDS.TestSet.BDD_STYLE, Control.exe.getExecSettings().getRunSettings().isBddReportEnabled());
             testSetData.put(RDS.TestSet.PERF_REPORT, Control.exe.getExecSettings().getRunSettings().isPerformanceLogEnabled());
+            testSetData.put(RDS.TestSet.VIDEO_REPORT, Control.exe.getExecSettings().getRunSettings().isVideoEnabled());
+            testSetData.put(RDS.TestSet.TRACING_REPORT, Control.exe.getExecSettings().getRunSettings().isTracingEnabled());
             testSetData.put(RDS.TestSet.START_TIME, runTime);
             testSetData.put(RDS.TestSet.TEST_RUN, RunManager.getGlobalSettings().isTestRun());
             testSetData.put(RDS.TestSet.NO_OF_TESTS, size);
@@ -247,6 +249,15 @@ public class HtmlSummaryHandler extends SummaryHandler implements PrimaryHandler
             // Copy media folder for embedded CSS/JS resources
             FileUtils.copyDirectoryToDirectory(new File(FilePath.getReportMediaPath()),
                     new File(FilePath.getCurrentResultsPath()));
+            
+            // Fix media paths in the copied HTML files
+            String summaryHtml = FileUtils.readFileToString(new File(FilePath.getCurrentSummaryHTMLPathV2()), Charset.defaultCharset());
+            summaryHtml = summaryHtml.replaceAll("../../../../media", "media");
+            FileUtils.writeStringToFile(new File(FilePath.getCurrentSummaryHTMLPathV2()), summaryHtml, Charset.defaultCharset());
+            
+            String detailedHtml = FileUtils.readFileToString(new File(FilePath.getCurrentDetailedHTMLPathV2()), Charset.defaultCharset());
+            detailedHtml = detailedHtml.replaceAll("../../../../media", "media");
+            FileUtils.writeStringToFile(new File(FilePath.getCurrentDetailedHTMLPathV2()), detailedHtml, Charset.defaultCharset());
         } else {
             // Copy classic templates
             FileUtils.copyFileToDirectory(new File(FilePath.getSummaryHTMLPath()),
@@ -260,6 +271,10 @@ public class HtmlSummaryHandler extends SummaryHandler implements PrimaryHandler
             if (useModern) {
                 FileUtils.copyFileToDirectory(new File(FilePath.getPerfReportHTMLPathV2()),
                         new File(FilePath.getCurrentResultsPath()));
+                // Fix media paths in performance report
+                String perfHtml = FileUtils.readFileToString(new File(FilePath.getCurrentPerfReportHTMLPathV2()), Charset.defaultCharset());
+                perfHtml = perfHtml.replaceAll("../../../../media", "media");
+                FileUtils.writeStringToFile(new File(FilePath.getCurrentPerfReportHTMLPathV2()), perfHtml, Charset.defaultCharset());
             } else {
                 FileUtils.copyFileToDirectory(new File(FilePath.getPerfReportHTMLPath()),
                         new File(FilePath.getCurrentResultsPath()));
@@ -269,6 +284,10 @@ public class HtmlSummaryHandler extends SummaryHandler implements PrimaryHandler
             if (useModern) {
                 FileUtils.copyFileToDirectory(new File(FilePath.getVideoReportHTMLPathV2()),
                         new File(FilePath.getCurrentResultsPath()));
+                // Fix media paths in video report
+                String videoHtml = FileUtils.readFileToString(new File(FilePath.getCurrentVideoReportHTMLPathV2()), Charset.defaultCharset());
+                videoHtml = videoHtml.replaceAll("../../../../media", "media");
+                FileUtils.writeStringToFile(new File(FilePath.getCurrentVideoReportHTMLPathV2()), videoHtml, Charset.defaultCharset());
             } else {
                 FileUtils.copyFileToDirectory(new File(FilePath.getVideoReportHTMLPath()),
                         new File(FilePath.getCurrentResultsPath()));

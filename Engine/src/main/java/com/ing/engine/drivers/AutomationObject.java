@@ -6,9 +6,12 @@ import com.ing.datalib.or.common.ObjectGroup;
 import com.ing.datalib.or.mobile.MobileORObject;
 import com.ing.datalib.or.mobile.MobileORPage;
 import com.ing.datalib.or.mobile.ResolvedMobileObject;
+import com.ing.datalib.or.structureddata.ResolvedStructuredDataObject;
+import com.ing.datalib.or.structureddata.StructuredDataORObject;
 import com.ing.datalib.or.web.WebORObject;
 import com.ing.datalib.or.web.WebORPage;
 import com.ing.datalib.or.web.ResolvedWebObject;
+import com.ing.datalib.or.sap.ResolvedSapObject;
 import com.ing.engine.constants.SystemDefaults;
 import com.ing.engine.core.Control;
 import com.ing.engine.core.CommandControl;
@@ -151,6 +154,20 @@ public class AutomationObject implements AutomationObjectApi {
                 return mresolved.getGroup();
             }
         } catch (Exception ignore) { }
+        try {
+            ResolvedStructuredDataObject.PageRef sdref = ResolvedStructuredDataObject.PageRef.parse(page);
+            ResolvedStructuredDataObject sdresolved = objRep.resolveStructuredDataObject(sdref, object);
+            if (sdresolved != null && sdresolved.getGroup() != null) {
+                return sdresolved.getGroup();
+            }
+        } catch (Exception ignore) { }
+        try {
+            ResolvedSapObject.PageRef sref = ResolvedSapObject.PageRef.parse(page);
+            ResolvedSapObject sresolved = objRep.resolveSapObject(sref, object);
+            if (sresolved != null && sresolved.getGroup() != null) {
+                return sresolved.getGroup();
+            }
+        } catch (Exception ignore) { }
         if (objRep.getWebOR() != null && objRep.getWebOR().getPageByName(page) != null) {
             return objRep.getWebOR().getPageByName(page).getObjectGroupByName(object);
         } else if (objRep.getWebSharedOR() != null && objRep.getWebSharedOR().getPageByName(page) != null) {
@@ -159,6 +176,14 @@ public class AutomationObject implements AutomationObjectApi {
             return objRep.getMobileOR().getPageByName(page).getObjectGroupByName(object);
         } else if (objRep.getMobileSharedOR() != null && objRep.getMobileSharedOR().getPageByName(page) != null) {
             return objRep.getMobileSharedOR().getPageByName(page).getObjectGroupByName(object);
+        } else if (objRep.getStructuredDataOR() != null && objRep.getStructuredDataOR().getPageByName(page) != null) {
+            return objRep.getStructuredDataOR().getPageByName(page).getObjectGroupByName(object);
+        } else if (objRep.getStructuredDataSharedOR() != null && objRep.getStructuredDataSharedOR().getPageByName(page) != null) {
+            return objRep.getStructuredDataSharedOR().getPageByName(page).getObjectGroupByName(object);
+        } else if (objRep.getSapOR() != null && objRep.getSapOR().getPageByName(page) != null) {
+            return objRep.getSapOR().getPageByName(page).getObjectGroupByName(object);
+        } else if (objRep.getSapSharedOR() != null && objRep.getSapSharedOR().getPageByName(page) != null) {
+            return objRep.getSapSharedOR().getPageByName(page).getObjectGroupByName(object);
         }
         return null;
     }
@@ -209,6 +234,26 @@ public class AutomationObject implements AutomationObjectApi {
             return objRep.getMobileOR().getPageByName(page).getObjectGroupByName(object).getObjects().get(0);
         } else if (objRep.getMobileSharedOR() != null && objRep.getMobileSharedOR().getPageByName(page) != null) {
             return objRep.getMobileSharedOR().getPageByName(page).getObjectGroupByName(object).getObjects().get(0);
+        }
+        return null;
+    }
+
+    public ObjectGroup<StructuredDataORObject> getStructuredDataObjects(String page, String object) {
+        ObjectRepository objRep = Control.getCurrentProject().getObjectRepository();
+        if (objRep.getStructuredDataOR() != null && objRep.getStructuredDataOR().getPageByName(page) != null) {
+            return objRep.getStructuredDataOR().getPageByName(page).getObjectGroupByName(object);
+        } else if (objRep.getStructuredDataSharedOR() != null && objRep.getStructuredDataSharedOR().getPageByName(page) != null) {
+            return objRep.getStructuredDataSharedOR().getPageByName(page).getObjectGroupByName(object);
+        }
+        return null;
+    }
+
+    public StructuredDataORObject getStructuredDataObject(String page, String object) {
+        ObjectRepository objRep = Control.getCurrentProject().getObjectRepository();
+        if (objRep.getMobileOR() != null && objRep.getMobileOR().getPageByName(page) != null) {
+            return objRep.getStructuredDataOR().getPageByName(page).getObjectGroupByName(object).getObjects().get(0);
+        } else if (objRep.getStructuredDataSharedOR() != null && objRep.getStructuredDataSharedOR().getPageByName(page) != null) {
+            return objRep.getStructuredDataSharedOR().getPageByName(page).getObjectGroupByName(object).getObjects().get(0);
         }
         return null;
     }
@@ -294,7 +339,7 @@ public class AutomationObject implements AutomationObjectApi {
                     locator = this.page.locator("xpath=" + value);
                     break;
                 case "Role":
-                    locator = createRoleLocator(value, this.page);
+                    locator = createRoleLocator(value, this.page, (Page.GetByRoleOptions) options);
                     break;
                 case "ChainedLocator":
                     locator = createChainedLocator(value, this.page);
@@ -339,7 +384,7 @@ public class AutomationObject implements AutomationObjectApi {
                     locator = framelocator.locator("xpath=" + value);
                     break;
                 case "Role":
-                    locator = createRoleLocator(value, framelocator);
+                    locator = createRoleLocator(value, framelocator, (FrameLocator.GetByRoleOptions) options);
                     break;
                 case "ChainedLocator":
                     locator = createChainedLocator(value, framelocator);
@@ -851,11 +896,9 @@ public class AutomationObject implements AutomationObjectApi {
                 
                 if (locatorType.equals(LocatorType.LOCATOR)){
                     textOptions.setExact(exact);
-                    System.out.println("textOptions : " + textOptions);
                     return textOptions;
                 } else if (locatorType.equals(LocatorType.FRAMELOCATOR)){
                     textFrameLocatorOptions.setExact(exact);
-                    System.out.println("textFrameLocatorOptions : " + textFrameLocatorOptions);
                     return textFrameLocatorOptions;
                 }
                 break;
@@ -865,11 +908,9 @@ public class AutomationObject implements AutomationObjectApi {
 
                 if (locatorType.equals(LocatorType.LOCATOR)){
                     labelOptions.setExact(exact);
-                    System.out.println("labelOptions : " + labelOptions);
                     return labelOptions;
                 } else if (locatorType.equals(LocatorType.FRAMELOCATOR)){
                     labelFrameLocatorOptions.setExact(exact);
-                    System.out.println("labelFrameLocatorOptions : " + labelFrameLocatorOptions);
                     return labelFrameLocatorOptions;
                 }
                 break;
@@ -879,11 +920,9 @@ public class AutomationObject implements AutomationObjectApi {
 
                 if (locatorType.equals(LocatorType.LOCATOR)){
                     placeholderOptions.setExact(exact);
-                    System.out.println("placeholderOptions : " + placeholderOptions);
                     return placeholderOptions;
                 } else if (locatorType.equals(LocatorType.FRAMELOCATOR)){
                     placeholderFrameLocatorOptions.setExact(exact);
-                    System.out.println("placeholderFrameLocatorOptions : " + placeholderFrameLocatorOptions);
                     return placeholderFrameLocatorOptions;
                 }
                 break;
@@ -893,11 +932,9 @@ public class AutomationObject implements AutomationObjectApi {
 
                 if (locatorType.equals(LocatorType.LOCATOR)){
                     altTextOptions.setExact(exact);
-                    System.out.println("altTextOptions : " + altTextOptions);
                     return altTextOptions;
                 } else if (locatorType.equals(LocatorType.FRAMELOCATOR)){
                     altTextFrameLocatorOptions.setExact(exact);
-                    System.out.println("altTextFrameLocatorOptions : " + altTextFrameLocatorOptions);
                     return altTextFrameLocatorOptions;
                 }
                 break;
@@ -907,26 +944,32 @@ public class AutomationObject implements AutomationObjectApi {
 
                 if (locatorType.equals(LocatorType.LOCATOR)){
                     titleOptions.setExact(exact);
-                    System.out.println("titleOptions : " + titleOptions);
                     return titleOptions;
                 } else if (locatorType.equals(LocatorType.FRAMELOCATOR)){
                     titleFrameLocatorOptions.setExact(exact);
-                    System.out.println("titleFrameLocatorOptions : " + titleFrameLocatorOptions);
                     return titleFrameLocatorOptions;
+                }
+                break;
+            case "Role":
+                Page.GetByRoleOptions roleOptions = new Page.GetByRoleOptions();
+                FrameLocator.GetByRoleOptions roleFrameLocatorOptions = new FrameLocator.GetByRoleOptions();
+
+                if (locatorType.equals(LocatorType.LOCATOR)){
+                    roleOptions.setExact(exact);
+                    return roleOptions;
+                } else if (locatorType.equals(LocatorType.FRAMELOCATOR)){
+                    roleFrameLocatorOptions.setExact(exact);
+                    return roleFrameLocatorOptions;
                 }
                 break;
         }
         return null;
     }
 
-    private Locator createRoleLocator(String value, Page page) {
+    private Locator createRoleLocator(String value, Page page, Page.GetByRoleOptions roleOptions) {
         if (value.contains(";")) {
             String[] parts = value.split(";");
             String roleType = parts[0].toUpperCase();
-            Page.GetByRoleOptions roleOptions = new Page.GetByRoleOptions();
-            if (value.toLowerCase().contains(";exact")) {
-                roleOptions.setExact(true);
-            }
             if (parts.length > 1) {
                 roleOptions.setName(parts[1]);
             }
@@ -936,14 +979,10 @@ public class AutomationObject implements AutomationObjectApi {
         }
     }
 
-    private Locator createRoleLocator(String value, FrameLocator framelocator) {
+    private Locator createRoleLocator(String value, FrameLocator framelocator, FrameLocator.GetByRoleOptions roleOptions) {
         if (value.contains(";")) {
             String[] parts = value.split(";");
             String roleType = parts[0].toUpperCase();
-            FrameLocator.GetByRoleOptions roleOptions = new FrameLocator.GetByRoleOptions();
-            if (value.toLowerCase().contains(";exact")) {
-                roleOptions.setExact(true);
-            }
             if (parts.length > 1) {
                 roleOptions.setName(parts[1]);
             }

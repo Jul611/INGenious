@@ -25,9 +25,14 @@ import com.ing.datalib.model.DataItem;
 import com.ing.datalib.model.Meta;
 import com.ing.datalib.model.ProjectInfo;
 import com.ing.datalib.or.ObjectRepository;
+import com.ing.datalib.or.mobile.MobileOR;
+import com.ing.datalib.or.sap.SapOR;
+import com.ing.datalib.or.structureddata.StructuredDataOR;
+import com.ing.datalib.or.web.WebOR;
 import com.ing.datalib.or.web.WebOR.ORScope;
 import com.ing.datalib.settings.ProjectSettings;
 import com.ing.datalib.util.data.FileScanner;
+
 
 /**
  * Represents an automation project and acts as the central entry point for loading, managing,
@@ -162,10 +167,6 @@ public class Project {
      * Returns the list of reusable scenarios.
      * @return list of Reusable Components scenarios
      */
-    /**
-     * Returns the list of reusable scenarios.
-     * @return list of Reusable Components scenarios
-     */
     public List<Scenario> getReusableScenarios() {
         return reusableScenarios;
     }
@@ -193,7 +194,7 @@ public class Project {
      * @return the scenario if found, null otherwise
      */
     public Scenario getScenarioByName(String name) {
-        for (Scenario scenario : scenarios) {
+        for (Scenario scenario : getAllScenarios()) {
             if (scenario.getName().equalsIgnoreCase(name)) {
                 return scenario;
             }
@@ -208,6 +209,20 @@ public class Project {
      */
     public Scenario getReusableScenarioByName(String name) {
         for (Scenario scenario : reusableScenarios) {
+            if (scenario.getName().equalsIgnoreCase(name)) {
+                return scenario;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds a test plan scenario by name.
+     * @param name scenario name to search for (case-insensitive)
+     * @return the reusable scenario if found, null otherwise
+     */
+    public Scenario getTestPlanScenarioByName(String name) {
+        for (Scenario scenario : scenarios) {
             if (scenario.getName().equalsIgnoreCase(name)) {
                 return scenario;
             }
@@ -416,6 +431,10 @@ public class Project {
             getObjectRepository().getWebSharedOR().setName(newName);
             getObjectRepository().getMobileOR().setName(newName);
             getObjectRepository().getMobileSharedOR().setName(newName);
+            getObjectRepository().getStructuredDataOR().setName(newName);
+            getObjectRepository().getStructuredDataSharedOR().setName(newName);
+            getObjectRepository().getSapOR().setName(newName);
+            getObjectRepository().getSapSharedOR().setName(newName);
             return true;
         }
         return false;
@@ -800,7 +819,7 @@ public class Project {
      * @param newName new object name
      */
     public void refactorObjectName(String pageName, String oldName, String newName) {
-        for (Scenario scenario : scenarios) {
+        for (Scenario scenario : getAllScenarios()) {
             scenario.refactorObjectName(pageName, oldName, newName);
         }
     }
@@ -813,7 +832,7 @@ public class Project {
      * @param newObjName new object name
      */
     public void refactorObjectName(String oldpageName, String oldObjName, String newPageName, String newObjName) {
-        for (Scenario scenario : scenarios) {
+        for (Scenario scenario : getAllScenarios()) {
             scenario.refactorObjectName(oldpageName, oldObjName, newPageName, newObjName);
         }
     }
@@ -828,8 +847,68 @@ public class Project {
      * @param newName  new object name to apply
      */
     public void refactorObjectName(ORScope scope, String pageName, String oldName, String newName) {
-        for (Scenario scenario : scenarios) {
+        for (Scenario scenario : getAllScenarios()) {
             scenario.refactorObjectName(scope, pageName, oldName, newName);
+        }
+    }
+ 
+    /**
+     * Refactors Mobile OR object references in TestSteps.
+     * Mobile scope is mapped to Web scope because Scenarios/TestSteps
+     * are tool-agnostic and only care about PROJECT vs SHARED.
+     */
+    public void refactorMobileObjectName(MobileOR.ORScope scope, String pageName, String oldName, String newName) {
+        for (Scenario scenario : getAllScenarios()) {
+            WebOR.ORScope webScope =
+            (scope == MobileOR.ORScope.SHARED)
+                ? WebOR.ORScope.SHARED
+                : WebOR.ORScope.PROJECT;
+            scenario.refactorObjectName(
+                webScope,
+                pageName,
+                oldName,
+                newName
+            );
+        }
+    }
+
+     /**
+     * Refactors Structured Data OR object references in TestSteps.
+     * Mobile scope is mapped to Web scope because Scenarios/TestSteps
+     * are tool-agnostic and only care about PROJECT vs SHARED.
+     */
+    public void refactorStructuredDataObjectName(StructuredDataOR.ORScope scope, String pageName, String oldName, String newName) {
+        for (Scenario scenario : getAllScenarios()) {
+            WebOR.ORScope webScope =
+            (scope == StructuredDataOR.ORScope.SHARED)
+                ? WebOR.ORScope.SHARED
+                : WebOR.ORScope.PROJECT;
+            scenario.refactorObjectName(
+                webScope,
+                pageName,
+                oldName,
+                newName
+            );
+        }
+    }
+
+    /**
+     * Refactors SAP OR object references in TestSteps.
+     * SAP scope is mapped to Web scope because Scenarios/TestSteps
+     * are tool-agnostic and only care about PROJECT vs SHARED.
+     */
+    public void refactorSapObjectName(SapOR.ORScope scope, String pageName, String oldName, String newName) {
+        for (Scenario scenario : getAllScenarios()) {
+            WebOR.ORScope webScope =
+            (scope == SapOR.ORScope.SHARED)
+                ? WebOR.ORScope.SHARED
+                : WebOR.ORScope.PROJECT;
+            scenario.refactorObjectName(
+                webScope,
+                pageName,
+                oldName,
+                newName
+            );
         }
     }
 
@@ -839,7 +918,7 @@ public class Project {
      * @param newPageName new page name
      */
     public void refactorPageName(String oldPageName, String newPageName) {
-        for (Scenario scenario : scenarios) {
+        for (Scenario scenario : getAllScenarios()) {
             scenario.refactorPageName(oldPageName, newPageName);
         }
     }
@@ -868,7 +947,7 @@ public class Project {
     public void refactorPageName(ORScope scope, String oldPageName, String newPageName) {
         String oldScoped = scope == ORScope.SHARED ? "[Shared] " + oldPageName : "[Project] " + oldPageName;
         String newScoped = scope == ORScope.SHARED ? "[Shared] " + newPageName : "[Project] " + newPageName;
-        for (Scenario scenario : scenarios) {
+        for (Scenario scenario : getAllScenarios()) {
             scenario.refactorPageName(oldPageName, newPageName);
             scenario.refactorPageName(oldScoped, newScoped);
         }
@@ -927,13 +1006,37 @@ public class Project {
                     ? "[Shared] " + pageName
                     : "[Project] " + pageName;
         }
+        // Search in TestPlan scenarios
         for (Scenario scenario : scenarios) {
             impacted.addAll(scenario.getImpactedObjectTestCases(pageName, objectName));
             if (scopedPageName != null) {
                 impacted.addAll(scenario.getImpactedObjectTestCases(scopedPageName, objectName));
             }
         }
-        return new ArrayList<>(impacted);
+        // Search in ReusableComponents scenarios
+        for (Scenario scenario : reusableScenarios) {
+            impacted.addAll(scenario.getImpactedObjectTestCases(pageName, objectName));
+            if (scopedPageName != null) {
+                impacted.addAll(scenario.getImpactedObjectTestCases(scopedPageName, objectName));
+            }
+        }
+        // Sort by type (Test Plan first), then by scenario name, then by test case name
+        List<TestCase> sortedList = new ArrayList<>(impacted);
+        sortedList.sort((tc1, tc2) -> {
+            // First compare by source type (TEST_PLAN comes before REUSABLE_COMPONENTS)
+            int sourceCompare = tc1.getScenario().getSource().compareTo(tc2.getScenario().getSource());
+            if (sourceCompare != 0) {
+                return sourceCompare;
+            }
+            // Then compare by scenario name
+            int scenarioCompare = tc1.getScenario().getName().compareToIgnoreCase(tc2.getScenario().getName());
+            if (scenarioCompare != 0) {
+                return scenarioCompare;
+            }
+            // Finally compare by test case name
+            return tc1.getName().compareToIgnoreCase(tc2.getName());
+        });
+        return sortedList;
     }
 
     /**

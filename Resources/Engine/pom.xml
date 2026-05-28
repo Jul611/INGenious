@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ingenious-playwright</groupId>
     <artifactId>ingenious-engine</artifactId>
-    <version>2.4.1</version>
+    <version>3.0.0-preview</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <playwright.version>1.58.0</playwright.version>
@@ -57,7 +57,7 @@
         <mockito.version>5.14.2</mockito.version>
         <assertj.version>3.26.3</assertj.version>
 
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
@@ -217,6 +217,11 @@
             <version>${kafka-avro-serializer.version}</version>
         </dependency> -->
         <dependency>
+            <groupId>io.github.osobolev</groupId>
+            <artifactId>jacob</artifactId>
+            <version>1.21</version>
+        </dependency>
+        <dependency>
             <groupId>com.ing</groupId>
             <artifactId>ingenious-testdata-csv</artifactId>
             <version>${project.version}</version>
@@ -227,8 +232,7 @@
             <artifactId>ingenious-api</artifactId>
             <version>${ingenious-api.version}</version>
             <type>jar</type>
-        </dependency>
-        
+        </dependency>        
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-xml</artifactId>

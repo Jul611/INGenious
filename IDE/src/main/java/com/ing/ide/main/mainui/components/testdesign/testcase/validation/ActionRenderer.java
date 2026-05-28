@@ -3,7 +3,9 @@ package com.ing.ide.main.mainui.components.testdesign.testcase.validation;
 import com.ing.datalib.component.Scenario;
 import com.ing.datalib.component.TestStep;
 import com.ing.datalib.or.web.ResolvedWebObject;
+import com.ing.datalib.or.structureddata.ResolvedStructuredDataObject;
 import com.ing.datalib.or.mobile.ResolvedMobileObject;
+import com.ing.datalib.or.sap.ResolvedSapObject;
 import com.ing.engine.support.ObjectTypeUtil;
 import com.ing.engine.support.methodInf.MethodInfoManager;
 import com.ing.ingenious.api.types.ObjectType;
@@ -31,7 +33,11 @@ public class ActionRenderer extends AbstractRenderer {
     public void render(JComponent comp, TestStep step, Object value) {
         if (!step.isCommented()) {
             if (isEmpty(value)) {
-                setEmpty(comp);
+                if (isPristineStep(step)) {
+                    setDefault(comp);
+                } else {
+                    setEmpty(comp);
+                }
             } else if (step.isReusableStep()) {
                 if (isReusablePresent(step)) {
                     setDefault(comp);
@@ -101,12 +107,20 @@ public class ActionRenderer extends AbstractRenderer {
             return MethodInfoManager.getMethodListFor(objectName).contains(action);
         }
 
-        // Check if it's a web or mobile page object
         if (isWebObject(step)) {
             return MethodInfoManager.getMethodListFor(ObjectType.PLAYWRIGHT, ObjectType.WEB).contains(action);
         }
+
         if (isMobileObject(step)) {
             return MethodInfoManager.getMethodListFor(ObjectType.APP).contains(action);
+        }
+
+        if (isStructuredDataObject(step)) {
+            return MethodInfoManager.getMethodListFor(ObjectType.STRUCTUREDDATA).contains(action);
+        }
+
+        if (isSapObject(step)) {
+            return MethodInfoManager.getMethodListFor(ObjectType.SAP).contains(action);
         }
 
         // Fallback to generic actions available for any object
@@ -134,6 +148,32 @@ public class ActionRenderer extends AbstractRenderer {
         ResolvedMobileObject r = (ref != null && ref.name != null && ref.scope != null)
             ? repo.resolveMobileObject(ref, objectName)
             : repo.resolveMobileObjectWithScope(pageToken, objectName);
+
+        return r != null && r.isPresent();
+    }
+
+    private boolean isStructuredDataObject(TestStep step) {
+        var repo = step.getProject().getObjectRepository();
+        String pageToken = step.getReference();
+        String objectName = step.getObject();
+
+        ResolvedStructuredDataObject.PageRef ref = ResolvedStructuredDataObject.PageRef.parse(pageToken);
+        ResolvedStructuredDataObject r = (ref != null && ref.name != null && ref.scope != null)
+            ? repo.resolveStructuredDataObject(ref, objectName)
+            : repo.resolveStructuredDataObjectWithScope(pageToken, objectName);
+
+        return r != null && r.isPresent();
+    }
+    
+    private boolean isSapObject(TestStep step) {
+        var repo = step.getProject().getObjectRepository();
+        String pageToken = step.getReference();
+        String objectName = step.getObject();
+
+        ResolvedSapObject.PageRef ref = ResolvedSapObject.PageRef.parse(pageToken);
+        ResolvedSapObject r = (ref != null && ref.name != null && ref.scope != null)
+            ? repo.resolveSapObject(ref, objectName)
+            : repo.resolveSapObjectWithScope(pageToken, objectName);
 
         return r != null && r.isPresent();
     }

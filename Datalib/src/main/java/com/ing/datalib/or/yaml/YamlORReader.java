@@ -1,9 +1,12 @@
 package com.ing.datalib.or.yaml;
 
-import com.ing.datalib.or.api.APIOR;
-import com.ing.datalib.or.api.APIORPage;
+import com.ing.datalib.or.structureddata.StructuredDataOR;
+import com.ing.datalib.or.structureddata.StructuredDataORPage;
 import com.ing.datalib.or.mobile.MobileOR;
 import com.ing.datalib.or.mobile.MobileORPage;
+import com.ing.datalib.or.ObjectRepository;
+import com.ing.datalib.or.sap.SapOR;
+import com.ing.datalib.or.sap.SapORPage;
 import com.ing.datalib.or.web.WebOR;
 import com.ing.datalib.or.web.WebORPage;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +47,8 @@ public class YamlORReader {
     
     private final ObjectMapper yamlMapper;
     
+    private ObjectRepository objectRepository;
+    
     public YamlORReader() {
         YAMLFactory factory = new YAMLFactory();
         factory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
@@ -52,11 +57,18 @@ public class YamlORReader {
         this.yamlMapper.findAndRegisterModules();
     }
     
+    public YamlORReader(ObjectRepository objectRepository) {
+        this.objectRepository = objectRepository;
+        YAMLFactory factory = new YAMLFactory();
+        factory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
+        this.yamlMapper = new ObjectMapper(factory);
+        this.yamlMapper.findAndRegisterModules();
+    }
     /**
      * Check if a YAML-based Web OR exists.
      */
     public boolean webORExists(File orLocation) {
-        File webPagesDir = new File(orLocation, "Web/pages");
+        File webPagesDir = new File(orLocation, "Web");
         return webPagesDir.exists() && webPagesDir.isDirectory();
     }
     
@@ -64,16 +76,24 @@ public class YamlORReader {
      * Check if a YAML-based Mobile OR exists.
      */
     public boolean mobileORExists(File orLocation) {
-        File mobilePagesDir = new File(orLocation, "Mobile/pages");
+        File mobilePagesDir = new File(orLocation, "Mobile");
         return mobilePagesDir.exists() && mobilePagesDir.isDirectory();
     }
     
     /**
-     * Check if a YAML-based API OR exists.
+     * Check if a YAML-based Structured Data OR exists.
      */
-    public boolean apiORExists(File orLocation) {
-        File apiPagesDir = new File(orLocation, "API/pages");
-        return apiPagesDir.exists() && apiPagesDir.isDirectory();
+    public boolean structuredDataORExists(File orLocation) {
+        File structuredDataPagesDir = new File(orLocation, "StructuredData");
+        return structuredDataPagesDir.exists() && structuredDataPagesDir.isDirectory();
+    }
+    
+    /**
+     * Check if a YAML-based SAP OR exists.
+     */
+    public boolean sapORExists(File orLocation) {
+        File sapPagesDir = new File(orLocation, "SAP");
+        return sapPagesDir.exists() && sapPagesDir.isDirectory();
     }
     
     /**
@@ -84,7 +104,13 @@ public class YamlORReader {
      */
     public WebOR readWebOR(File orLocation) throws IOException {
         WebOR webOR = new WebOR();
-        File webPagesDir = new File(orLocation, "Web/pages");
+        File webPagesDir = new File(orLocation, "Web");
+        
+        if (orLocation.getPath().contains(File.separator + "Shared" + File.separator)) {
+            webOR.setScope(WebOR.ORScope.SHARED);
+        } else {
+            webOR.setScope(WebOR.ORScope.PROJECT);
+        }
         
         if (!webPagesDir.exists()) {
             LOGGER.info("No Web OR YAML directory found at: " + webPagesDir.getAbsolutePath());
@@ -116,7 +142,13 @@ public class YamlORReader {
      */
     public MobileOR readMobileOR(File orLocation) throws IOException {
         MobileOR mobileOR = new MobileOR();
-        File mobilePagesDir = new File(orLocation, "Mobile/pages");
+        File mobilePagesDir = new File(orLocation, "Mobile");
+        
+        if (orLocation.getPath().contains(File.separator + "Shared" + File.separator)) {
+            mobileOR.setScope(MobileOR.ORScope.SHARED);
+        } else {
+            mobileOR.setScope(MobileOR.ORScope.PROJECT);
+        }
         
         if (!mobilePagesDir.exists()) {
             LOGGER.info("No Mobile OR YAML directory found at: " + mobilePagesDir.getAbsolutePath());
@@ -139,6 +171,44 @@ public class YamlORReader {
         
         return mobileOR;
     }
+
+    /**
+     * Read Structured Data OR from YAML files.
+     * 
+     * @param orLocation The ObjectRepository directory
+     * @return StructuredDataOR populated with pages from YAML files
+     */
+    public StructuredDataOR readStructuredDataOR(File orLocation) throws IOException {
+        StructuredDataOR structuredDataOR = new StructuredDataOR();
+        File structuredDataPagesDir = new File(orLocation, "StructuredData");
+        
+        if (orLocation.getPath().contains(File.separator + "Shared" + File.separator)) {
+            structuredDataOR.setScope(StructuredDataOR.ORScope.SHARED);
+        } else {
+            structuredDataOR.setScope(StructuredDataOR.ORScope.PROJECT);
+        }
+        
+        if (!structuredDataPagesDir.exists()) {
+            LOGGER.info("No Structured Data OR YAML directory found at: " + structuredDataPagesDir.getAbsolutePath());
+            return structuredDataOR;
+        }
+        
+        List<File> yamlFiles = listYamlFiles(structuredDataPagesDir);
+        LOGGER.info("Found " + yamlFiles.size() + " Structured Data OR YAML files");
+        
+        for (File yamlFile : yamlFiles) {
+            try {
+                YamlStructuredDataPageDefinition pageDef = yamlMapper.readValue(yamlFile, YamlStructuredDataPageDefinition.class);
+                StructuredDataORPage page = pageDef.toStructuredDataORPage(structuredDataOR);
+                structuredDataOR.getPages().add(page);
+                LOGGER.fine("Loaded Structured Data page: " + page.getName() + " with " + pageDef.getElementCount() + " elements");
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Failed to read YAML file: " + yamlFile.getName(), e);
+            }
+        }
+        
+        return structuredDataOR;
+    }
     
     /**
      * Read a single Web page from a YAML file.
@@ -157,43 +227,57 @@ public class YamlORReader {
     }
     
     /**
-     * Read API OR from YAML files.
+     * Read a single Structured Data page from a YAML file.
+     */
+    public StructuredDataORPage readStructuredDataPage(File yamlFile, StructuredDataOR root) throws IOException {
+        YamlStructuredDataPageDefinition pageDef = yamlMapper.readValue(yamlFile, YamlStructuredDataPageDefinition.class);
+        return pageDef.toStructuredDataORPage(root);
+    }
+    
+    /**
+     * Read SAP OR from YAML files.
      * 
      * @param orLocation The ObjectRepository directory
-     * @return APIOR populated with pages from YAML files
+     * @return SapOR populated with pages from YAML files
      */
-    public APIOR readAPIOR(File orLocation) throws IOException {
-        APIOR apiOR = new APIOR();
-        File apiPagesDir = new File(orLocation, "API/pages");
+    public SapOR readSapOR(File orLocation) throws IOException {
+        SapOR sapOR = new SapOR();
+        File sapPagesDir = new File(orLocation, "SAP");
         
-        if (!apiPagesDir.exists()) {
-            LOGGER.info("No API OR YAML directory found at: " + apiPagesDir.getAbsolutePath());
-            return apiOR;
+        if (orLocation.getPath().contains(File.separator + "Shared" + File.separator)) {
+            sapOR.setScope(SapOR.ORScope.SHARED);
+        } else {
+            sapOR.setScope(SapOR.ORScope.PROJECT);
         }
         
-        List<File> yamlFiles = listYamlFiles(apiPagesDir);
-        LOGGER.info("Found " + yamlFiles.size() + " API OR YAML files");
+        if (!sapPagesDir.exists()) {
+            LOGGER.info("No SAP OR YAML directory found at: " + sapPagesDir.getAbsolutePath());
+            return sapOR;
+        }
+        
+        List<File> yamlFiles = listYamlFiles(sapPagesDir);
+        LOGGER.info("Found " + yamlFiles.size() + " SAP OR YAML files");
         
         for (File yamlFile : yamlFiles) {
             try {
-                YamlAPIPageDefinition pageDef = yamlMapper.readValue(yamlFile, YamlAPIPageDefinition.class);
-                APIORPage page = pageDef.toAPIORPage(apiOR);
-                apiOR.getPages().add(page);
-                LOGGER.fine("Loaded API page: " + page.getName() + " with " + pageDef.getElementCount() + " elements");
+                YamlSapPageDefinition pageDef = yamlMapper.readValue(yamlFile, YamlSapPageDefinition.class);
+                SapORPage page = pageDef.toSapORPage(sapOR);
+                sapOR.getPages().add(page);
+                LOGGER.fine("Loaded SAP page: " + page.getName() + " with " + pageDef.getElementCount() + " elements");
             } catch (IOException e) {
                 LOGGER.log(Level.WARNING, "Failed to read YAML file: " + yamlFile.getName(), e);
             }
         }
         
-        return apiOR;
+        return sapOR;
     }
     
     /**
-     * Read a single API page from a YAML file.
+     * Read a single SAP page from a YAML file.
      */
-    public APIORPage readAPIPage(File yamlFile, APIOR root) throws IOException {
-        YamlAPIPageDefinition pageDef = yamlMapper.readValue(yamlFile, YamlAPIPageDefinition.class);
-        return pageDef.toAPIORPage(root);
+    public SapORPage readSapPage(File yamlFile, SapOR root) throws IOException {
+        YamlSapPageDefinition pageDef = yamlMapper.readValue(yamlFile, YamlSapPageDefinition.class);
+        return pageDef.toSapORPage(root);
     }
     
     /**

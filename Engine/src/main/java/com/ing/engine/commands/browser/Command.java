@@ -30,6 +30,7 @@ import com.ing.ingenious.api.contract.drivers.AutomationObjectApi;
 import com.ing.ingenious.api.contract.drivers.MobileObjectApi;
 import com.ing.ingenious.api.contract.drivers.PlaywrightDriverCreationApi;
 import com.ing.ingenious.api.contract.reports.TestCaseReportApi;
+import com.ing.engine.drivers.StructuredDataObject;
 import java.io.File;
 import java.util.List;
 import java.util.Properties;
@@ -40,6 +41,9 @@ import javax.jms.JMSProducer;
 import javax.jms.TextMessage;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import com.jacob.activeX.ActiveXComponent;
+import com.jacob.com.Dispatch;
+import com.ing.engine.drivers.SAPObject;
 
 /** Kafka Imports */
 // import org.apache.kafka.common.header.Header;
@@ -57,6 +61,7 @@ public class Command implements CommandPluginApi {
     public BrowserContext BrowserContext;
     public AutomationObject AObject;
     public MobileObject MObject;
+    public StructuredDataObject SObject;
     public PlaywrightDriverCreation Driver;
     public String Data;
     public String ObjectName;
@@ -73,6 +78,12 @@ public class Command implements CommandPluginApi {
     public WebDriver mDriver;
     public WebElement Element;
     public MobileObject mObject;
+    
+    //For SAP Testing
+    public ActiveXComponent SAPsession;
+    public SAPObject SAPObject;
+    public Dispatch SAPElement;
+    public Process SAPProcess;
 
     /**
      * ******API*******
@@ -206,11 +217,27 @@ public class Command implements CommandPluginApi {
             Reference = Commander.Reference;
             Action = Commander.Action;
             userData = Commander.userData;
+        } else if (Commander.SAPsession != null) {
+            SAPsession = Commander.SAPsession.session;
+            SAPProcess = Commander.SAPsession.SAPProcess;
+            SAPObject = Commander.SAPObject;
+            Data = Commander.Data;
+            ObjectName = Commander.ObjectName;
+            SAPElement = Commander.SAPElement;
+            imageObjectGroup = Commander.imageObjectGroup;
+            Description = Commander.Description;
+            Condition = Commander.Condition;
+            Input = Commander.Input;
+            Report = Commander.Report;
+            Reference = Commander.Reference;
+            Action = Commander.Action;
+            userData = Commander.userData;
         } else {
             Page = Commander.Page.page;
             Playwright = Commander.Playwright.playwright;
             BrowserContext = Commander.BrowserContext.browserContext;
             AObject = Commander.AObject;
+            SObject = Commander.SObject;
             Driver = Commander.Page;
             Data = Commander.Data;
             ObjectName = Commander.ObjectName;

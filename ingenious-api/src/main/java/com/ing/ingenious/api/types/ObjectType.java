@@ -48,6 +48,10 @@ public class ObjectType {
     public static final String GENERAL = "General";
     /** String manipulation operations object type */
     public static final String STRINGOPERATIONS = "String Operations";
+    /** Structured data operations object type */
+    public static final String STRUCTUREDDATA = "Structured Data";
+    /** SAP operations object type */
+    public static final String SAP = "SAP";
 
     /**
      * An unmodifiable set containing all standard framework object types.
@@ -73,6 +77,8 @@ public class ObjectType {
         add(DATA);
         add(GENERAL);
         add(STRINGOPERATIONS);
+        add(STRUCTUREDDATA);
+        add(SAP);
         }};
 
     /**

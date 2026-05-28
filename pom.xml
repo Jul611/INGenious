@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.ing</groupId>
     <artifactId>ingenious-playwright</artifactId>
-    <version>2.4.1</version>
+    <version>3.0.0-preview</version>
     <packaging>pom</packaging>
     <modules>
         <module>StoryWriter</module>
@@ -71,7 +71,7 @@
         <mockito.version>5.14.2</mockito.version>
         <assertj.version>3.26.3</assertj.version>
 
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
