@@ -74,8 +74,8 @@ public class PlaywrightDriverFactory {
     public static Playwright createPlaywright() {
         Map<String, String> env = new HashMap<>();
  
-        //if(Control.exe.getExecSettings().getRunSettings().isGridExecution())
-        //    env.put("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1");
+        // Business version: skip browser downloads - use local system browsers only
+        env.put("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1");
  
         return Playwright.create(new Playwright.CreateOptions().setEnv(env));
         
@@ -110,7 +110,7 @@ public class PlaywrightDriverFactory {
         NewContextOptions newContextOptions = new NewContextOptions();
         newContextOptions = addContextOptions(newContextOptions, context, capabilities, settings);
         LaunchOptions launchOptions = new LaunchOptions();
-        launchOptions = addLaunchOptions(launchOptions, capabilities);
+        launchOptions = addLaunchOptions(launchOptions, capabilities, browserName);
         BrowserContext browserContext = null;
         if (isGrid) {
             String cdpURL = Control.exe.getExecSettings().getRunSettings().getRemoteGridURL();
@@ -131,9 +131,11 @@ public class PlaywrightDriverFactory {
 
     private static final Logger LOGGER = Logger.getLogger(PlaywrightDriverFactory.class.getName());
 
-    private static LaunchOptions addLaunchOptions(LaunchOptions launchOptions, List<String> caps) {
+    private static LaunchOptions addLaunchOptions(LaunchOptions launchOptions, List<String> caps, String browserName) {
         List<String> customArgs = new ArrayList<>();
         customArgs.add("--auth-server-allowlist='_'");
+        boolean hasChannel = false;
+        boolean hasExecutablePath = false;
                 
         if(isViewPortSizeMaximized){
             customArgs.add("--start-maximized=true");    
@@ -151,8 +153,10 @@ public class PlaywrightDriverFactory {
                     if (!value.trim().equals(""))
                         launchOptions.setSlowMo((double) getPropertyValueAsDesiredType(value));
                 } else if (key.toLowerCase().contains("setchannel")) {
-                    if (!value.trim().equals(""))
+                    if (!value.trim().equals("")) {
                         launchOptions.setChannel((String) getPropertyValueAsDesiredType(value));
+                        hasChannel = true;
+                    }
                 } else if (key.toLowerCase().contains("setchromiumsandbox")) {
                     if (!value.trim().equals(""))
                         launchOptions.setChromiumSandbox((boolean) getPropertyValueAsDesiredType(value));
@@ -163,8 +167,10 @@ public class PlaywrightDriverFactory {
                     if (!value.trim().equals(""))
                         launchOptions.setDownloadsPath(Paths.get((String) getPropertyValueAsDesiredType(value)));
                 } else if (key.toLowerCase().contains("setexecutablepath")) {
-                    if (!value.trim().equals(""))
+                    if (!value.trim().equals("")) {
                         launchOptions.setExecutablePath(Paths.get((String) getPropertyValueAsDesiredType(value)));
+                        hasExecutablePath = true;
+                    }
                 } else if (key.toLowerCase().contains("settimeout")) {
                     if (!value.trim().equals(""))
                         launchOptions.setTimeout((double) getPropertyValueAsDesiredType(value));
@@ -177,6 +183,16 @@ public class PlaywrightDriverFactory {
                 
             }
         }
+
+        if (!hasChannel && !hasExecutablePath && browserName != null) {
+            String browserNameLower = browserName.toLowerCase();
+            if (browserNameLower.contains("chromium")) {
+                launchOptions.setChannel("chrome");
+            } else if (browserNameLower.contains("firefox")) {
+                launchOptions.setChannel("firefox");
+            }
+        }
+
         launchOptions.setArgs(customArgs);
         
         return launchOptions;
