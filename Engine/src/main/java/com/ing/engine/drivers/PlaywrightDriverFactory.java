@@ -28,8 +28,7 @@ public class PlaywrightDriverFactory {
     public static boolean isViewPortSizeMaximized;
 
     public enum Browser {
-        Chromium("Chromium"),
-        WebKit("WebKit"),
+        Chrome("Chrome"),
         Firefox("Firefox"),
         Empty("No Browser");
 
@@ -75,7 +74,7 @@ public class PlaywrightDriverFactory {
         Map<String, String> env = new HashMap<>();
 
         //if(Control.exe.getExecSettings().getRunSettings().isGridExecution())
-           env.put("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1");
+        env.put("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1");
 
         return Playwright.create(new Playwright.CreateOptions().setEnv(env));
     }
@@ -90,11 +89,9 @@ public class PlaywrightDriverFactory {
         BrowserType browserType;
 
         switch (browser) {
-            case Chromium:
+            case Chrome:
+                // Chrome uses the Chromium engine
                 browserType = playwright.chromium();
-                break;
-            case WebKit:
-                browserType = playwright.webkit();
                 break;
             case Firefox:
                 browserType = playwright.firefox();
@@ -117,7 +114,12 @@ public class PlaywrightDriverFactory {
         NewContextOptions newContextOptions = new NewContextOptions();
         newContextOptions = addContextOptions(newContextOptions, context, capabilities, settings);
         LaunchOptions launchOptions = new LaunchOptions();
-        launchOptions = addLaunchOptions(launchOptions, capabilities, PlaywrightDriverFactory.Browser.fromString(browserName));
+        launchOptions =
+            addLaunchOptions(
+                launchOptions,
+                capabilities,
+                PlaywrightDriverFactory.Browser.fromString(browserName)
+            );
         BrowserContext browserContext = null;
         if (isGrid) {
             String cdpURL = Control.exe.getExecSettings().getRunSettings().getRemoteGridURL();
@@ -138,20 +140,15 @@ public class PlaywrightDriverFactory {
 
     private static final Logger LOGGER = Logger.getLogger(PlaywrightDriverFactory.class.getName());
 
-    private static String detectAndSetBrowserPath(LaunchOptions launchOptions, Browser browserType) {
-        if (browserType == Browser.WebKit) {
-            throw new RuntimeException(
-                "WebKit browser is not supported with local machine browsers only mode. " +
-                "WebKit is a proprietary engine maintained by Playwright. " +
-                "Please use Chromium, Chrome, Firefox, or Edge instead."
-            );
-        }
-        
+    private static String detectAndSetBrowserPath(
+        LaunchOptions launchOptions,
+        Browser browserType
+    ) {
         BrowserPathDetector.BrowserType detectorBrowserType = null;
-        
+
         switch (browserType) {
-            case Chromium:
-                detectorBrowserType = BrowserPathDetector.BrowserType.CHROMIUM;
+            case Chrome:
+                detectorBrowserType = BrowserPathDetector.BrowserType.CHROME;
                 break;
             case Firefox:
                 detectorBrowserType = BrowserPathDetector.BrowserType.FIREFOX;
@@ -159,21 +156,27 @@ public class PlaywrightDriverFactory {
             default:
                 return null;
         }
-        
+
         String detectedPath = BrowserPathDetector.detectBrowserPath(detectorBrowserType);
-        
+
         if (detectedPath != null) {
             launchOptions.setExecutablePath(Paths.get(detectedPath));
             return detectedPath;
         } else {
             throw new RuntimeException(
-                "Unable to locate " + browserType.getBrowserValue() + " browser on this machine. " +
+                "Unable to locate " +
+                browserType.getBrowserValue() +
+                " browser on this machine. " +
                 "Please ensure the browser is installed in a standard location or specify the path in your configuration."
             );
         }
     }
 
-    private static LaunchOptions addLaunchOptions(LaunchOptions launchOptions, List<String> caps, Browser browserType) {
+    private static LaunchOptions addLaunchOptions(
+        LaunchOptions launchOptions,
+        List<String> caps,
+        Browser browserType
+    ) {
         List<String> customArgs = new ArrayList<>();
         customArgs.add("--auth-server-allowlist='_'");
 
@@ -627,7 +630,7 @@ public class PlaywrightDriverFactory {
                     .getProperty(key.toString());
             }
         }
-        
+
         // Check system environment variables if not found in project settings
         if (value.startsWith("%") && value.endsWith("%")) {
             String varName = value.substring(1, value.length() - 1);
@@ -636,7 +639,7 @@ public class PlaywrightDriverFactory {
                 return envValue;
             }
         }
-        
+
         return value;
     }
 }
