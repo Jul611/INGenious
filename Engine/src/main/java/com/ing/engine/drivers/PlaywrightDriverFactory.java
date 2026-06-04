@@ -74,7 +74,7 @@ public class PlaywrightDriverFactory {
     public static Playwright createPlaywright() {
         Map<String, String> env = new HashMap<>();
  
-        // Business version: skip browser downloads - use local system browsers only
+        
         env.put("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1");
  
         return Playwright.create(new Playwright.CreateOptions().setEnv(env));
