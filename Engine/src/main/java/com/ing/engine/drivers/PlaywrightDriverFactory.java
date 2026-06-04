@@ -117,7 +117,7 @@ public class PlaywrightDriverFactory {
         NewContextOptions newContextOptions = new NewContextOptions();
         newContextOptions = addContextOptions(newContextOptions, context, capabilities, settings);
         LaunchOptions launchOptions = new LaunchOptions();
-        launchOptions = addLaunchOptions(launchOptions, capabilities);
+        launchOptions = addLaunchOptions(launchOptions, capabilities, PlaywrightDriverFactory.Browser.fromString(browserName));
         BrowserContext browserContext = null;
         if (isGrid) {
             String cdpURL = Control.exe.getExecSettings().getRunSettings().getRemoteGridURL();
@@ -138,13 +138,41 @@ public class PlaywrightDriverFactory {
 
     private static final Logger LOGGER = Logger.getLogger(PlaywrightDriverFactory.class.getName());
 
-    private static LaunchOptions addLaunchOptions(LaunchOptions launchOptions, List<String> caps) {
+    private static String detectAndSetBrowserPath(LaunchOptions launchOptions, Browser browserType) {
+        BrowserPathDetector.BrowserType detectorBrowserType = null;
+        
+        switch (browserType) {
+            case Chromium:
+                detectorBrowserType = BrowserPathDetector.BrowserType.CHROMIUM;
+                break;
+            case Firefox:
+                detectorBrowserType = BrowserPathDetector.BrowserType.FIREFOX;
+                break;
+            case WebKit:
+                detectorBrowserType = BrowserPathDetector.BrowserType.WEBKIT;
+                break;
+            default:
+                return null;
+        }
+        
+        String detectedPath = BrowserPathDetector.detectBrowserPath(detectorBrowserType);
+        
+        if (detectedPath != null) {
+            launchOptions.setExecutablePath(Paths.get(detectedPath));
+        }
+        
+        return detectedPath;
+    }
+
+    private static LaunchOptions addLaunchOptions(LaunchOptions launchOptions, List<String> caps, Browser browserType) {
         List<String> customArgs = new ArrayList<>();
         customArgs.add("--auth-server-allowlist='_'");
 
         if (isViewPortSizeMaximized) {
             customArgs.add("--start-maximized=true");
         }
+
+        boolean executablePathSpecified = false;
 
         if (!caps.isEmpty()) {
             for (String cap : caps) {
@@ -174,9 +202,11 @@ public class PlaywrightDriverFactory {
                         Paths.get((String) getPropertyValueAsDesiredType(value))
                     );
                 } else if (key.toLowerCase().contains("setexecutablepath")) {
-                    if (!value.trim().equals("")) launchOptions.setExecutablePath(
-                        Paths.get((String) getPropertyValueAsDesiredType(value))
-                    );
+                    if (!value.trim().equals("")) {
+                        String resolvedPath = handleUserDefinedVariables(value);
+                        launchOptions.setExecutablePath(Paths.get(resolvedPath));
+                        executablePathSpecified = true;
+                    }
                 } else if (key.toLowerCase().contains("settimeout")) {
                     if (!value.trim().equals("")) launchOptions.setTimeout(
                         (double) getPropertyValueAsDesiredType(value)
@@ -190,6 +220,15 @@ public class PlaywrightDriverFactory {
                 }
             }
         }
+
+        // Auto-detect browser path if not explicitly specified
+        if (!executablePathSpecified) {
+            String detectedPath = detectAndSetBrowserPath(launchOptions, browserType);
+            if (detectedPath != null) {
+                LOGGER.info("Auto-detected browser path: " + detectedPath);
+            }
+        }
+
         launchOptions.setArgs(customArgs);
 
         return launchOptions;
@@ -579,6 +618,16 @@ public class PlaywrightDriverFactory {
                     .getProperty(key.toString());
             }
         }
+        
+        // Check system environment variables if not found in project settings
+        if (value.startsWith("%") && value.endsWith("%")) {
+            String varName = value.substring(1, value.length() - 1);
+            String envValue = System.getenv(varName);
+            if (envValue != null) {
+                return envValue;
+            }
+        }
+        
         return value;
     }
 }
