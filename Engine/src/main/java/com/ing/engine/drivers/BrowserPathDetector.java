@@ -8,7 +8,8 @@ import java.util.List;
 
 /**
  * Automatically detects installed browser executable paths on the local system.
- * Supports Windows, macOS, and Linux with common installation locations.
+ * Supports Chrome, Chromium, Firefox, and Edge across Windows, macOS, and Linux.
+ * WebKit is not supported as it is not available as a standalone browser.
  */
 public class BrowserPathDetector {
 
@@ -16,8 +17,7 @@ public class BrowserPathDetector {
         CHROMIUM("chromium"),
         CHROME("chrome"),
         EDGE("edge"),
-        FIREFOX("firefox"),
-        WEBKIT("webkit");
+        FIREFOX("firefox");
 
         private final String name;
 

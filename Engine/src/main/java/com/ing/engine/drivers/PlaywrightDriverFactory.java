@@ -139,6 +139,14 @@ public class PlaywrightDriverFactory {
     private static final Logger LOGGER = Logger.getLogger(PlaywrightDriverFactory.class.getName());
 
     private static String detectAndSetBrowserPath(LaunchOptions launchOptions, Browser browserType) {
+        if (browserType == Browser.WebKit) {
+            throw new RuntimeException(
+                "WebKit browser is not supported with local machine browsers only mode. " +
+                "WebKit is a proprietary engine maintained by Playwright. " +
+                "Please use Chromium, Chrome, Firefox, or Edge instead."
+            );
+        }
+        
         BrowserPathDetector.BrowserType detectorBrowserType = null;
         
         switch (browserType) {
@@ -148,9 +156,6 @@ public class PlaywrightDriverFactory {
             case Firefox:
                 detectorBrowserType = BrowserPathDetector.BrowserType.FIREFOX;
                 break;
-            case WebKit:
-                detectorBrowserType = BrowserPathDetector.BrowserType.WEBKIT;
-                break;
             default:
                 return null;
         }
@@ -159,9 +164,13 @@ public class PlaywrightDriverFactory {
         
         if (detectedPath != null) {
             launchOptions.setExecutablePath(Paths.get(detectedPath));
+            return detectedPath;
+        } else {
+            throw new RuntimeException(
+                "Unable to locate " + browserType.getBrowserValue() + " browser on this machine. " +
+                "Please ensure the browser is installed in a standard location or specify the path in your configuration."
+            );
         }
-        
-        return detectedPath;
     }
 
     private static LaunchOptions addLaunchOptions(LaunchOptions launchOptions, List<String> caps, Browser browserType) {
