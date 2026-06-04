@@ -8,12 +8,15 @@ import java.util.List;
 
 /**
  * Automatically detects installed browser executable paths on the local system.
- * Supports Chrome and Firefox across Windows, macOS, and Linux.
+ * Supports Chrome, Chromium, Firefox, and Edge across Windows, macOS, and Linux.
+ * WebKit is not supported as it is not available as a standalone browser.
  */
 public class BrowserPathDetector {
 
     public enum BrowserType {
+        CHROMIUM("chromium"),
         CHROME("chrome"),
+        EDGE("edge"),
         FIREFOX("firefox");
 
         private final String name;
@@ -48,10 +51,20 @@ public class BrowserPathDetector {
         List<String> possiblePaths = new ArrayList<>();
 
         switch (browserType) {
+            case CHROMIUM:
+                possiblePaths.add("C:\\Program Files\\Chromium\\Application\\chrome.exe");
+                possiblePaths.add("C:\\Program Files (x86)\\Chromium\\Application\\chrome.exe");
+                break;
             case CHROME:
                 possiblePaths.add("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
                 possiblePaths.add(
                     "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
+                );
+                break;
+            case EDGE:
+                possiblePaths.add("C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe");
+                possiblePaths.add(
+                    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
                 );
                 break;
             case FIREFOX:
@@ -67,8 +80,14 @@ public class BrowserPathDetector {
         List<String> possiblePaths = new ArrayList<>();
 
         switch (browserType) {
+            case CHROMIUM:
+                possiblePaths.add("/Applications/Chromium.app/Contents/MacOS/Chromium");
+                break;
             case CHROME:
                 possiblePaths.add("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome");
+                break;
+            case EDGE:
+                possiblePaths.add("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge");
                 break;
             case FIREFOX:
                 possiblePaths.add("/Applications/Firefox.app/Contents/MacOS/firefox");
@@ -82,9 +101,18 @@ public class BrowserPathDetector {
         List<String> possiblePaths = new ArrayList<>();
 
         switch (browserType) {
+            case CHROMIUM:
+                possiblePaths.add("/snap/bin/chromium");
+                possiblePaths.add("/usr/bin/chromium");
+                possiblePaths.add("/usr/bin/chromium-browser");
+                break;
             case CHROME:
                 possiblePaths.add("/usr/bin/google-chrome");
                 possiblePaths.add("/snap/bin/google-chrome");
+                break;
+            case EDGE:
+                possiblePaths.add("/usr/bin/microsoft-edge");
+                possiblePaths.add("/opt/microsoft/msedge/msedge");
                 break;
             case FIREFOX:
                 possiblePaths.add("/usr/bin/firefox");

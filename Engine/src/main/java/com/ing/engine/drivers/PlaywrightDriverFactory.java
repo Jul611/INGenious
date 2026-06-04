@@ -28,7 +28,10 @@ public class PlaywrightDriverFactory {
     public static boolean isViewPortSizeMaximized;
 
     public enum Browser {
+        Chromium("Chromium"),
         Chrome("Chrome"),
+        Edge("Edge"),
+        WebKit("WebKit"),
         Firefox("Firefox"),
         Empty("No Browser");
 
@@ -89,9 +92,14 @@ public class PlaywrightDriverFactory {
         BrowserType browserType;
 
         switch (browser) {
+            case Chromium:
             case Chrome:
-                // Chrome uses the Chromium engine
+            case Edge:
+                // Chrome and Edge use the Chromium engine
                 browserType = playwright.chromium();
+                break;
+            case WebKit:
+                browserType = playwright.webkit();
                 break;
             case Firefox:
                 browserType = playwright.firefox();
@@ -144,11 +152,25 @@ public class PlaywrightDriverFactory {
         LaunchOptions launchOptions,
         Browser browserType
     ) {
+        if (browserType == Browser.WebKit) {
+            throw new RuntimeException(
+                "WebKit browser is not supported with local machine browsers only mode. " +
+                "WebKit is a proprietary engine maintained by Playwright. " +
+                "Please use Chromium, Chrome, Firefox, or Edge instead."
+            );
+        }
+
         BrowserPathDetector.BrowserType detectorBrowserType = null;
 
         switch (browserType) {
+            case Chromium:
+                detectorBrowserType = BrowserPathDetector.BrowserType.CHROMIUM;
+                break;
             case Chrome:
                 detectorBrowserType = BrowserPathDetector.BrowserType.CHROME;
+                break;
+            case Edge:
+                detectorBrowserType = BrowserPathDetector.BrowserType.EDGE;
                 break;
             case Firefox:
                 detectorBrowserType = BrowserPathDetector.BrowserType.FIREFOX;
