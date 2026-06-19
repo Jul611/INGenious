@@ -963,8 +963,10 @@ public class TestCaseComponent extends JPanel implements ActionListener {
                 }
                 if (codegenCommand && line.contains(PLAYWRIGHT_INSTALL_HINT)) {
                     waitForProcess(process, "Playwright codegen");
-                    logPlaywright("Playwright browser binaries are missing. Starting install...");
-                    Process installProcess = runPlaywrightProcess("install");
+                    logPlaywright(
+                        "Playwright browser binaries are missing. Starting install of chromium + webkit only..."
+                    );
+                    Process installProcess = runPlaywrightProcess("install chromium webkit");
                     waitForProcess(installProcess, "Playwright install");
                     logPlaywright("Playwright install completed. Restarting recorder...");
                     return runPlaywrightProcess(processArgs);

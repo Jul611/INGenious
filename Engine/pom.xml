@@ -569,4 +569,32 @@
             </plugin>          
         </plugins>
     </build>
+    <profiles>
+        <!-- Install only chromium and webkit browsers (skip firefox).
+             Usage: mvn exec:java@install-browsers -f engine/pom.xml -->
+        <profile>
+            <id>install-browsers</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <executions>
+                            <execution>
+                                <id>install-browsers</id>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <mainClass>com.microsoft.playwright.CLI</mainClass>
+                            <commandlineArgs>install chromium webkit</commandlineArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
