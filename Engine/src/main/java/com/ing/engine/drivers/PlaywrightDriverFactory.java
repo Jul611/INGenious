@@ -74,10 +74,8 @@ public class PlaywrightDriverFactory {
     public static Playwright createPlaywright() {
         Map<String, String> env = new HashMap<>();
 
-        // Skip automatic browser download at runtime — browsers must be
-        // pre-installed via the targeted Maven profile or manual CLI command
-        // that only installs chromium and webkit (not firefox).
-        env.put("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1");
+        //if(Control.exe.getExecSettings().getRunSettings().isGridExecution())
+        //   env.put("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1");
 
         return Playwright.create(new Playwright.CreateOptions().setEnv(env));
     }
