@@ -29,7 +29,7 @@ public class PluginManagerService {
     private static final String REGISTRY_FILE = "Resources/plugins/registry.json";
     private static final String PLUGIN_INFO_FILE = ".plugininfo";
     private static final String REMOTE_REGISTRY_URL =
-        "https://raw.githubusercontent.com/Jul611/INGenious/main/Resources/plugins/registry.json";
+        "https://raw.githubusercontent.com/Jul611/INGenious/initiative-repo/Resources/plugins/registry.json";
 
     private final ObjectMapper mapper = new ObjectMapper();
 
