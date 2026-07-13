@@ -26,6 +26,51 @@ public class PluginRegistryEntry {
     private boolean featured;
     private String githubRepo;
 
+    // For publishing: the pluginEntryClasses from the JAR manifest
+    private String entryClasses;
+
+    /**
+     * Nested class for detailed action info extracted from a JAR.
+     */
+    public static class ActionInfo {
+        private String name;
+        private String description;
+        private String objectType;
+        private String inputType;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public String getObjectType() {
+            return objectType;
+        }
+
+        public void setObjectType(String objectType) {
+            this.objectType = objectType;
+        }
+
+        public String getInputType() {
+            return inputType;
+        }
+
+        public void setInputType(String inputType) {
+            this.inputType = inputType;
+        }
+    }
+
     // Getters and setters
 
     public String getName() {
@@ -178,6 +223,14 @@ public class PluginRegistryEntry {
 
     public void setGithubRepo(String githubRepo) {
         this.githubRepo = githubRepo;
+    }
+
+    public String getEntryClasses() {
+        return entryClasses;
+    }
+
+    public void setEntryClasses(String entryClasses) {
+        this.entryClasses = entryClasses;
     }
 
     @Override

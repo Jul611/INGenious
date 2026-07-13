@@ -3,10 +3,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.ing.plugins</groupId>
-    <artifactId>demo-helloworld</artifactId>
+    <artifactId>calc-math</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>Hello World Demo Plugin</name>
+    <name>Calculator Math Plugin</name>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -32,13 +32,13 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Plugin-Name>Hello World Demo</Plugin-Name>
+                            <Plugin-Name>Calculator Math</Plugin-Name>
                             <Plugin-Version>1.0.0</Plugin-Version>
-                            <Plugin-Description>A demo plugin that adds Hello World and custom greeting actions</Plugin-Description>
-                            <Plugin-Author>INGenious Plugins Team</Plugin-Author>
-                            <Plugin-Author-Email>plugins@company.com</Plugin-Author-Email>
+                            <Plugin-Description>Adds and multiplies numbers — a demo plugin for testing the publish workflow</Plugin-Description>
+                            <Plugin-Author>Demo Author</Plugin-Author>
+                            <Plugin-Author-Email>demo@example.com</Plugin-Author-Email>
                             <Plugin-Min-Engine-Version>3.0.0</Plugin-Min-Engine-Version>
-                            <pluginEntryClasses>com.ing.plugins.helloworld.HelloWorldActions</pluginEntryClasses>
+                            <pluginEntryClasses>com.ing.plugins.calc.CalcActions</pluginEntryClasses>
                         </manifestEntries>
                     </archive>
                 </configuration>

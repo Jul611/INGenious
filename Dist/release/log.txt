@@ -1,64 +1,37 @@
-2026-07-13 21:27:22:07S +0800 [WARNING] com.sun.javafx.application.PlatformImpl startup:Unsupported JavaFX configuration: classes were loaded from 'unnamed module @4278a03f'
-2026-07-13 21:27:28:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:Auto-migrating CSV test cases to YAML (keepBackup=true)...
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:CSV to YAML migration completed: 31 file(s) converted, 0 conflict(s), 0 error(s)
+2026-07-13 22:58:17:07S +0800 [WARNING] com.sun.javafx.application.PlatformImpl startup:Unsupported JavaFX configuration: classes were loaded from 'unnamed module @27ae2fd0'
+2026-07-13 22:58:18:07S +0800 [INFO] com.ing.engine.plugin.loader.PluginLoader loadAllPluginsEntryClasses:Scanning plugins from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\plugins
+2026-07-13 22:58:26:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:Auto-migrating CSV test cases to YAML (keepBackup=true)...
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:CSV to YAML migration completed: 31 file(s) converted, 0 conflict(s), 0 error(s)
 C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\Settings\SAP.properties properties file already exists: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\Settings
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:Found 4 Web OR YAML files
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\Mobile
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\StructuredData
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\SAP
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:No Web OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Web
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Mobile
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\StructuredData
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\SAP
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: Bank Accounts (resolved=1)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 6 object reference(s) to explicit scope prefixes in: Initaition
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 4 Execute reusable reference(s) to Reference scope column in: Pay money to an existing contact (resolved=4)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 4 Execute reusable reference(s) to Reference scope column in: Request money from existing contact (resolved=4)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 16 object reference(s) to explicit scope prefixes in: Registration
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: LoginComplete (resolved=1)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Reuse
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 5 Execute reusable reference(s) to Reference scope column in: HighAmount (resolved=5)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 5 Execute reusable reference(s) to Reference scope column in: LowAmount (resolved=5)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 5 object reference(s) to explicit scope prefixes in: Login
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Logout
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 6 object reference(s) to explicit scope prefixes in: Initiation
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Pay
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Request
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: chooses to pay (resolved=1)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: chooses to request (resolved=1)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: User creates a new transaction (resolved=1)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: User is logged in (resolved=1)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 2 Execute reusable reference(s) to Reference scope column in: user should be able to complete the operation (resolved=2)
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loading API Workbench data from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\api
-2026-07-13 21:27:29:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loaded 1 collections, 0 environments, 0 history entries
-2026-07-13 21:27:31:07S +0800 [WARNING] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:No registry found (remote or local)
-2026-07-13 21:28:50:07S +0800 [WARNING] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:No registry found (remote or local)
-2026-07-13 21:29:25:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:30:29:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:30:32:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:30:33:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:30:35:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:30:44:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:36:05:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:36:55:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORWriter ensureDirectory:Created directory: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\Mobile
-2026-07-13 21:36:55:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORWriter ensureDirectory:Created directory: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\StructuredData
-2026-07-13 21:36:55:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORWriter ensureDirectory:Created directory: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\SAP
-2026-07-13 21:37:21:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:38:26:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:39:39:07S +0800 [INFO] com.ing.ide.main.Main finish:INGenious Playwright Studio has been Terminated - [ Total Time : 00:12:17.074 ]
-2026-07-13 21:39:49:07S +0800 [WARNING] com.sun.javafx.application.PlatformImpl startup:Unsupported JavaFX configuration: classes were loaded from 'unnamed module @70be0a2b'
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:Auto-migrating CSV test cases to YAML (keepBackup=true)...
-C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\Settings\SAP.properties properties file already exists: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\Settings
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:Found 4 Web OR YAML files
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:Found 0 Mobile OR YAML files
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:Found 0 Structured Data OR YAML files
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:Found 0 SAP OR YAML files
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:No Web OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Web
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Mobile
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\StructuredData
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\SAP
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loading API Workbench data from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\api
-2026-07-13 21:39:54:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loaded 1 collections, 0 environments, 0 history entries
-2026-07-13 21:39:57:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:39:57:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 21:42:01:07S +0800 [INFO] com.ing.ide.main.Main finish:INGenious Playwright Studio has been Terminated - [ Total Time : 00:02:12.320 ]
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:Found 4 Web OR YAML files
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\Mobile
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\StructuredData
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\SAP
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:No Web OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Web
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Mobile
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\StructuredData
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\SAP
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: Bank Accounts (resolved=1)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 6 object reference(s) to explicit scope prefixes in: Initaition
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 4 Execute reusable reference(s) to Reference scope column in: Pay money to an existing contact (resolved=4)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 4 Execute reusable reference(s) to Reference scope column in: Request money from existing contact (resolved=4)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 16 object reference(s) to explicit scope prefixes in: Registration
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: LoginComplete (resolved=1)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Reuse
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 5 Execute reusable reference(s) to Reference scope column in: HighAmount (resolved=5)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 5 Execute reusable reference(s) to Reference scope column in: LowAmount (resolved=5)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 5 object reference(s) to explicit scope prefixes in: Login
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Logout
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 6 object reference(s) to explicit scope prefixes in: Initiation
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Pay
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Request
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: chooses to pay (resolved=1)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: chooses to request (resolved=1)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: User creates a new transaction (resolved=1)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: User is logged in (resolved=1)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 2 Execute reusable reference(s) to Reference scope column in: user should be able to complete the operation (resolved=2)
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loading API Workbench data from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\api
+2026-07-13 22:58:27:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loaded 1 collections, 0 environments, 0 history entries
+2026-07-13 22:58:29:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-13 22:58:47:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-13 22:59:06:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub

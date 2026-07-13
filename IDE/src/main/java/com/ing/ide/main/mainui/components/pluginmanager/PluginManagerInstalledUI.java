@@ -1,18 +1,22 @@
 package com.ing.ide.main.mainui.components.pluginmanager;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 /**
  * Installed tab for the Plugin Manager.
  * Shows locally installed plugins with Uninstall buttons.
+ * Uses MouseListener for button clicks (same reliable pattern as PluginManagerBrowseUI).
  */
 public class PluginManagerInstalledUI extends JPanel {
     private static final String[] COLUMNS = { "Plugin", "Version", "Actions", "" };
-    private static final int[] COL_WIDTHS = { 250, 100, 100, 120 };
+    private static final int[] COL_WIDTHS = { 200, 100, 100, 120 };
+    private static final int UNINSTALL_COL = 3;
 
     private final PluginManagerService service;
     private final Runnable onUninstallCallback;
@@ -37,9 +41,10 @@ public class PluginManagerInstalledUI extends JPanel {
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
-        JButton refreshButton = new JButton("Refresh");
-        refreshButton.addActionListener(e -> loadData());
-        headerPanel.add(refreshButton, BorderLayout.EAST);
+        JButton checkUpdatesButton = new JButton("Check for Updates");
+        checkUpdatesButton.setToolTipText("Compare installed versions against the registry");
+        checkUpdatesButton.addActionListener(e -> checkForUpdates());
+        headerPanel.add(checkUpdatesButton, BorderLayout.EAST);
 
         add(headerPanel, BorderLayout.NORTH);
 
@@ -62,17 +67,59 @@ public class PluginManagerInstalledUI extends JPanel {
 
         for (int i = 0; i < COL_WIDTHS.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(COL_WIDTHS[i]);
-            if (i == 3) {
+            if (i == UNINSTALL_COL) {
                 table.getColumnModel().getColumn(i).setMaxWidth(COL_WIDTHS[i]);
             }
         }
 
-        // Uninstall button column
-        table.getColumnModel().getColumn(3).setCellRenderer(new UninstallButtonRenderer());
+        // Action count - centered
         table
             .getColumnModel()
-            .getColumn(3)
-            .setCellEditor(new UninstallButtonEditor(new JCheckBox()));
+            .getColumn(2)
+            .setCellRenderer(
+                new DefaultTableCellRenderer() {
+
+                    @Override
+                    public Component getTableCellRendererComponent(
+                        JTable t,
+                        Object v,
+                        boolean isSel,
+                        boolean hasFocus,
+                        int row,
+                        int col
+                    ) {
+                        JLabel l = (JLabel) super.getTableCellRendererComponent(
+                            t,
+                            v,
+                            isSel,
+                            hasFocus,
+                            row,
+                            col
+                        );
+                        l.setHorizontalAlignment(SwingConstants.CENTER);
+                        return l;
+                    }
+                }
+            );
+
+        // Uninstall button column - render as button
+        table.getColumnModel().getColumn(UNINSTALL_COL).setCellRenderer(new UninstallRenderer());
+
+        // Mouse listener for Uninstall column clicks
+        table.addMouseListener(
+            new MouseAdapter() {
+
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int col = table.columnAtPoint(e.getPoint());
+                    int row = table.rowAtPoint(e.getPoint());
+                    if (col == UNINSTALL_COL && row >= 0) {
+                        int modelRow = table.convertRowIndexToModel(row);
+                        uninstallPlugin(modelRow);
+                    }
+                }
+            }
+        );
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -138,6 +185,15 @@ public class PluginManagerInstalledUI extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             service.uninstallPlugin(plugin.getName());
+            JOptionPane.showMessageDialog(
+                this,
+                "Plugin \"" +
+                plugin.getDisplayName() +
+                "\" uninstalled successfully.\n" +
+                "Restart INGenious for the changes to take effect.",
+                "Plugin Uninstalled",
+                JOptionPane.INFORMATION_MESSAGE
+            );
             loadData();
             if (onUninstallCallback != null) {
                 onUninstallCallback.run();
@@ -145,61 +201,86 @@ public class PluginManagerInstalledUI extends JPanel {
         }
     }
 
-    // Button renderer
-    static class UninstallButtonRenderer
-        extends JButton
-        implements javax.swing.table.TableCellRenderer {
+    private void checkForUpdates() {
+        List<PluginInstalledEntry> installed = installedPlugins;
+        if (installed == null || installed.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No plugins installed to check updates for.",
+                "Check for Updates",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+            return;
+        }
 
-        public UninstallButtonRenderer() {
+        SwingWorker<List<PluginRegistryEntry>, Void> worker = new SwingWorker<List<PluginRegistryEntry>, Void>() {
+
+            @Override
+            protected List<PluginRegistryEntry> doInBackground() {
+                return service.checkForUpdates(installed);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    List<PluginRegistryEntry> updates = get();
+                    if (updates == null || updates.isEmpty()) {
+                        JOptionPane.showMessageDialog(
+                            PluginManagerInstalledUI.this,
+                            "All installed plugins are up to date.",
+                            "Check for Updates",
+                            JOptionPane.INFORMATION_MESSAGE
+                        );
+                    } else {
+                        StringBuilder sb = new StringBuilder("Updates available for:\n");
+                        for (PluginRegistryEntry u : updates) {
+                            sb
+                                .append("  - ")
+                                .append(u.getDisplayName())
+                                .append(" (")
+                                .append(u.getVersion())
+                                .append(")\n");
+                        }
+                        JOptionPane.showMessageDialog(
+                            PluginManagerInstalledUI.this,
+                            sb.toString(),
+                            "Updates Available",
+                            JOptionPane.INFORMATION_MESSAGE
+                        );
+                    }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(
+                        PluginManagerInstalledUI.this,
+                        "Failed to check for updates: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    // Renders the Uninstall cell as a clickable button
+    static class UninstallRenderer extends JButton implements javax.swing.table.TableCellRenderer {
+
+        public UninstallRenderer() {
             setOpaque(true);
             setText("Uninstall");
+            setBackground(new Color(200, 50, 50));
+            setForeground(Color.WHITE);
         }
 
         @Override
         public Component getTableCellRendererComponent(
-            JTable table,
-            Object value,
-            boolean isSelected,
+            JTable t,
+            Object v,
+            boolean isSel,
             boolean hasFocus,
             int row,
-            int column
+            int col
         ) {
-            setText("Uninstall");
             return this;
-        }
-    }
-
-    // Button editor
-    class UninstallButtonEditor extends DefaultCellEditor {
-        private final JButton button;
-        private int currentRow;
-
-        public UninstallButtonEditor(JCheckBox checkBox) {
-            super(checkBox);
-            button = new JButton("Uninstall");
-            button.addActionListener(
-                (ActionEvent e) -> {
-                    int modelRow = table.convertRowIndexToModel(currentRow);
-                    uninstallPlugin(modelRow);
-                }
-            );
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(
-            JTable table,
-            Object value,
-            boolean isSelected,
-            int row,
-            int column
-        ) {
-            currentRow = row;
-            return button;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return "Uninstall";
         }
     }
 }

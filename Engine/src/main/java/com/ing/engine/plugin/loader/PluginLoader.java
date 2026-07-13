@@ -9,39 +9,71 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * PluginLoader is responsible for discovering and loading plugin entry classes
  * from plugin JARs located in the application's plugin directory. It uses a child-first class loader
  * strategy to ensure plugin classes and their dependencies are loaded in isolation from the main application.
+ * <p>
+ * Scans both {@code Resources/plugins/} (IDE-side installed plugins) and
+ * {@code {appRoot}/plugins/} (legacy/engine-side) directories.
  */
 public class PluginLoader {
+    private static final Logger LOG = Logger.getLogger(PluginLoader.class.getName());
+
+    private static final String RESOURCES_PLUGINS_DIR = "Resources/plugins";
 
     /**
      * Loads all plugin entry classes from the plugins directory.
      * <p>
-     * This method scans each plugin folder, collects all plugin JARs and their dependencies,
+     * This method scans each plugin folder in both {@code Resources/plugins/}
+     * and {@code {appRoot}/plugins/}, collects all plugin JARs and their dependencies,
      * and loads the classes specified as entry points in the JAR manifest (pluginEntryClasses attribute).
      *
      * @return a list of loaded plugin entry classes
-     * @throws IllegalArgumentException if the plugin directory is missing
+     * @throws IllegalArgumentException if neither plugin directory exists
      */
     public static List<Class<?>> loadAllPluginsEntryClasses() {
         List<Class<?>> classes = new ArrayList<>();
-        File baseDir = new File(FilePath.getAppRoot() + "/plugins"); // root plugin directory
 
-        if (!baseDir.exists() || !baseDir.isDirectory()) {
-            throw new IllegalArgumentException(
-                "Base plugin directory not found: " + baseDir.getAbsolutePath()
-            );
+        // Scan Resources/plugins/ first (IDE-side installed plugins)
+        File resourcesDir = new File(RESOURCES_PLUGINS_DIR);
+        if (resourcesDir.exists() && resourcesDir.isDirectory()) {
+            LOG.info("Scanning plugins from: " + resourcesDir.getAbsolutePath());
+            loadPluginsFromDirectory(resourcesDir, classes);
         }
 
+        // Also scan legacy appRoot/plugins/ (engine-side)
+        File baseDir = new File(FilePath.getAppRoot() + "/plugins");
+        if (baseDir.exists() && baseDir.isDirectory() && !baseDir.equals(resourcesDir)) {
+            LOG.info("Scanning plugins from: " + baseDir.getAbsolutePath());
+            loadPluginsFromDirectory(baseDir, classes);
+        }
+
+        if (classes.isEmpty()) {
+            LOG.warning("No plugin entry classes found in any plugin directory");
+        }
+
+        return classes;
+    }
+
+    /**
+     * Scans a single plugin directory for plugin JARs and loads entry classes.
+     */
+    private static void loadPluginsFromDirectory(File baseDir, List<Class<?>> classes) {
         // Iterate over each plugin folder
-        for (File pluginFolder : baseDir.listFiles(File::isDirectory)) {
+        File[] pluginDirs = baseDir.listFiles(File::isDirectory);
+        if (pluginDirs == null) return;
+
+        for (File pluginFolder : pluginDirs) {
+            if (pluginFolder.getName().startsWith(".")) continue; // skip hidden
+
             // Find all plugin JARs (any *.jar in the plugin folder, not in lib)
             File[] jarFiles = pluginFolder.listFiles((dir, name) -> name.endsWith(".jar"));
             if (jarFiles == null || jarFiles.length == 0) {
-                System.err.println("No plugin JAR found in: " + pluginFolder.getAbsolutePath());
+                LOG.fine("No plugin JAR found in: " + pluginFolder.getAbsolutePath());
                 continue;
             }
             File libDir = new File(pluginFolder, "lib"); // Dependencies folder
@@ -65,21 +97,21 @@ public class PluginLoader {
                             classes.add(pluginClassLoader.loadClass(entryClass));
                         }
                     } catch (Exception ex) {
-                        System.err.println(
-                            "Error loading entry classes from: " +
-                            pluginJar.getName() +
-                            " -> " +
-                            ex.getMessage()
+                        LOG.log(
+                            Level.WARNING,
+                            "Error loading entry classes from: " + pluginJar.getName(),
+                            ex
                         );
                     }
                 }
             } catch (Exception ex) {
-                System
-                    .getLogger(PluginLoader.class.getName())
-                    .log(System.Logger.Level.ERROR, (String) null, ex);
+                LOG.log(
+                    Level.SEVERE,
+                    "Error processing plugin folder: " + pluginFolder.getName(),
+                    ex
+                );
             }
         }
-        return classes;
     }
 
     // Accepts one or more plugin JARs, plus an optional libDir for dependencies

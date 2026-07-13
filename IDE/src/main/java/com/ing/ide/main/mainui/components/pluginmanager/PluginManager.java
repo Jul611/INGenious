@@ -6,7 +6,7 @@ import javax.swing.*;
 
 /**
  * Main Plugin Manager tab component.
- * Contains a JTabbedPane with Browse (Marketplace) and Installed tabs.
+ * Contains a JTabbedPane with Browse (Marketplace), Installed, and Publish tabs.
  * <p>
  * For the PoC, this is self-contained and reads from a local registry.json.
  * In production, it would fetch from a remote GitHub/Azure DevOps URL.
@@ -17,6 +17,7 @@ public class PluginManager extends JPanel {
     private final PluginManagerService service;
     private final PluginManagerBrowseUI browseUI;
     private final PluginManagerInstalledUI installedUI;
+    private final PluginManagerPublishUI publishUI;
     private final JLabel statusLabel;
     private final JButton installFromFileButton;
 
@@ -41,6 +42,10 @@ public class PluginManager extends JPanel {
         // Installed tab
         this.installedUI = new PluginManagerInstalledUI(service, this::refreshInstalled);
         tabbedPane.addTab("Installed", installedUI);
+
+        // Publish tab
+        this.publishUI = new PluginManagerPublishUI(service, this::refreshInstalled);
+        tabbedPane.addTab("Publish", publishUI);
 
         add(tabbedPane, BorderLayout.CENTER);
 

@@ -7,8 +7,8 @@
 | File | Purpose |
 |---|---|
 | `PluginManager.java` | Main tab with Browse + Installed tabs, Import from File button |
-| `PluginManagerBrowseUI.java` | Marketplace table showing registry plugins with Install button |
-| `PluginManagerInstalledUI.java` | Table of installed plugins with Uninstall button |
+| `PluginManagerBrowseUI.java` | Marketplace table showing registry plugins with Install button, **conflict detection**, **version compatibility check** |
+| `PluginManagerInstalledUI.java` | Table of installed plugins with Uninstall button (MouseListener pattern, reliable) |
 | `PluginManagerService.java` | Fetches registry (GitHub first, local fallback), downloads JARs, lists/uninstalls |
 | `PluginRegistryEntry.java` | Data model for registry.json entries |
 | `PluginInstalledEntry.java` | Data model for locally installed plugins |
@@ -22,9 +22,23 @@
 | `INGIcons.java` | Registered puzzle icon `getPluginManagerIcon` via `getIngIcon` |
 | `FXToolBar.java` | Added "Plugins" button to the toolbar |
 
+### Engine Plugin Loading (2 new + 1 modified file)
+
+| File | Change |
+|---|---|
+| `PluginLoader.java` | **Fixed** — now scans both `Resources/plugins/` and `{appRoot}/plugins/` |
+| `PluginMetadata.java` | **New** — reads plugin metadata from JAR manifests (Plugin-Name, Plugin-Version, etc.) and .plugininfo files |
+
+### Pre-Install Safety Checks
+
+- **Version compatibility**: checks `minEngineVersion`/`maxEngineVersion` against `About.getBuildVersion()` before install
+- **Conflict detection**: scans already-installed plugins for duplicate `@Action` method names before install
+- **Restart prompt**: user can restart immediately after install/uninstall
+
 ### Registry
 
 - `Resources/plugins/registry.json` — 2 plugins listed
+- `Dist/release/plugins/registry.json` — in sync
 - Service (`PluginManagerService`) tries `REMOTE_REGISTRY_URL` first, falls back to local file on failure
 - Remote URL: `https://raw.githubusercontent.com/Jul611/INGenious/initiative-repo/Resources/plugins/registry.json`
 
@@ -44,44 +58,27 @@ Each has:
 
 Both built JARs are in `Resources/plugins/` — served via `raw.githubusercontent.com` URLs pointing to the `initiative-repo` branch.
 
-## Known Issue: Install Button Not Working
+## Known Issues
 
-The `PluginManagerBrowseUI.java` was rewritten to use a `MouseListener` on the table instead of a `CellEditor`, which should be more reliable. The code:
+- **Install/Uninstall buttons** — both tabs now use the reliable MouseListener pattern (installed tab was fixed from old ButtonEditor pattern)
+- **Dist/release/plugins/** — synchronized with Resources/plugins/
 
-```java
-table.addMouseListener(new MouseAdapter() {
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        int col = table.columnAtPoint(e.getPoint());
-        int row = table.rowAtPoint(e.getPoint());
-        if (col == INSTALL_COL && row >= 0) {
-            int modelRow = table.convertRowIndexToModel(row);
-            installPlugin(modelRow);
-        }
-    }
-});
-```
+## Remaining Work for Week 8
 
-The `PluginManagerInstalledUI.java` still uses the old `ButtonEditor` pattern — may have the same issue.
-
-**To debug**: add `System.out.println("DEBUG click at col=" + col + " row=" + row)` inside the mouse listener.
+1. **Engine PluginLoader integration** — the `MethodInfoManager.load()` already scans `{appRoot}/plugins/` for `@Action` annotations. The `PluginLoader` now also scans `Resources/plugins/`. Still needs to verify end-to-end: install plugin → restart → actions appear in step builder
+2. **Test suite** — unit tests for conflict detection, version parsing, and install/uninstall flows
+3. **PR pipeline** — GitHub Actions YAML for plugin registry validation
+4. **Plugin author documentation** — CONTRIBUTING.md for the plugins repo
 
 ## How to Test
 
 1. Build: `mvn compile -pl IDE -am`
-2. Launch INGenious from `IDE/src/main/java/com/ing/ide/main/Main.java` (?)
+2. Launch INGenious from `IDE/src/main/java/com/ing/ide/main/Main.java`
 3. Click **Plugins** button in the toolbar
 4. Browse tab loads — shows plugin list
-5. Click Install on a row — calls `service.downloadPlugin()`
+5. Click Install on a row — runs conflict + version checks, then downloads
 6. Switch to Installed tab — see the plugin
-
-## What Still Needs Work
-
-1. **Install click reliability** — debug if still not working
-2. **Also fix Uninstall button** in `PluginManagerInstalledUI.java` (same rewrite needed)
-3. **Engine PluginLoader integration** — the `Engine` needs to scan `Resources/plugins/` for installed plugin JARs and load `@Action` classes via the `pluginEntryClasses` manifest. Currently the Plugin Manager just writes files to disk
-4. **registry.json duplicates** — both `Resources/plugins/` and `Dist/release/plugins/` have copies. Keep in sync
-5. **Branch** — all work is on `initiative-repo` branch
+7. Uninstall button works reliably
 
 ## How to Write a Plugin
 

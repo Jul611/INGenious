@@ -1,10 +1,11 @@
 package com.ing.ide.main.mainui.components.pluginmanager;
 
+import com.ing.ide.main.ui.About;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,9 +17,9 @@ import javax.swing.table.TableRowSorter;
 /**
  * Browse tab for the Plugin Manager marketplace.
  * Shows available plugins from the registry with Install buttons.
+ * Includes pre-install conflict detection and version compatibility checks.
  */
 public class PluginManagerBrowseUI extends JPanel {
-
     private static final Logger LOG = Logger.getLogger(PluginManagerBrowseUI.class.getName());
     private static final int INSTALL_COL = 5;
 
@@ -58,14 +59,17 @@ public class PluginManagerBrowseUI extends JPanel {
         add(headerPanel, BorderLayout.NORTH);
 
         // Table
-        tableModel = new DefaultTableModel(
-            new String[]{"", "Plugin", "Author", "Version", "Actions", "Install"}, 0
-        ) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // no inline editing; we handle clicks via mouse listener
-            }
-        };
+        tableModel =
+            new DefaultTableModel(
+                new String[] { "", "Plugin", "Author", "Version", "Actions", "Install" },
+                0
+            ) {
+
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false; // no inline editing; we handle clicks via mouse listener
+                }
+            };
 
         table = new JTable(tableModel);
         table.setRowHeight(32);
@@ -76,7 +80,7 @@ public class PluginManagerBrowseUI extends JPanel {
         table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
         // Column widths
-        int[] widths = {30, 220, 140, 70, 80, 100};
+        int[] widths = { 30, 220, 140, 70, 80, 100 };
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
             if (i == 0 || i == 5) {
@@ -85,43 +89,77 @@ public class PluginManagerBrowseUI extends JPanel {
         }
 
         // Featured star renderer
-        table.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object v,
-                    boolean isSel, boolean hasFocus, int row, int col) {
-                JLabel l = new JLabel();
-                if (Boolean.TRUE.equals(v)) l.setText("\u2605");
-                l.setHorizontalAlignment(SwingConstants.CENTER);
-                return l;
-            }
-        });
+        table
+            .getColumnModel()
+            .getColumn(0)
+            .setCellRenderer(
+                new DefaultTableCellRenderer() {
+
+                    @Override
+                    public Component getTableCellRendererComponent(
+                        JTable t,
+                        Object v,
+                        boolean isSel,
+                        boolean hasFocus,
+                        int row,
+                        int col
+                    ) {
+                        JLabel l = new JLabel();
+                        if (Boolean.TRUE.equals(v)) l.setText("\u2605");
+                        l.setHorizontalAlignment(SwingConstants.CENTER);
+                        return l;
+                    }
+                }
+            );
 
         // Action count - centered
-        table.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object v,
-                    boolean isSel, boolean hasFocus, int row, int col) {
-                JLabel l = (JLabel) super.getTableCellRendererComponent(t, v, isSel, hasFocus, row, col);
-                l.setHorizontalAlignment(SwingConstants.CENTER);
-                return l;
-            }
-        });
+        table
+            .getColumnModel()
+            .getColumn(4)
+            .setCellRenderer(
+                new DefaultTableCellRenderer() {
+
+                    @Override
+                    public Component getTableCellRendererComponent(
+                        JTable t,
+                        Object v,
+                        boolean isSel,
+                        boolean hasFocus,
+                        int row,
+                        int col
+                    ) {
+                        JLabel l = (JLabel) super.getTableCellRendererComponent(
+                            t,
+                            v,
+                            isSel,
+                            hasFocus,
+                            row,
+                            col
+                        );
+                        l.setHorizontalAlignment(SwingConstants.CENTER);
+                        return l;
+                    }
+                }
+            );
 
         // Install column - render as button-like
         table.getColumnModel().getColumn(INSTALL_COL).setCellRenderer(new InstallRenderer());
 
         // Mouse listener for Install column clicks
-        table.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int col = table.columnAtPoint(e.getPoint());
-                int row = table.rowAtPoint(e.getPoint());
-                if (col == INSTALL_COL && row >= 0) {
-                    int modelRow = table.convertRowIndexToModel(row);
-                    installPlugin(modelRow);
+        table.addMouseListener(
+            new MouseAdapter() {
+
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int col = table.columnAtPoint(e.getPoint());
+                    int row = table.rowAtPoint(e.getPoint());
+                    if (col == INSTALL_COL && row >= 0) {
+                        int modelRow = table.convertRowIndexToModel(row);
+                        installPlugin(modelRow);
+                    }
                 }
             }
-        });
+        );
 
         // Sorter
         table.setRowSorter(new TableRowSorter<>(tableModel));
@@ -138,6 +176,7 @@ public class PluginManagerBrowseUI extends JPanel {
 
     public void loadData() {
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
             @Override
             protected Void doInBackground() {
                 plugins = service.fetchRegistry();
@@ -159,22 +198,26 @@ public class PluginManagerBrowseUI extends JPanel {
             return;
         }
 
-        plugins.sort((a, b) -> {
-            if (a.isFeatured() != b.isFeatured()) {
-                return a.isFeatured() ? -1 : 1;
+        plugins.sort(
+            (a, b) -> {
+                if (a.isFeatured() != b.isFeatured()) {
+                    return a.isFeatured() ? -1 : 1;
+                }
+                return a.getDisplayName().compareToIgnoreCase(b.getDisplayName());
             }
-            return a.getDisplayName().compareToIgnoreCase(b.getDisplayName());
-        });
+        );
 
         for (PluginRegistryEntry plugin : plugins) {
-            tableModel.addRow(new Object[]{
-                plugin.isFeatured(),
-                plugin.getDisplayName(),
-                plugin.getAuthor(),
-                plugin.getVersion(),
-                String.valueOf(plugin.getActionCount()),
-                "Install"
-            });
+            tableModel.addRow(
+                new Object[] {
+                    plugin.isFeatured(),
+                    plugin.getDisplayName(),
+                    plugin.getAuthor(),
+                    plugin.getVersion(),
+                    String.valueOf(plugin.getActionCount()),
+                    "Install"
+                }
+            );
         }
         statusLabel.setText(plugins.size() + " plugin(s) available");
     }
@@ -186,43 +229,194 @@ public class PluginManagerBrowseUI extends JPanel {
         if (query.isEmpty()) {
             sorter.setRowFilter(null);
         } else {
-            sorter.setRowFilter(new RowFilter<Object, Object>() {
-                @Override
-                public boolean include(Entry<?, ?> entry) {
-                    String name = entry.getStringValue(1).toLowerCase();
-                    String author = entry.getStringValue(2).toLowerCase();
-                    return name.contains(query) || author.contains(query);
+            sorter.setRowFilter(
+                new RowFilter<Object, Object>() {
+
+                    @Override
+                    public boolean include(Entry<?, ?> entry) {
+                        String name = entry.getStringValue(1).toLowerCase();
+                        String author = entry.getStringValue(2).toLowerCase();
+                        return name.contains(query) || author.contains(query);
+                    }
                 }
-            });
+            );
         }
+    }
+
+    /**
+     * Checks version compatibility before installing.
+     * Returns a warning message if incompatible, null if ok.
+     */
+    private String checkVersionCompatibility(PluginRegistryEntry plugin) {
+        String engineVersion = About.getBuildVersion();
+        String minEngine = plugin.getMinEngineVersion();
+        String maxEngine = plugin.getMaxEngineVersion();
+
+        if (minEngine != null && !minEngine.isEmpty()) {
+            try {
+                int minVer = parseVersion(minEngine);
+                int engVer = parseVersion(engineVersion);
+                if (engVer < minVer) {
+                    return (
+                        "This plugin requires engine version " +
+                        minEngine +
+                        " or newer.\nCurrent engine version: " +
+                        engineVersion +
+                        "\n\nThe plugin may not work correctly."
+                    );
+                }
+            } catch (NumberFormatException e) {
+                // Version format not comparable, skip check
+            }
+        }
+
+        if (maxEngine != null && !maxEngine.isEmpty()) {
+            try {
+                int maxVer = parseVersion(maxEngine);
+                int engVer = parseVersion(engineVersion);
+                if (engVer > maxVer) {
+                    return (
+                        "This plugin is designed for engine version " +
+                        maxEngine +
+                        " or older.\nCurrent engine version: " +
+                        engineVersion +
+                        "\n\nThe plugin may not work correctly."
+                    );
+                }
+            } catch (NumberFormatException e) {
+                // Version format not comparable, skip check
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Simple version parser that converts "3.1.0" to an integer for comparison.
+     */
+    private int parseVersion(String version) {
+        if (version == null || version.isEmpty() || version.equals("dev")) return 0;
+        String[] parts = version.split("\\.");
+        int result = 0;
+        for (int i = 0; i < Math.min(parts.length, 3); i++) {
+            try {
+                result = result * 1000 + Integer.parseInt(parts[i]);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks if the plugin's actions conflict with already-installed plugins.
+     * Returns a list of conflicting action names, empty if none.
+     */
+    private List<String> findConflictingActions(PluginRegistryEntry plugin) {
+        List<String> conflicts = new ArrayList<>();
+        List<PluginInstalledEntry> installed = service.getInstalledPlugins();
+
+        if (plugin.getActions() == null || installed == null || installed.isEmpty()) {
+            return conflicts;
+        }
+
+        Set<String> existingActions = new HashSet<>();
+        for (PluginInstalledEntry installedPlugin : installed) {
+            if (installedPlugin.getActions() != null) {
+                existingActions.addAll(installedPlugin.getActions());
+            }
+        }
+
+        for (String action : plugin.getActions()) {
+            if (existingActions.contains(action)) {
+                conflicts.add(action);
+            }
+        }
+
+        return conflicts;
     }
 
     private void installPlugin(int modelRow) {
         if (plugins == null || modelRow < 0 || modelRow >= plugins.size()) return;
         PluginRegistryEntry plugin = plugins.get(modelRow);
+
+        // --- Pre-install checks ---
+
+        // 1. Version compatibility check
+        String versionWarning = checkVersionCompatibility(plugin);
+        if (versionWarning != null) {
+            int choice = JOptionPane.showConfirmDialog(
+                this,
+                versionWarning + "\n\nDo you want to continue installing?",
+                "Version Compatibility Warning",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            if (choice != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
+        // 2. Conflict detection
+        List<String> conflicts = findConflictingActions(plugin);
+        if (!conflicts.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("The following actions already exist from other installed plugins:\n\n");
+            for (String c : conflicts) {
+                sb.append("  - ").append(c).append("\n");
+            }
+            sb.append("\nInstalling this plugin may cause duplicate action errors.\n");
+            sb.append("Do you want to continue anyway?");
+
+            int choice = JOptionPane.showConfirmDialog(
+                this,
+                sb.toString(),
+                "Action Conflict Warning",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            if (choice != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
+        // 3. Proceed with install
         try {
             service.downloadPlugin(plugin);
-            int choice = JOptionPane.showConfirmDialog(this,
-                    "Plugin \"" + plugin.getDisplayName() + "\" installed successfully.\n"
-                    + "Restart INGenious now for the changes to take effect?",
-                    "Plugin Installed", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
+            int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Plugin \"" +
+                plugin.getDisplayName() +
+                "\" installed successfully.\n" +
+                "Restart INGenious now for the changes to take effect?",
+                "Plugin Installed",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE
+            );
             if (choice == JOptionPane.YES_OPTION) {
-                // Trigger restart via action listener
-                Toolkit.getDefaultToolkit().beep();
+                // Trigger restart via frame
+                Container parent = getTopLevelAncestor();
+                if (parent instanceof com.ing.ide.main.mainui.AppMainFrame) {
+                    ((com.ing.ide.main.mainui.AppMainFrame) parent).restart();
+                }
             }
             if (onInstallCallback != null) {
                 onInstallCallback.run();
             }
         } catch (IOException e) {
             LOG.log(Level.SEVERE, "Failed to install plugin", e);
-            JOptionPane.showMessageDialog(this,
-                    "Failed to install plugin: " + e.getMessage(),
-                    "Install Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                this,
+                "Failed to install plugin: " + e.getMessage(),
+                "Install Error",
+                JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 
     // Renders the Install cell as a clickable button
     static class InstallRenderer extends JButton implements javax.swing.table.TableCellRenderer {
+
         public InstallRenderer() {
             setOpaque(true);
             setText("Install");
@@ -231,8 +425,14 @@ public class PluginManagerBrowseUI extends JPanel {
         }
 
         @Override
-        public Component getTableCellRendererComponent(JTable t, Object v,
-                boolean isSel, boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(
+            JTable t,
+            Object v,
+            boolean isSel,
+            boolean hasFocus,
+            int row,
+            int col
+        ) {
             return this;
         }
     }
