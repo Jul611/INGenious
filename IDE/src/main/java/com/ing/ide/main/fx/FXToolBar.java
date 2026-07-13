@@ -66,9 +66,8 @@ public class FXToolBar extends JFXPanel {
                 createButton("Archetype Configurations", "BrowserConfiguration"),
                 new Separator(),
                 createAPITesterButton(),
-                //createAICopilotButton(),
+                createPluginManagerButton(),
                 createSpacer()
-                //, createDarkModeToggle()
             );
 
         VBox root = new VBox(toolBar);
@@ -83,7 +82,6 @@ public class FXToolBar extends JFXPanel {
         Button btn = new Button();
         btn.setTooltip(new Tooltip(action));
 
-        // Use colorful Ikonli web font icon
         org.kordamp.ikonli.javafx.FontIcon icon = INGIcons.fxColored(iconName, 18);
         if (icon != null) {
             btn.setGraphic(icon);
@@ -100,7 +98,6 @@ public class FXToolBar extends JFXPanel {
         btn.getStyleClass().add("workbench-btn");
         btn.setTooltip(new Tooltip("Open API Testing Console - Test REST APIs like Postman"));
 
-        // Keep the icon explicitly black to match the neutral Workbench style.
         org.kordamp.ikonli.javafx.FontIcon icon = INGIcons.fx(
             "APITester",
             16,
@@ -114,18 +111,21 @@ public class FXToolBar extends JFXPanel {
         return btn;
     }
 
-    private Button createAICopilotButton() {
-        Button btn = new Button("AI Assistant");
-        btn.getStyleClass().add("api-tester-btn");
-        btn.setTooltip(new Tooltip("Open the INGenious AI Assistant (GitHub Models)"));
+    private Button createPluginManagerButton() {
+        Button btn = new Button("Plugins");
+        btn.getStyleClass().add("workbench-btn");
+        btn.setTooltip(new Tooltip("Open Plugin Manager - Browse and install plugins"));
 
-        org.kordamp.ikonli.javafx.FontIcon icon = INGIcons.fxColored("AICopilot", 16);
+        org.kordamp.ikonli.javafx.FontIcon icon = INGIcons.fx(
+            "PluginManager",
+            16,
+            javafx.scene.paint.Color.BLACK
+        );
         if (icon != null) {
-            icon.setIconColor(INGIcons.CLR_DATA);
             btn.setGraphic(icon);
         }
 
-        btn.setOnAction(e -> fireSwingAction("AI Assistant"));
+        btn.setOnAction(e -> fireSwingAction("Plugin Manager"));
         return btn;
     }
 
@@ -151,7 +151,6 @@ public class FXToolBar extends JFXPanel {
     }
 
     private HBox createDarkModeToggle() {
-        // Sun icon for light mode, Moon icon for dark mode
         org.kordamp.ikonli.javafx.FontIcon sunIcon = new org.kordamp.ikonli.javafx.FontIcon(
             "fas-sun"
         );
@@ -172,7 +171,6 @@ public class FXToolBar extends JFXPanel {
         darkModeToggle.setOnAction(
             e -> {
                 fireSwingAction("Dark Mode");
-                // Small delay to let theme switch, then update toggle appearance
                 Platform.runLater(
                     () -> {
                         try {
@@ -218,9 +216,6 @@ public class FXToolBar extends JFXPanel {
         return spacer;
     }
 
-    /**
-     * Bridges JavaFX button clicks to Swing AppActionListener.
-     */
     private void fireSwingAction(String command) {
         SwingUtilities.invokeLater(
             () -> {
@@ -234,9 +229,6 @@ public class FXToolBar extends JFXPanel {
         );
     }
 
-    /**
-     * Returns the auto-save toggle button for external state sync.
-     */
     public ToggleButton getAutoSaveToggle() {
         return autoSaveToggle;
     }

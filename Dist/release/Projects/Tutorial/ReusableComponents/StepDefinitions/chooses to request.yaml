@@ -1,0 +1,8 @@
+schemaVersion: 1
+testCase: chooses to request
+scenario: StepDefinitions
+steps:
+  - step: 1
+    object: Execute
+    action: Operations:Request
+    reference: "[Project]"

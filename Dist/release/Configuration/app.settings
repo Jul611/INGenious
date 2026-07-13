@@ -1,0 +1,21 @@
+#Created
+#Mon Jul 13 14:44:56 GMT+08:00 2026
+addonPort=8887
+dateTimeFormat=yyyy-MM-dd HH\:mm\:ss\:SSS Z
+defaultLogLevel=INFO
+defaultWaitTime=10
+elementWaitTime=10
+githubModelsLogin=
+githubModelsModel=openai/gpt-4o-mini
+githubModelsToken=
+githubOAuthClientId=
+harPort=11234
+helpdoc=https\://ing-bank.github.io/ingenious-doc/
+loadRecentProject=true
+logBackupLoc=backup/log
+logfile=log.txt
+maxFileSize=4.5
+showDateTime=true
+standaloneReport=false
+theme=Indigo
+themes=Orange,Indigo,Fuchsia,Sky

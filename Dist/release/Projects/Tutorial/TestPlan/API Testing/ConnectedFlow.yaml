@@ -1,0 +1,171 @@
+schemaVersion: 1
+testCase: ConnectedFlow
+scenario: API Testing
+steps:
+  - step: 1
+    object: Webservice
+    description: 'Set End Point '
+    action: setEndPoint
+    input: '@http://localhost:3000/customers'
+
+  - step: 2
+    object: Webservice
+    description: 'Add Header '
+    action: addHeader
+    input: '@Content-Type=application/json'
+
+  - step: 3
+    object: Webservice
+    description: 'POST Rest Request '
+    action: postRestRequest
+    input: "{     \"name\": \"{ConnectedFlow:OriginalName}\",          \"country\"\
+      : \"{ConnectedFlow:Country}\" }"
+
+  - step: 4
+    object: Webservice
+    description: 'Assert Response Code '
+    action: assertResponseCode
+    input: '@201'
+
+  - step: 5
+    object: Webservice
+    description: 'Store JSON Element In DataSheet '
+    action: storeJSONelementInDataSheet
+    input: ConnectedFlow:CustID
+    condition: $.id
+
+  - step: 6
+    object: '*********************'
+    comment: true
+
+  - step: 7
+    object: Webservice
+    description: 'Set End Point '
+    action: setEndPoint
+    input: "@http://localhost:3000/customers/{ConnectedFlow:CustID}"
+
+  - step: 8
+    object: Webservice
+    description: 'Add Header '
+    action: addHeader
+    input: '@Content-Type=application/json'
+
+  - step: 9
+    object: Webservice
+    description: 'POST Rest Request '
+    action: putRestRequest
+    input: "{     \"name\": \"{ConnectedFlow:NewName}\",               \"country\"\
+      : \"{ConnectedFlow:Country}\" }"
+
+  - step: 10
+    object: Webservice
+    description: 'Assert Response Code '
+    action: assertResponseCode
+    input: '@200'
+
+  - step: 11
+    object: '*********************'
+    comment: true
+
+  - step: 12
+    object: Webservice
+    description: 'Set End Point '
+    action: setEndPoint
+    input: "@http://localhost:3000/customers?id={ConnectedFlow:CustID}"
+
+  - step: 13
+    object: Webservice
+    description: 'Add Header '
+    action: addHeader
+    input: '@Content-Type=application/json'
+
+  - step: 14
+    object: Webservice
+    description: 'POST Rest Request '
+    action: getRestRequest
+
+  - step: 15
+    object: Webservice
+    description: 'Assert Response Code '
+    action: assertResponseCode
+    input: '@200'
+
+  - step: 16
+    object: Webservice
+    description: 'Assert JSON Element Equals '
+    action: assertJSONelementEquals
+    input: ConnectedFlow:NewName
+    condition: "$.[0].name"
+
+  - step: 17
+    object: '*******************'
+    comment: true
+
+  - step: 18
+    object: Webservice
+    description: 'Set End Point '
+    action: setEndPoint
+    input: '@http://localhost:3000/accounts'
+
+  - step: 19
+    object: Webservice
+    description: 'Add Header '
+    action: addHeader
+    input: '@Content-Type=application/json'
+
+  - step: 20
+    object: Webservice
+    description: 'POST Rest Request '
+    action: postRestRequest
+    input: "{     \"accountnumber\": \"{ConnectedFlow:AccountNumber}\",          \
+      \ \"customerId\": \"{ConnectedFlow:CustID}\"   }"
+
+  - step: 21
+    object: Webservice
+    description: 'Assert Response Code '
+    action: assertResponseCode
+    input: '@201'
+
+  - step: 22
+    object: Webservice
+    description: 'Store JSON Element In DataSheet '
+    action: storeJSONelementInDataSheet
+    input: ConnectedFlow:AccountID
+    condition: $.id
+
+  - step: 23
+    object: '*******************'
+    comment: true
+
+  - step: 24
+    object: Webservice
+    description: 'Set End Point '
+    action: setEndPoint
+    input: '@http://localhost:3000/transactions'
+
+  - step: 25
+    object: Webservice
+    description: 'Add Header '
+    action: addHeader
+    input: '@Content-Type=application/json'
+
+  - step: 26
+    object: Webservice
+    description: 'POST Rest Request '
+    action: postRestRequest
+    input: "{    \"accountId\": \"{ConnectedFlow:AccountID}\",           \"amount\"\
+      : {ConnectedFlow:Amount},           \"date\": \"{ConnectedFlow:Date}\",    \
+      \       \"type\": \"{ConnectedFlow:Type}\"    }"
+
+  - step: 27
+    object: Webservice
+    description: 'Assert Response Code '
+    action: assertResponseCode
+    input: '@201'
+
+  - step: 28
+    object: Webservice
+    description: 'Store JSON Element In DataSheet '
+    action: storeJSONelementInDataSheet
+    input: ConnectedFlow:TransactionID
+    condition: $.id

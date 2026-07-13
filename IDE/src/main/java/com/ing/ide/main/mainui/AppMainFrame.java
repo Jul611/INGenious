@@ -23,6 +23,7 @@ import com.ing.ide.main.fx.FXStatusBar;
 import com.ing.ide.main.fx.FXToolBar;
 import com.ing.ide.main.mainui.components.aichat.AICopilot;
 import com.ing.ide.main.mainui.components.apitester.APITester;
+import com.ing.ide.main.mainui.components.pluginmanager.PluginManager;
 import com.ing.ide.main.mainui.components.testdesign.TestDesign;
 import com.ing.ide.main.mainui.components.testexecution.TestExecution;
 import com.ing.ide.main.shr.SHR;
@@ -85,6 +86,8 @@ public class AppMainFrame extends JFrame {
 
     private final AICopilot aiCopilot;
 
+    private final PluginManager pluginManager;
+
     private final FXDashBoard dashBoard;
 
     private final DashBoardManager dashBoardManager;
@@ -137,6 +140,7 @@ public class AppMainFrame extends JFrame {
         apiTester = new APITester(this);
         progressed(52);
         aiCopilot = new AICopilot(this);
+        pluginManager = new PluginManager(this);
         dashBoard = new FXDashBoard(testExecution);
         progressed(60);
         dashBoardManager = new DashBoardManager(this);
@@ -168,6 +172,7 @@ public class AppMainFrame extends JFrame {
         slideShow.addSlide("DashBoard", dashBoard);
         slideShow.addSlide("APITester", apiTester.getAPITesterUI());
         slideShow.addSlide("AICopilot", aiCopilot.getAICopilotUI());
+        slideShow.addSlide("PluginManager", pluginManager);
         slideShow.addSlideChangeListener(aiCopilot);
         progressed(85);
         add(slideShow, BorderLayout.CENTER);
@@ -311,6 +316,13 @@ public class AppMainFrame extends JFrame {
         getGlassPane().setVisible(false);
         slideShow.showSlide("AICopilot");
         if (fxStatusBar != null) fxStatusBar.setCurrentView("AI Assistant");
+    }
+
+    public void showPluginManager() {
+        getGlassPane().setVisible(false);
+        slideShow.showSlide("PluginManager");
+        pluginManager.load();
+        if (fxStatusBar != null) fxStatusBar.setCurrentView("Plugin Manager");
     }
 
     private String getAppTitle() {

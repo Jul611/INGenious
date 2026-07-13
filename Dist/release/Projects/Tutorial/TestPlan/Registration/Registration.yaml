@@ -1,0 +1,127 @@
+schemaVersion: 1
+testCase: Registration
+scenario: Registration
+steps:
+  - step: 1
+    object: Browser
+    description: "Open the Url [<Data>] in the Browser"
+    action: Open
+    input: '@http://localhost:3000/signin'
+
+  - step: 2
+    object: signup
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Registration"
+
+  - step: 3
+    object: signup
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Registration"
+
+  - step: 4
+    object: First Name
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Fill
+    input: "=Concat(John_,=Round(=Random(3))):"
+    reference: "[Project] Registration"
+
+  - step: 5
+    object: Last Name
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Registration"
+
+  - step: 6
+    object: Last Name
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Fill
+    input: "=Concat(Doe_,=Round(=Random(3))):"
+    reference: "[Project] Registration"
+
+  - step: 7
+    object: Username
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Registration"
+
+  - step: 8
+    object: General
+    description: Add a variable to access within testcase
+    action: AddVar
+    input: "=Concat(John_,=Round(=Random(3))):"
+    condition: '%uname%'
+
+  - step: 9
+    object: Username
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Fill
+    input: '%uname%'
+    reference: "[Project] Registration"
+    breakpoint: true
+
+  - step: 10
+    object: Refactor_Object
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Registration"
+
+  - step: 11
+    object: General
+    description: Add a variable to access within testcase
+    action: AddVar
+    input: "=Concat(pass_,=Round(=Random(3))):"
+    condition: '%password%'
+
+  - step: 12
+    object: Refactor_Object_1
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Fill
+    input: '%password%'
+    reference: "[Project] Registration"
+
+  - step: 13
+    object: Confirm Password
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Registration"
+
+  - step: 14
+    object: Confirm Password
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Fill
+    input: '%password%'
+    reference: "[Project] Registration"
+
+  - step: 15
+    object: signup-submit
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Registration"
+
+  - step: 16
+    object: Username1
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Fill
+    input: '%uname%'
+    reference: "[Project] Registration"
+
+  - step: 17
+    object: Password
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Registration"
+
+  - step: 18
+    object: Password
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Fill
+    input: '%password%'
+    reference: "[Project] Registration"
+
+  - step: 19
+    object: signin-submit
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Registration"

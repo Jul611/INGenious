@@ -139,6 +139,7 @@ public final class INGIcons {
         register("ArchetypeConfigurations", MaterialDesignW.WEB, CLR_TOOL);
         register("APITester", MaterialDesignA.API, CLR_DATA);
         register("AICopilot", FontAwesomeBrands.GITHUB, CLR_DATA);
+        register("PluginManager", MaterialDesignP.PUZZLE, CLR_CONFIG);
 
         // ── Common Actions ──
         register("add", MaterialDesignP.PLUS, CLR_CREATE);

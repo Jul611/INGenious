@@ -1,0 +1,9 @@
+schemaVersion: 1
+testCase: Validation
+scenario: Operations
+steps:
+  - step: 1
+    object: Transaction Submitted!
+    description: "Click the [<Object>] "
+    action: assertElementIsVisible
+    reference: "[Project] Myfirstscript"

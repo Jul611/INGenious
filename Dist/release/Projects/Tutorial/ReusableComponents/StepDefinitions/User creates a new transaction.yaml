@@ -1,0 +1,8 @@
+schemaVersion: 1
+testCase: User creates a new transaction
+scenario: StepDefinitions
+steps:
+  - step: 1
+    object: Execute
+    action: Operations:Initiation
+    reference: "[Project]"

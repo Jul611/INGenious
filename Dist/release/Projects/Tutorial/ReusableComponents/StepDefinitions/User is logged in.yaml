@@ -1,0 +1,8 @@
+schemaVersion: 1
+testCase: User is logged in
+scenario: StepDefinitions
+steps:
+  - step: 1
+    object: Execute
+    action: Common:Login
+    reference: "[Project]"

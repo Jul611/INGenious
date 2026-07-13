@@ -1,0 +1,9 @@
+schemaVersion: 1
+testCase: Request
+scenario: Operations
+steps:
+  - step: 1
+    object: transaction-request
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Myfirstscript"

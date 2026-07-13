@@ -1,0 +1,16 @@
+schemaVersion: 1
+testCase: AuthenticateContext
+scenario: NewScenario
+steps:
+  - step: 1
+    object: Browser
+    description: "Open the Url [<Data>] in the Browser"
+    action: Open
+    input: '@https://the-internet.herokuapp.com/basic_auth'
+
+  - step: 2
+    object: General
+    description: "Wait for [<Data>] milli seconds"
+    action: pause
+    input: '@1'
+    breakpoint: true

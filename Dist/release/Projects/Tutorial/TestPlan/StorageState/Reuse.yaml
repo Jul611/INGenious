@@ -1,0 +1,21 @@
+schemaVersion: 1
+testCase: Reuse
+scenario: StorageState
+steps:
+  - step: 1
+    object: Browser
+    description: "Open the Url [<Data>] in the Browser"
+    action: Open
+    input: '@http://localhost:3000/user/settings'
+
+  - step: 2
+    object: General
+    description: "Wait for [<Data>] milli seconds"
+    action: pause
+    input: '@1'
+
+  - step: 3
+    object: Logout
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Myfirstscript"

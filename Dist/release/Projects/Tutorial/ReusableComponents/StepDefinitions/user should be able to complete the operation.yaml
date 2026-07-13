@@ -1,0 +1,13 @@
+schemaVersion: 1
+testCase: user should be able to complete the operation
+scenario: StepDefinitions
+steps:
+  - step: 1
+    object: Execute
+    action: Operations:Validation
+    reference: "[Project]"
+
+  - step: 2
+    object: Execute
+    action: Common:Logout
+    reference: "[Project]"

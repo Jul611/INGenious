@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "name": "demo-helloworld",
+      "displayName": "Hello World Demo",
+      "description": "A demo plugin that adds Hello World and custom greeting actions. Shows how plugins integrate with the INGenious step builder.",
+      "author": "INGenious Plugins Team",
+      "authorEmail": "plugins@company.com",
+      "version": "1.0.0",
+      "minEngineVersion": "3.0.0",
+      "maxEngineVersion": "",
+      "downloadUrl": "https://raw.githubusercontent.com/Jul611/INGenious/main/Resources/plugins/demo-helloworld/demo-helloworld-1.0.0.jar",
+      "libUrls": [],
+      "objectTypes": ["General"],
+      "actionCount": 2,
+      "actions": ["sayHelloWorld", "sayCustomGreeting"],
+      "homepageUrl": "https://github.com/Jul611/INGenious/tree/main/plugin-examples",
+      "license": "MIT",
+      "releaseNotes": "Initial release of the Hello World demo plugin.",
+      "dateAdded": "2026-07-13",
+      "featured": true,
+      "githubRepo": "Jul611/INGenious"
+    }
+  ]
+}

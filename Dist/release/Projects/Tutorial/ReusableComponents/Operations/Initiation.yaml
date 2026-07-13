@@ -1,0 +1,43 @@
+schemaVersion: 1
+testCase: Initiation
+scenario: Operations
+steps:
+  - step: 1
+    object: nav-top-new-transaction
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Myfirstscript"
+
+  - step: 2
+    object: Recipient
+    description: "Set object [<Object>] property  as [<Data>] at runtime"
+    action: setObjectProperty
+    input: Transaction:Recipient
+    condition: '#name'
+    reference: "[Project] Myfirstscript"
+
+  - step: 3
+    object: Recipient
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Myfirstscript"
+
+  - step: 4
+    object: Amount
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Fill
+    input: Transaction:Amount
+    reference: "[Project] Myfirstscript"
+
+  - step: 5
+    object: Add a note
+    description: "Click the [<Object>] "
+    action: Click
+    reference: "[Project] Myfirstscript"
+
+  - step: 6
+    object: Add a note
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Fill
+    input: Transaction:Text for note
+    reference: "[Project] Myfirstscript"
