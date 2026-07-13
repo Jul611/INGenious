@@ -23,7 +23,6 @@ import java.util.logging.Logger;
  * </p>
  */
 public class PluginManagerService {
-
     private static final Logger LOG = Logger.getLogger(PluginManagerService.class.getName());
     private static final String PLUGINS_DIR = "Resources/plugins";
     private static final String REGISTRY_FILE = "Resources/plugins/registry.json";
@@ -181,9 +180,28 @@ public class PluginManagerService {
             LOG.warning("Creating placeholder JAR for: " + target.getName());
             try (FileOutputStream fos = new FileOutputStream(target)) {
                 byte[] emptyJar = new byte[] {
-                    0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                    0x50,
+                    0x4B,
+                    0x05,
+                    0x06,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00
                 };
                 fos.write(emptyJar);
             }
