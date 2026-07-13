@@ -39,3 +39,26 @@ C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\Settin
 2026-07-13 21:30:33:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
 2026-07-13 21:30:35:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
 2026-07-13 21:30:44:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-13 21:36:05:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-13 21:36:55:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORWriter ensureDirectory:Created directory: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\Mobile
+2026-07-13 21:36:55:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORWriter ensureDirectory:Created directory: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\StructuredData
+2026-07-13 21:36:55:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORWriter ensureDirectory:Created directory: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\SAP
+2026-07-13 21:37:21:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-13 21:38:26:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-13 21:39:39:07S +0800 [INFO] com.ing.ide.main.Main finish:INGenious Playwright Studio has been Terminated - [ Total Time : 00:12:17.074 ]
+2026-07-13 21:39:49:07S +0800 [WARNING] com.sun.javafx.application.PlatformImpl startup:Unsupported JavaFX configuration: classes were loaded from 'unnamed module @70be0a2b'
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:Auto-migrating CSV test cases to YAML (keepBackup=true)...
+C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\Settings\SAP.properties properties file already exists: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\Settings
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:Found 4 Web OR YAML files
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:Found 0 Mobile OR YAML files
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:Found 0 Structured Data OR YAML files
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:Found 0 SAP OR YAML files
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:No Web OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Web
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Mobile
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\StructuredData
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\SAP
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loading API Workbench data from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\api
+2026-07-13 21:39:54:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loaded 1 collections, 0 environments, 0 history entries
+2026-07-13 21:39:57:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-13 21:39:57:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-13 21:42:01:07S +0800 [INFO] com.ing.ide.main.Main finish:INGenious Playwright Studio has been Terminated - [ Total Time : 00:02:12.320 ]

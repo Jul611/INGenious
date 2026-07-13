@@ -21,6 +21,27 @@
       "dateAdded": "2026-07-13",
       "featured": true,
       "githubRepo": "Jul611/INGenious"
+    },
+    {
+      "name": "demo-screenshots",
+      "displayName": "Screenshot Tools",
+      "description": "Adds screenshot capture actions for Playwright browser tests. Includes full-page, element, and page info logging actions.",
+      "author": "INGenious Plugins Team",
+      "authorEmail": "plugins@company.com",
+      "version": "1.0.0",
+      "minEngineVersion": "3.0.0",
+      "maxEngineVersion": "",
+      "downloadUrl": "https://raw.githubusercontent.com/Jul611/INGenious/initiative-repo/Resources/plugins/screenshots/demo-screenshots-1.0.0.jar",
+      "libUrls": [],
+      "objectTypes": ["Playwright", "General"],
+      "actionCount": 3,
+      "actions": ["takeFullPageScreenshot", "captureElementScreenshot", "logPageInfo"],
+      "homepageUrl": "https://github.com/Jul611/INGenious/tree/initiative-repo/plugin-examples",
+      "license": "MIT",
+      "releaseNotes": "Initial release of Screenshot Tools demo plugin.",
+      "dateAdded": "2026-07-13",
+      "featured": true,
+      "githubRepo": "Jul611/INGenious"
     }
   ]
 }
