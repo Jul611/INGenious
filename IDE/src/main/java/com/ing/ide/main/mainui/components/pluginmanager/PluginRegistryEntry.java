@@ -25,6 +25,7 @@ public class PluginRegistryEntry {
     private String dateAdded;
     private boolean featured;
     private String githubRepo;
+    private String readmeUrl;
 
     // For publishing: the pluginEntryClasses from the JAR manifest
     private String entryClasses;
@@ -215,6 +216,14 @@ public class PluginRegistryEntry {
 
     public void setFeatured(boolean featured) {
         this.featured = featured;
+    }
+
+    public String getReadmeUrl() {
+        return readmeUrl;
+    }
+
+    public void setReadmeUrl(String readmeUrl) {
+        this.readmeUrl = readmeUrl;
     }
 
     public String getGithubRepo() {

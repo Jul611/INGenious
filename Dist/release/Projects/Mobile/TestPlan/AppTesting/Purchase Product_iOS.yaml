@@ -1,0 +1,99 @@
+schemaVersion: 1
+testCase: Purchase Product_iOS
+scenario: AppTesting
+steps:
+  - step: 1
+    object: Username
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Set
+    input: Data:Uname
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 2
+    object: Password
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Set
+    input: Data:Pwd
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 3
+    object: Login Button
+    description: "Click the [<Object>] "
+    action: Tap
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 4
+    object: ADD TO CART
+    description: "Click the [<Object>] "
+    action: Tap
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 5
+    object: Cart1
+    description: "Click the [<Object>] "
+    action: Tap
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 6
+    object: CHECKOUT
+    description: "Click the [<Object>] "
+    action: Tap
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 7
+    object: First Name
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Set
+    input: Data:Fname
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 8
+    object: Last Name
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Set
+    input: Data:Lname
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 9
+    object: ZipPostal Code
+    description: "Enter the value [<Data>] in the Field [<Object>]"
+    action: Set
+    input: Data:Zip
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 10
+    object: CONTINUE
+    description: "Click the [<Object>] "
+    action: Tap
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 11
+    object: Sauce Labs Backpack
+    description: "Assert if [<Object>] element is displayed"
+    action: assertElementDisplayed
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 12
+    object: Amount
+    description: "Assert if [<Object>] element is displayed"
+    action: assertElementDisplayed
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 13
+    object: Mobile
+    description: Scroll to Element in iOS
+    action: scrollInIOS
+    input: "@selector=//*[@text='FINISH']"
+    condition: down
+
+  - step: 14
+    object: FINISH
+    description: "Click the [<Object>] "
+    action: Tap
+    reference: "[Project] swaglabsmobileapp"
+
+  - step: 15
+    object: Success Message
+    description: "Assert if [<Object>] element is displayed"
+    action: assertElementDisplayed
+    reference: "[Project] swaglabsmobileapp"

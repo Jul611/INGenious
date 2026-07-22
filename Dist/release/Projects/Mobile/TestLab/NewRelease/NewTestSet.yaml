@@ -1,0 +1,20 @@
+schemaVersion: 1
+name: NewTestSet
+release: NewRelease
+executions:
+  - execute: true
+    testScenario: AppTesting
+    testCase: Purchase Product_Android
+    iteration: Single
+    status: NoRun
+    browser: Chromium
+    browserVersion: Default
+    platform: Any
+  - execute: true
+    testScenario: AppTesting
+    testCase: Purchase Product_iOS
+    iteration: Single
+    status: NoRun
+    browser: Chromium
+    browserVersion: Default
+    platform: Any

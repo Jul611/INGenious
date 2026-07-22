@@ -1,38 +1,61 @@
-2026-07-13 22:58:17:07S +0800 [WARNING] com.sun.javafx.application.PlatformImpl startup:Unsupported JavaFX configuration: classes were loaded from 'unnamed module @27ae2fd0'
-2026-07-13 22:58:18:07S +0800 [INFO] com.ing.engine.plugin.loader.PluginLoader loadAllPluginsEntryClasses:Scanning plugins from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\plugins
-2026-07-13 22:58:26:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:Auto-migrating CSV test cases to YAML (keepBackup=true)...
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:CSV to YAML migration completed: 31 file(s) converted, 0 conflict(s), 0 error(s)
-C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\Settings\SAP.properties properties file already exists: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\Settings
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:Found 4 Web OR YAML files
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\Mobile
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\StructuredData
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\ObjectRepository\SAP
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:No Web OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Web
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Mobile
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\StructuredData
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\SAP
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: Bank Accounts (resolved=1)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 6 object reference(s) to explicit scope prefixes in: Initaition
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 4 Execute reusable reference(s) to Reference scope column in: Pay money to an existing contact (resolved=4)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 4 Execute reusable reference(s) to Reference scope column in: Request money from existing contact (resolved=4)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 16 object reference(s) to explicit scope prefixes in: Registration
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: LoginComplete (resolved=1)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Reuse
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 5 Execute reusable reference(s) to Reference scope column in: HighAmount (resolved=5)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 5 Execute reusable reference(s) to Reference scope column in: LowAmount (resolved=5)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 5 object reference(s) to explicit scope prefixes in: Login
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Logout
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 6 object reference(s) to explicit scope prefixes in: Initiation
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Pay
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 object reference(s) to explicit scope prefixes in: Request
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: chooses to pay (resolved=1)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: chooses to request (resolved=1)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: User creates a new transaction (resolved=1)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 1 Execute reusable reference(s) to Reference scope column in: User is logged in (resolved=1)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 2 Execute reusable reference(s) to Reference scope column in: user should be able to complete the operation (resolved=2)
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loading API Workbench data from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Tutorial\api
-2026-07-13 22:58:27:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loaded 1 collections, 0 environments, 0 history entries
-2026-07-13 22:58:29:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 22:58:47:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-13 22:59:06:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
-2026-07-14 00:08:10:07S +0800 [INFO] com.ing.ide.main.Main finish:INGenious Playwright Studio has been Terminated - [ Total Time : 01:09:53.609 ]
+2026-07-22 19:18:12:07S +0800 [WARNING] com.sun.javafx.application.PlatformImpl startup:Unsupported JavaFX configuration: classes were loaded from 'unnamed module @4278a03f'
+2026-07-22 19:18:13:07S +0800 [INFO] com.ing.engine.plugin.loader.PluginLoader loadAllPluginsEntryClasses:Scanning plugins from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\plugins
+2026-07-22 19:18:13:07S +0800 [WARNING] com.ing.engine.plugin.loader.PluginLoader loadAllPluginsEntryClasses:No plugin entry classes found in any plugin directory
+2026-07-22 19:19:10:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:Auto-migrating CSV test cases to YAML (keepBackup=true)...
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:CSV to YAML migration completed: 3 file(s) converted, 0 conflict(s), 0 error(s)
+C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\Settings\SAP.properties properties file already exists: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\Settings
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.settings.migration.EmulatorToDeviceMigration migrate:Emulator->Device migration: migrated=[AndroidEmulator1, iOSEmulator1], skippedExisting=[], skippedLegacy=[]
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:No Web OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\ObjectRepository\Web
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:Found 1 Mobile OR YAML files
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\ObjectRepository\StructuredData
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\ObjectRepository\SAP
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:No Web OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Web
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Mobile
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\StructuredData
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\SAP
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.datalib.component.TestCase loadSteps:Migrated 14 object reference(s) to explicit scope prefixes in: Purchase Product_Android
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loading API Workbench data from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\api
+2026-07-22 19:19:11:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loaded 1 collections, 0 environments, 0 history entries
+2026-07-22 19:23:22:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-22 19:23:22:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-22 19:23:34:07S +0800 [INFO] com.ing.ide.main.Main finish:INGenious Playwright Studio has been Terminated - [ Total Time : 00:05:22.744 ]
+2026-07-22 19:23:35:07S +0800 [WARNING] com.sun.javafx.application.PlatformImpl startup:Unsupported JavaFX configuration: classes were loaded from 'unnamed module @7995092a'
+2026-07-22 19:23:36:07S +0800 [INFO] com.ing.engine.plugin.loader.PluginLoader loadAllPluginsEntryClasses:Scanning plugins from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\plugins
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:Auto-migrating CSV test cases to YAML (keepBackup=true)...
+C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\Settings\SAP.properties properties file already exists: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\Settings
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:No Web OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\ObjectRepository\Web
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:Found 1 Mobile OR YAML files
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\ObjectRepository\StructuredData
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\ObjectRepository\SAP
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:No Web OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Web
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Mobile
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\StructuredData
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\SAP
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loading API Workbench data from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\api
+2026-07-22 19:23:41:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loaded 1 collections, 0 environments, 0 history entries
+2026-07-22 19:23:43:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-22 19:24:17:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-22 19:25:22:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-22 19:25:24:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService publishDirectly:Release created, JAR uploaded: https://github.com/Jul611/ingenious-plugins-trial/releases/download/print-test-v1.0.0/demo-print-test-1.0.0.jar
+2026-07-22 19:25:26:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService publishDirectly:registry.json updated on GitHub
+2026-07-22 19:26:04:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-22 19:26:05:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub
+2026-07-22 19:26:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORWriter ensureDirectory:Created directory: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\ObjectRepository\Web
+2026-07-22 19:26:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORWriter ensureDirectory:Created directory: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\ObjectRepository\StructuredData
+2026-07-22 19:26:11:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORWriter ensureDirectory:Created directory: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\ObjectRepository\SAP
+2026-07-22 19:26:11:07S +0800 [INFO] com.ing.ide.main.Main finish:INGenious Playwright Studio has been Terminated - [ Total Time : 00:02:36.011 ]
+2026-07-22 19:26:12:07S +0800 [WARNING] com.sun.javafx.application.PlatformImpl startup:Unsupported JavaFX configuration: classes were loaded from 'unnamed module @7995092a'
+2026-07-22 19:26:13:07S +0800 [INFO] com.ing.engine.plugin.loader.PluginLoader loadAllPluginsEntryClasses:Scanning plugins from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\plugins
+2026-07-22 19:26:17:07S +0800 [INFO] com.ing.datalib.component.Project migrateTestsFromCsvToYaml:Auto-migrating CSV test cases to YAML (keepBackup=true)...
+C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\Settings\SAP.properties properties file already exists: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\Settings
+2026-07-22 19:26:17:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:Found 0 Web OR YAML files
+2026-07-22 19:26:17:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:Found 1 Mobile OR YAML files
+2026-07-22 19:26:18:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:Found 0 Structured Data OR YAML files
+2026-07-22 19:26:18:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:Found 0 SAP OR YAML files
+2026-07-22 19:26:18:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readWebOR:No Web OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Web
+2026-07-22 19:26:18:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readMobileOR:No Mobile OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\Mobile
+2026-07-22 19:26:18:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readStructuredDataOR:No Structured Data OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\StructuredData
+2026-07-22 19:26:18:07S +0800 [INFO] com.ing.datalib.or.yaml.YamlORReader readSapOR:No SAP OR YAML directory found at: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Shared\SharedObjectRepository\SAP
+2026-07-22 19:26:18:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loading API Workbench data from: C:\Users\Julian\Documents\GitHub\INGenious\Dist\release\Projects\Mobile\api
+2026-07-22 19:26:18:07S +0800 [INFO] com.ing.ide.main.mainui.components.apitester.APITester loadData:Loaded 1 collections, 0 environments, 0 history entries
+2026-07-22 19:26:33:07S +0800 [INFO] com.ing.ide.main.mainui.components.pluginmanager.PluginManagerService fetchRegistry:Loaded registry from GitHub

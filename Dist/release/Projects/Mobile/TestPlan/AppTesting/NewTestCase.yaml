@@ -1,0 +1,8 @@
+schemaVersion: 1
+testCase: NewTestCase
+scenario: AppTesting
+steps:
+  - step: 1
+    object: General
+    description: "Logs a 'Hello, World!' message to verify the plugin is working"
+    action: sayHelloWorld

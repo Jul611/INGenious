@@ -2,38 +2,91 @@ page: swaglabsmobileapp
 scope: PROJECT
 elements:
   Username:
-    accessibility: test-Username
+    android:
+      accessibility: test-Username
+    ios:
+      accessibility: test-Username
   Password:
-    accessibility: test-Password
+    android:
+      accessibility: test-Password
+    ios:
+      accessibility: test-Password
   Login Button:
-    accessibility: test-LOGIN
+    android:
+      accessibility: test-LOGIN
+    ios:
+      accessibility: test-LOGIN
   ADD TO CART:
-    xpath: "(//*[@content-desc='test-ADD TO CART'])[1] | (//*[@name=\"test-ADD TO\
-      \ CART\"])[1]"
+    android:
+      xpath: "(//*[@content-desc='test-ADD TO CART'])[1] | (//*[@name=\"test-ADD TO\
+        \ CART\"])[1]"
+    ios:
+      xpath: "(//*[@content-desc='test-ADD TO CART'])[1] | (//*[@name=\"test-ADD TO\
+        \ CART\"])[1]"
   Cart1:
-    xpath: "(//*[@name=\"1\"])[4] | //android.view.ViewGroup[@content-desc=\"test-Cart\"\
-      ]/android.view.ViewGroup/android.widget.ImageView | (//XCUIElementTypeOther[@name=\"\
-      1\"])[4]"
+    android:
+      xpath: "(//*[@name=\"1\"])[4] | //android.view.ViewGroup[@content-desc=\"test-Cart\"\
+        ]/android.view.ViewGroup/android.widget.ImageView | (//XCUIElementTypeOther[@name=\"\
+        1\"])[4]"
+    ios:
+      xpath: "(//*[@name=\"1\"])[4] | //android.view.ViewGroup[@content-desc=\"test-Cart\"\
+        ]/android.view.ViewGroup/android.widget.ImageView | (//XCUIElementTypeOther[@name=\"\
+        1\"])[4]"
   CHECKOUT:
-    xpath: "//*[@name=\"test-CHECKOUT\"] | //*[@content-desc=\"test-CHECKOUT\"]"
+    android:
+      xpath: "//*[@name=\"test-CHECKOUT\"] | //*[@content-desc=\"test-CHECKOUT\"]"
+    ios:
+      xpath: "//*[@name=\"test-CHECKOUT\"] | //*[@content-desc=\"test-CHECKOUT\"]"
   First Name:
-    xpath: "//*[@content-desc='test-First Name'] | //*[@name=\"test-First Name\"]"
+    android:
+      xpath: "//*[@content-desc='test-First Name'] | //*[@name=\"test-First Name\"\
+        ]"
+    ios:
+      xpath: "//*[@content-desc='test-First Name'] | //*[@name=\"test-First Name\"\
+        ]"
   Last Name:
-    xpath: "//*[@content-desc='test-Last Name'] | //*[@name=\"test-Last Name\"]"
+    android:
+      xpath: "//*[@content-desc='test-Last Name'] | //*[@name=\"test-Last Name\"]"
+    ios:
+      xpath: "//*[@content-desc='test-Last Name'] | //*[@name=\"test-Last Name\"]"
   ZipPostal Code:
-    xpath: "//*[@content-desc='test-Zip/Postal Code'] | //*[@name=\"test-Zip/Postal\
-      \ Code\"]"
+    android:
+      xpath: "//*[@content-desc='test-Zip/Postal Code'] | //*[@name=\"test-Zip/Postal\
+        \ Code\"]"
+    ios:
+      xpath: "//*[@content-desc='test-Zip/Postal Code'] | //*[@name=\"test-Zip/Postal\
+        \ Code\"]"
   CONTINUE:
-    xpath: "//*[@name=\"test-CONTINUE\"] | //*[@content-desc=\"test-CONTINUE\"]"
+    android:
+      xpath: "//*[@name=\"test-CONTINUE\"] | //*[@content-desc=\"test-CONTINUE\"]"
+    ios:
+      xpath: "//*[@name=\"test-CONTINUE\"] | //*[@content-desc=\"test-CONTINUE\"]"
   Sauce Labs Backpack:
-    xpath: "//*[@name=\"Sauce Labs Backpack\"] | //*[@text=\"Sauce Labs Backpack\"\
-      ]"
+    android:
+      xpath: "//*[@name=\"Sauce Labs Backpack\"] | //*[@text=\"Sauce Labs Backpack\"\
+        ]"
+    ios:
+      xpath: "//*[@name=\"Sauce Labs Backpack\"] | //*[@text=\"Sauce Labs Backpack\"\
+        ]"
   Amount:
-    xpath: "//*[@name=\"$29.99\"] | //*[@text=\"$29.99\"]"
+    android:
+      xpath: "//*[@name=\"$29.99\"] | //*[@text=\"$29.99\"]"
+    ios:
+      xpath: "//*[@name=\"$29.99\"] | //*[@text=\"$29.99\"]"
   FINISH:
-    xpath: "//*[@content-desc='test-FINISH'] | //*[@name=\"test-FINISH\"]"
+    android:
+      xpath: "//*[@content-desc='test-FINISH'] | //*[@name=\"test-FINISH\"]"
+    ios:
+      xpath: "//*[@content-desc='test-FINISH'] | //*[@name=\"test-FINISH\"]"
   Success Message:
-    xpath: "//*[@text=\"THANK YOU FOR YOU ORDER\"] | //*[@name=\"THANK YOU FOR YOU\
-      \ ORDER\"] "
+    android:
+      xpath: "//*[@text=\"THANK YOU FOR YOU ORDER\"] | //*[@name=\"THANK YOU FOR YOU\
+        \ ORDER\"] "
+    ios:
+      xpath: "//*[@text=\"THANK YOU FOR YOU ORDER\"] | //*[@name=\"THANK YOU FOR YOU\
+        \ ORDER\"] "
   Cart1_iOS:
-    xpath: "(//XCUIElementTypeOther[@name=\"1\"])[4]"
+    android:
+      xpath: "(//XCUIElementTypeOther[@name=\"1\"])[4]"
+    ios:
+      xpath: "(//XCUIElementTypeOther[@name=\"1\"])[4]"

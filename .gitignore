@@ -26,3 +26,10 @@ Thumbs.db
 # Lib dependencies (should be resolved by Maven, but plugin-examples need the jars)
 plugin-examples/*/lib/
 !plugin-examples/*/lib/*.jar
+
+# Plugin registry token (kept out of source control)
+Configuration/app.settings
+Resources/Configuration/app.settings
+Configuration/user-config.json
+Resources/Configuration/user-config.json
+Dist/release/Configuration/user-config.json

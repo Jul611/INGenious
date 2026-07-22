@@ -1,0 +1,8 @@
+#Plugin info
+#Wed Jul 22 19:23:31 GMT+08:00 2026
+actions=sayHelloWorld,sayCustomGreeting
+author=INGenious Plugins Team
+description=A demo plugin that adds Hello World and custom greeting actions. Shows how plugins integrate with the INGenious step builder.
+displayName=Hello World Demo
+name=demo-helloworld
+version=1.0.0

@@ -2,13 +2,13 @@ package com.ing.ide.main.mainui.components.pluginmanager;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ing.ide.settings.AppSettings;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -20,13 +20,60 @@ import java.util.logging.Logger;
  */
 public class PluginManagerService {
     private static final Logger LOG = Logger.getLogger(PluginManagerService.class.getName());
-    private static final String PLUGINS_DIR = "Resources/plugins";
-    private static final String REGISTRY_FILE = "Resources/plugins/registry.json";
+    private static final String PLUGINS_DIR = "plugins";
+    private static final String REGISTRY_FILE = "plugins/registry.json";
     private static final String PLUGIN_INFO_FILE = ".plugininfo";
-    private static final String REMOTE_REGISTRY_URL =
-        "https://raw.githubusercontent.com/Jul611/INGenious/initiative-repo/Resources/plugins/registry.json";
+
+    // GitHub Contents API URL for the private plugins registry repo.
+    // Falls back to env var INGENIOUS_PLUGIN_REGISTRY_URL, then app.settings, then this default.
+    private static final String DEFAULT_REGISTRY_URL =
+        "https://api.github.com/repos/Jul611/ingenious-plugins-trial/contents/registry.json";
 
     private final ObjectMapper mapper = new ObjectMapper();
+
+    // ─── Token loading ────────────────────────────────────────────────
+
+    /**
+     * Returns the GitHub PAT for authenticating to the private plugin registry.
+     * Reads directly from UserConfig every time (no stale cache).
+     */
+    public static String getRegistryToken() {
+        try {
+            String token = UserConfig.getPublishPat();
+            if (token != null && !token.isEmpty()) {
+                return token;
+            }
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Could not read publishPat from UserConfig", e);
+        }
+        return null;
+    }
+
+    /**
+     * Returns the effective remote registry URL.
+     * Checks env var FIRST, then the hardcoded default.
+     */
+    private static String getRemoteRegistryUrl() {
+        String envUrl = System.getenv("INGENIOUS_PLUGIN_REGISTRY_URL");
+        if (envUrl != null && !envUrl.isEmpty()) {
+            return envUrl;
+        }
+        return DEFAULT_REGISTRY_URL;
+    }
+
+    /**
+     * Adds the Authorization header and User-Agent to a connection
+     * if a token is available.
+     */
+    private static void addAuthHeader(HttpURLConnection conn) {
+        conn.setRequestProperty("User-Agent", "INGenious-PluginManager/1.0");
+        String token = getRegistryToken();
+        if (token != null && !token.isEmpty()) {
+            conn.setRequestProperty("Authorization", "token " + token);
+        }
+    }
+
+    // ─── Registry fetching ────────────────────────────────────────────
 
     public List<PluginRegistryEntry> fetchRegistry() {
         List<PluginRegistryEntry> remote = tryFetchRemote();
@@ -34,12 +81,7 @@ public class PluginManagerService {
             LOG.info("Loaded registry from GitHub");
             return remote;
         }
-        List<PluginRegistryEntry> local = tryFetchLocal();
-        if (local != null && !local.isEmpty()) {
-            LOG.info("Loaded registry from local file");
-            return local;
-        }
-        LOG.warning("No registry found (remote or local)");
+        LOG.warning("Remote registry fetch failed — no PAT configured or network error");
         return Collections.emptyList();
     }
 
@@ -53,14 +95,31 @@ public class PluginManagerService {
 
     private List<PluginRegistryEntry> tryFetchRemote() {
         try {
-            URL url = new URL(REMOTE_REGISTRY_URL);
+            URL url = new URL(getRemoteRegistryUrl());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
-            conn.setRequestProperty("User-Agent", "INGenious-PluginManager/1.0");
+            addAuthHeader(conn);
             if (conn.getResponseCode() == 200) {
-                Map<String, Object> root = mapper.readValue(
+                // GitHub Contents API returns JSON with base64-encoded content
+                Map<String, Object> apiResponse = mapper.readValue(
                     conn.getInputStream(),
+                    new TypeReference<Map<String, Object>>() {}
+                );
+                String contentJson;
+                Object contentField = apiResponse.get("content");
+                Object encodingField = apiResponse.get("encoding");
+                if ("base64".equals(encodingField) && contentField instanceof String) {
+                    // Decode base64 content from GitHub Contents API
+                    String b64 = ((String) contentField).replaceAll("\\s", "");
+                    contentJson = new String(Base64.getDecoder().decode(b64), "UTF-8");
+                } else {
+                    // Raw response (e.g. from raw.githubusercontent.com or custom CDN)
+                    contentJson = mapper.writeValueAsString(apiResponse);
+                }
+
+                Map<String, Object> root = mapper.readValue(
+                    contentJson,
                     new TypeReference<Map<String, Object>>() {}
                 );
                 Object pluginsObj = root.get("plugins");
@@ -80,7 +139,7 @@ public class PluginManagerService {
                 }
             }
         } catch (Exception e) {
-            LOG.log(Level.FINE, "Remote registry unavailable", e);
+            LOG.log(Level.WARNING, "Remote registry fetch failed: {0}", e.getMessage());
         }
         return null;
     }
@@ -106,11 +165,24 @@ public class PluginManagerService {
         return null;
     }
 
+    // ─── Plugin download & install ────────────────────────────────────
+
     public boolean downloadPlugin(PluginRegistryEntry entry) throws IOException {
         File pluginDir = new File(PLUGINS_DIR, entry.getName());
         if (!pluginDir.exists()) pluginDir.mkdirs();
         String urlStr = entry.getDownloadUrl();
-        String jarName = urlStr.substring(urlStr.lastIndexOf('/') + 1);
+        // Extract the jar filename from the original downloadUrl BEFORE
+        // resolving to the API endpoint (which uses numeric asset IDs).
+        String jarName = entry
+            .getDownloadUrl()
+            .substring(entry.getDownloadUrl().lastIndexOf('/') + 1);
+        // Resolve GitHub release URLs to their raw asset download endpoint.
+        // The github.com/releases/download/... URL pattern does not work
+        // with Authorization headers on private repos (returns 404).
+        // We must use the API: /repos/{owner}/{repo}/releases/assets/{id}
+        if (urlStr.contains("github.com") && urlStr.contains("/releases/download/")) {
+            urlStr = resolveReleaseAssetUrl(urlStr);
+        }
         downloadFile(urlStr, new File(pluginDir, jarName));
         if (entry.getLibUrls() != null) {
             for (String libUrl : entry.getLibUrls()) {
@@ -136,6 +208,86 @@ public class PluginManagerService {
         return true;
     }
 
+    /**
+     * Converts a github.com/releases/download/... URL to the GitHub API
+     * asset download URL. On private repos, the release page URL returns 404
+     * when used with an Authorization header. The API endpoint works instead.
+     */
+    private String resolveReleaseAssetUrl(String releaseUrl) throws IOException {
+        // URL: https://github.com/OWNER/REPO/releases/download/TAG/FILE.jar
+        // We need to find the asset ID via GET /repos/.../releases/tags/TAG
+        // then use GET /repos/.../releases/assets/{id} with Accept: application/octet-stream
+        String[] parts = releaseUrl.split("/releases/download/", 2);
+        if (parts.length != 2) {
+            throw new IOException("Unable to parse release URL: " + releaseUrl);
+        }
+        String ownerRepoPart = parts[0];
+        // ownerRepoPart: https://github.com/Jul611/ingenious-plugins-trial
+        String tagAndFile = parts[1]; // demo-helloworld-v1.0.0/demo-helloworld-1.0.0.jar
+        int slashIdx = tagAndFile.indexOf('/');
+        if (slashIdx < 0) {
+            throw new IOException("Unable to parse release tag from URL: " + releaseUrl);
+        }
+        String tag = tagAndFile.substring(0, slashIdx);
+
+        // Extract owner and repo from the prefix URL
+        String prefixPath = ownerRepoPart.substring("https://github.com/".length());
+        // e.g. "Jul611/ingenious-plugins-trial"
+        String[] ownerRepo = prefixPath.split("/", 2);
+        if (ownerRepo.length != 2) {
+            throw new IOException("Unable to parse owner/repo from URL: " + releaseUrl);
+        }
+        String owner = ownerRepo[0];
+        String repo = ownerRepo[1];
+
+        // Step 1: Get release by tag
+        String apiUrl = GITHUB_API_BASE + "/repos/" + owner + "/" + repo + "/releases/tags/" + tag;
+        HttpURLConnection conn = (HttpURLConnection) new URL(apiUrl).openConnection();
+        conn.setConnectTimeout(10000);
+        conn.setReadTimeout(10000);
+        addAuthHeader(conn);
+
+        if (conn.getResponseCode() != 200) {
+            String err = "";
+            try (InputStream es = conn.getErrorStream()) {
+                if (es != null) err = new String(es.readAllBytes(), "UTF-8");
+            } catch (Exception ignored) {}
+            throw new IOException(
+                "Failed to resolve release tag " +
+                tag +
+                ": HTTP " +
+                conn.getResponseCode() +
+                " " +
+                err
+            );
+        }
+
+        Map<String, Object> release = mapper.readValue(
+            conn.getInputStream(),
+            new TypeReference<Map<String, Object>>() {}
+        );
+        Object assetsObj = release.get("assets");
+        if (!(assetsObj instanceof List)) {
+            throw new IOException("No assets found in release " + tag);
+        }
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> assets = (List<Map<String, Object>>) assetsObj;
+        if (assets.isEmpty()) {
+            throw new IOException("Release " + tag + " has no assets");
+        }
+
+        // Use the first asset (there should be exactly one per release)
+        int assetId = ((Number) assets.get(0).get("id")).intValue();
+
+        // Return the API download URL
+        // This URL requires the Accept: application/octet-stream header
+        return GITHUB_API_BASE + "/repos/" + owner + "/" + repo + "/releases/assets/" + assetId;
+    }
+
+    /**
+     * Downloads a file from the given URL to the target file.
+     * Throws IOException if the download fails — no placeholders.
+     */
     private void downloadFile(String urlStr, File target) throws IOException {
         if (urlStr.startsWith("file://")) {
             Files.copy(
@@ -145,14 +297,32 @@ public class PluginManagerService {
             );
             return;
         }
-        boolean downloaded = false;
-        try {
-            URL url = new URL(urlStr);
+
+        String currentUrl = urlStr;
+        boolean authRequired = true;
+        int maxRedirects = 5;
+
+        for (int i = 0; i < maxRedirects; i++) {
+            URL url = new URL(currentUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(10000);
-            conn.setRequestProperty("User-Agent", "INGenious-PluginManager/1.0");
-            if (conn.getResponseCode() == 200) {
+            conn.setInstanceFollowRedirects(false);
+            // Only send auth headers to GitHub — S3 redirect URLs are pre-signed
+            // and reject the Authorization header.
+            if (authRequired && currentUrl.contains("github")) {
+                addAuthHeader(conn);
+                // GitHub API asset endpoint requires this to return binary content
+                if (currentUrl.contains("/releases/assets/")) {
+                    conn.setRequestProperty("Accept", "application/octet-stream");
+                }
+            } else {
+                conn.setRequestProperty("User-Agent", "INGenious-PluginManager/1.0");
+            }
+
+            int responseCode = conn.getResponseCode();
+
+            if (responseCode == 200) {
                 try (
                     InputStream is = conn.getInputStream();
                     ReadableByteChannel rbc = Channels.newChannel(is);
@@ -160,43 +330,39 @@ public class PluginManagerService {
                 ) {
                     fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
                 }
-                downloaded = true;
+                return;
             }
-        } catch (Exception e) {
-            LOG.log(Level.WARNING, "Could not download from {0}", urlStr);
-        }
-        if (!downloaded) {
-            LOG.warning("Creating placeholder JAR for: " + target.getName());
-            try (FileOutputStream fos = new FileOutputStream(target)) {
-                fos.write(
-                    new byte[] {
-                        0x50,
-                        0x4B,
-                        0x05,
-                        0x06,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0
-                    }
-                );
+
+            // Follow redirect — GitHub release URLs redirect to a pre-signed S3 URL
+            // that does not need (and may reject) the Authorization header.
+            if (responseCode == 301 || responseCode == 302 || responseCode == 307) {
+                String location = conn.getHeaderField("Location");
+                if (location == null) {
+                    throw new IOException("Redirect with no Location header for " + currentUrl);
+                }
+                currentUrl = location;
+                authRequired = false;
+                continue;
             }
+
+            // Reached here = not a redirect, not 200 = real error
+            String errorBody = "";
+            try (InputStream es = conn.getErrorStream()) {
+                if (es != null) errorBody = new String(es.readAllBytes(), "UTF-8");
+            } catch (Exception ignored) {}
+            throw new IOException(
+                "Download failed: HTTP " +
+                responseCode +
+                " fetching " +
+                currentUrl +
+                (errorBody.isEmpty() ? "" : " \u2014 " + errorBody)
+            );
         }
+
+        throw new IOException("Too many redirects downloading " + urlStr);
     }
+
+    // ─── Installed plugin management ──────────────────────────────────
 
     public List<PluginInstalledEntry> getInstalledPlugins() {
         List<PluginInstalledEntry> installed = new ArrayList<>();
@@ -285,117 +451,9 @@ public class PluginManagerService {
         return REGISTRY_FILE;
     }
 
-    // ─── GitHub remote publishing ───
-
     private static final String GITHUB_API_BASE = "https://api.github.com";
-    private static final String GITHUB_OWNER = "Jul611";
-    private static final String GITHUB_REPO = "INGenious";
-    private static final String GITHUB_BRANCH = "initiative-repo";
 
-    private boolean pushToGithub(String pathInRepo, File localFile, String msg, String token)
-        throws IOException {
-        String existingSha = getExistingSha(pathInRepo, token);
-        byte[] fileBytes = Files.readAllBytes(localFile.toPath());
-        String contentB64 = Base64.getEncoder().encodeToString(fileBytes);
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("message", msg);
-        body.put("content", contentB64);
-        body.put("branch", GITHUB_BRANCH);
-        if (existingSha != null) body.put("sha", existingSha);
-
-        String urlStr =
-            GITHUB_API_BASE +
-            "/repos/" +
-            GITHUB_OWNER +
-            "/" +
-            GITHUB_REPO +
-            "/contents/" +
-            pathInRepo;
-        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
-        conn.setRequestMethod("PUT");
-        conn.setRequestProperty("Authorization", "token " + token);
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setRequestProperty("User-Agent", "INGenious-PluginManager/1.0");
-        conn.setDoOutput(true);
-        conn.setConnectTimeout(15000);
-        conn.setReadTimeout(15000);
-        try (OutputStream os = conn.getOutputStream()) {
-            mapper.writeValue(os, body);
-        }
-
-        int rc = conn.getResponseCode();
-        if (rc == 200 || rc == 201) {
-            LOG.info("Pushed: " + pathInRepo);
-            return true;
-        }
-        String err;
-        try (InputStream es = conn.getErrorStream()) {
-            err = es != null ? new String(es.readAllBytes(), "UTF-8") : "HTTP " + rc;
-        }
-        throw new IOException("GitHub API error (" + rc + "): " + err);
-    }
-
-    private String getExistingSha(String pathInRepo, String token) throws IOException {
-        String urlStr =
-            GITHUB_API_BASE +
-            "/repos/" +
-            GITHUB_OWNER +
-            "/" +
-            GITHUB_REPO +
-            "/contents/" +
-            pathInRepo +
-            "?ref=" +
-            GITHUB_BRANCH;
-        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
-        conn.setRequestProperty("Authorization", "token " + token);
-        conn.setRequestProperty("User-Agent", "INGenious-PluginManager/1.0");
-        conn.setConnectTimeout(10000);
-        conn.setReadTimeout(10000);
-        if (conn.getResponseCode() == 200) {
-            Map<String, Object> resp = mapper.readValue(
-                conn.getInputStream(),
-                new TypeReference<Map<String, Object>>() {}
-            );
-            return (String) resp.get("sha");
-        }
-        return null;
-    }
-
-    public String publishPluginToGitHub(
-        File jarFile,
-        PluginRegistryEntry entry,
-        String githubToken
-    )
-        throws IOException {
-        String name = publishPlugin(jarFile, entry);
-        if (githubToken != null && !githubToken.trim().isEmpty()) {
-            String pluginPath = "Resources/plugins/" + entry.getName();
-            String msg = "Add " + entry.getName() + " plugin v" + entry.getVersion();
-            pushToGithub(
-                "Resources/plugins/registry.json",
-                new File(REGISTRY_FILE),
-                msg + " [registry]",
-                githubToken
-            );
-            File jarDest = new File(PLUGINS_DIR + "/" + entry.getName() + "/" + jarFile.getName());
-            if (jarDest.exists()) pushToGithub(
-                pluginPath + "/" + jarFile.getName(),
-                jarDest,
-                msg + " [jar]",
-                githubToken
-            );
-            File infoFile = new File(PLUGINS_DIR + "/" + entry.getName() + "/" + PLUGIN_INFO_FILE);
-            if (infoFile.exists()) pushToGithub(
-                pluginPath + "/" + PLUGIN_INFO_FILE,
-                infoFile,
-                msg + " [info]",
-                githubToken
-            );
-        }
-        return name;
-    }
-
-    // ─── Local Plugin Publishing ───
+    // ─── Local Plugin Publishing (staging for local testing) ─────────
 
     public String publishPlugin(File jarFile, PluginRegistryEntry entry) throws IOException {
         File pluginDir = new File(PLUGINS_DIR, entry.getName());
@@ -462,6 +520,264 @@ public class PluginManagerService {
         registry.put("plugins", updated);
         mapper.writerWithDefaultPrettyPrinter().writeValue(regFile, registry);
         return entry.getName();
+    }
+
+    // ─── Submission Export (for PR-based publishing) ──────────────────
+
+    private static final String PLUGINS_REPO = "Jul611/ingenious-plugins-trial";
+
+    /**
+     * Exports a plugin submission to the given directory, producing the
+     * structure expected by the plugins repo for a PR submission:
+     * <pre>
+     *   plugins/{pluginName}/
+     *     \u2514\u2500\u2500 {jarFile}.jar
+     *   registry.json (updated with new entry, downloadUrl placeholder)
+     * </pre>
+     */
+    public File prepareSubmission(
+        File jarFile,
+        PluginRegistryEntry entry,
+        String readmeContent,
+        File outputDir
+    )
+        throws IOException {
+        if (!outputDir.exists()) outputDir.mkdirs();
+
+        // Copy JAR
+        File pluginsDir = new File(outputDir, "plugins/" + entry.getName());
+        pluginsDir.mkdirs();
+        Files.copy(
+            jarFile.toPath(),
+            new File(pluginsDir, jarFile.getName()).toPath(),
+            java.nio.file.StandardCopyOption.REPLACE_EXISTING
+        );
+
+        // Write README.md
+        Files.write(new File(pluginsDir, "README.md").toPath(), readmeContent.getBytes("UTF-8"));
+
+        // Write updated registry.json with placeholder downloadUrl
+        entry.setDownloadUrl(""); // CI fills this in after release creation
+        File regFile = new File(REGISTRY_FILE);
+        Map<String, Object> registry;
+        if (regFile.exists()) {
+            registry = mapper.readValue(regFile, new TypeReference<Map<String, Object>>() {});
+        } else {
+            registry = new LinkedHashMap<>(Map.of("version", 1, "plugins", new ArrayList<>()));
+        }
+        List<Map<String, Object>> pluginsList = (List<Map<String, Object>>) registry.get("plugins");
+        List<Map<String, Object>> updated = new ArrayList<>();
+        boolean replaced = false;
+        for (Map<String, Object> p : pluginsList) {
+            if (entry.getName().equals(p.get("name"))) {
+                updated.add(entryToMap(entry));
+                replaced = true;
+            } else updated.add(p);
+        }
+        if (!replaced) updated.add(entryToMap(entry));
+        registry.put("plugins", updated);
+        File outRegFile = new File(outputDir, "registry.json");
+        mapper.writerWithDefaultPrettyPrinter().writeValue(outRegFile, registry);
+
+        return outputDir;
+    }
+
+    /**
+     * Returns the PR creation URL for manual submission.
+     * Author clones the repo, copies the exported files in, commits, and opens a PR.
+     */
+    public static String getPluginsRepoUrl() {
+        return "https://github.com/" + PLUGINS_REPO;
+    }
+
+    public static String getPluginsRepoPrUrl() {
+        return getPluginsRepoUrl() + "/compare/main...?expand=1";
+    }
+
+    // ─── Direct GitHub publish ────────────────────────────────────────
+
+    /**
+     * Publishes a plugin directly to the plugins repo via the GitHub API.
+     * Creates a GitHub Release, uploads the JAR as an asset, and updates
+     * registry.json with the download URL.
+     * Uses the user's personal PAT from UserConfig (write access required).
+     *
+     * @param jarFile the built plugin JAR
+     * @param entry   the registry entry with metadata
+     * @param userPat the user's GitHub PAT with repo write access
+     * @return the download URL of the published release JAR
+     */
+    public String publishDirectly(File jarFile, PluginRegistryEntry entry, String userPat)
+        throws IOException {
+        String owner = "Jul611";
+        String repo = "ingenious-plugins-trial";
+        String tagName = entry.getName() + "-v" + entry.getVersion();
+        String jarFileName = jarFile.getName();
+
+        // 1. Create release
+        Map<String, Object> releaseBody = new LinkedHashMap<>();
+        releaseBody.put("tag_name", tagName);
+        releaseBody.put("name", entry.getDisplayName() + " v" + entry.getVersion());
+        releaseBody.put("body", entry.getReleaseNotes() != null ? entry.getReleaseNotes() : "");
+        releaseBody.put("draft", false);
+        releaseBody.put("prerelease", false);
+
+        String releaseUrl = GITHUB_API_BASE + "/repos/" + owner + "/" + repo + "/releases";
+        Map<String, Object> release = apiPost(releaseUrl, releaseBody, userPat);
+        Object uploadUrlObj = release.get("upload_url");
+        String uploadUrlTemplate = (String) uploadUrlObj;
+        String uploadUrl = uploadUrlTemplate.replace("{?name,label}", "?name=" + jarFileName);
+
+        // 2. Upload JAR as release asset
+        URL uploadEndpoint = new URL(uploadUrl);
+        HttpURLConnection uploadConn = (HttpURLConnection) uploadEndpoint.openConnection();
+        uploadConn.setRequestMethod("POST");
+        uploadConn.setRequestProperty("Authorization", "token " + userPat);
+        uploadConn.setRequestProperty("Content-Type", "application/java-archive");
+        uploadConn.setRequestProperty("User-Agent", "INGenious-PluginManager/1.0");
+        uploadConn.setDoOutput(true);
+        uploadConn.setConnectTimeout(30000);
+        uploadConn.setReadTimeout(30000);
+        try (
+            FileInputStream fis = new FileInputStream(jarFile);
+            OutputStream os = uploadConn.getOutputStream()
+        ) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = fis.read(buffer)) >= 0) {
+                os.write(buffer, 0, read);
+            }
+        }
+        int uploadCode = uploadConn.getResponseCode();
+        if (uploadCode != 201) {
+            String err = "";
+            try (InputStream es = uploadConn.getErrorStream()) {
+                if (es != null) err = new String(es.readAllBytes(), "UTF-8");
+            } catch (Exception ignored) {}
+            throw new IOException("Upload failed: HTTP " + uploadCode + " " + err);
+        }
+        String downloadUrl =
+            "https://github.com/" +
+            owner +
+            "/" +
+            repo +
+            "/releases/download/" +
+            tagName +
+            "/" +
+            jarFileName;
+        LOG.info("Release created, JAR uploaded: " + downloadUrl);
+
+        // 3. Update registry.json via Contents API
+        entry.setDownloadUrl(downloadUrl);
+        String regContentsUrl =
+            GITHUB_API_BASE + "/repos/" + owner + "/" + repo + "/contents/registry.json";
+
+        HttpURLConnection getConn = (HttpURLConnection) new URL(regContentsUrl).openConnection();
+        getConn.setRequestProperty("Authorization", "token " + userPat);
+        getConn.setRequestProperty("User-Agent", "INGenious-PluginManager/1.0");
+        String existingSha = null;
+        String existingContent = null;
+        if (getConn.getResponseCode() == 200) {
+            Map<String, Object> existing = mapper.readValue(
+                getConn.getInputStream(),
+                new TypeReference<Map<String, Object>>() {}
+            );
+            existingSha = (String) existing.get("sha");
+            String b64 = ((String) existing.get("content")).replaceAll("\\s", "");
+            existingContent = new String(Base64.getDecoder().decode(b64), "UTF-8");
+        }
+
+        Map<String, Object> registry;
+        if (existingContent != null) {
+            registry =
+                mapper.readValue(existingContent, new TypeReference<Map<String, Object>>() {});
+        } else {
+            registry = new LinkedHashMap<>(Map.of("version", 1, "plugins", new ArrayList<>()));
+        }
+        List<Map<String, Object>> pluginsList = (List<Map<String, Object>>) registry.get("plugins");
+        List<Map<String, Object>> updated = new ArrayList<>();
+        boolean replaced = false;
+        for (Map<String, Object> p : pluginsList) {
+            if (entry.getName().equals(p.get("name"))) {
+                updated.add(entryToMap(entry));
+                replaced = true;
+            } else updated.add(p);
+        }
+        if (!replaced) updated.add(entryToMap(entry));
+        registry.put("plugins", updated);
+        String newContent = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(registry);
+        String newContentB64 = Base64.getEncoder().encodeToString(newContent.getBytes("UTF-8"));
+
+        Map<String, Object> putBody = new LinkedHashMap<>();
+        putBody.put("message", "Add " + entry.getName() + " v" + entry.getVersion());
+        putBody.put("content", newContentB64);
+        if (existingSha != null) putBody.put("sha", existingSha);
+        putBody.put("branch", "main");
+
+        apiPut(regContentsUrl, putBody, userPat);
+        LOG.info("registry.json updated on GitHub");
+
+        return downloadUrl;
+    }
+
+    /**
+     * Simple HTTP POST returning parsed JSON.
+     */
+    private Map<String, Object> apiPost(String urlStr, Map<String, Object> body, String token)
+        throws IOException {
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Authorization", "token " + token);
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setRequestProperty("User-Agent", "INGenious-PluginManager/1.0");
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(15000);
+        try (OutputStream os = conn.getOutputStream()) {
+            mapper.writeValue(os, body);
+        }
+        int code = conn.getResponseCode();
+        if (code == 201 || code == 200) {
+            return mapper.readValue(
+                conn.getInputStream(),
+                new TypeReference<Map<String, Object>>() {}
+            );
+        }
+        String err = "";
+        try (InputStream es = conn.getErrorStream()) {
+            if (es != null) err = new String(es.readAllBytes(), "UTF-8");
+        } catch (Exception ignored) {}
+        throw new IOException("API POST " + code + " for " + urlStr + " \u2014 " + err);
+    }
+
+    /**
+     * Simple HTTP PUT returning parsed JSON.
+     */
+    private Map<String, Object> apiPut(String urlStr, Map<String, Object> body, String token)
+        throws IOException {
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+        conn.setRequestMethod("PUT");
+        conn.setRequestProperty("Authorization", "token " + token);
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setRequestProperty("User-Agent", "INGenious-PluginManager/1.0");
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(15000);
+        try (OutputStream os = conn.getOutputStream()) {
+            mapper.writeValue(os, body);
+        }
+        int code = conn.getResponseCode();
+        if (code == 201 || code == 200) {
+            return mapper.readValue(
+                conn.getInputStream(),
+                new TypeReference<Map<String, Object>>() {}
+            );
+        }
+        String err = "";
+        try (InputStream es = conn.getErrorStream()) {
+            if (es != null) err = new String(es.readAllBytes(), "UTF-8");
+        } catch (Exception ignored) {}
+        throw new IOException("API PUT " + code + " for " + urlStr + " \u2014 " + err);
     }
 
     public List<PluginRegistryEntry.ActionInfo> extractActionsFromJar(

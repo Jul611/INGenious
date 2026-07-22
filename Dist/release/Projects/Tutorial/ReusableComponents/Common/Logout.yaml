@@ -1,9 +1,0 @@
-schemaVersion: 1
-testCase: Logout
-scenario: Common
-steps:
-  - step: 1
-    object: sidenav-signout
-    description: "Click the [<Object>] "
-    action: Click
-    reference: "[Project] Myfirstscript"

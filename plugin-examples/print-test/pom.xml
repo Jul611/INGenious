@@ -1,0 +1,48 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.ing.plugins</groupId>
+    <artifactId>demo-print-test</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <name>Print Test Plugin</name>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.ing</groupId>
+            <artifactId>ingenious-api</artifactId>
+            <version>3.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Plugin-Name>Print Test</Plugin-Name>
+                            <Plugin-Version>1.0.0</Plugin-Version>
+                            <Plugin-Description>Simple plugin that prints test data to the console and report log</Plugin-Description>
+                            <Plugin-Author>INGenious Plugins Team</Plugin-Author>
+                            <Plugin-Author-Email>plugins@company.com</Plugin-Author-Email>
+                            <Plugin-Min-Engine-Version>3.0.0</Plugin-Min-Engine-Version>
+                            <pluginEntryClasses>com.ing.plugins.printtest.PrintTestActions</pluginEntryClasses>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

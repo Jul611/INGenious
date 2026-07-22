@@ -175,6 +175,25 @@ public class PluginManagerBrowseUI extends JPanel {
     }
 
     public void loadData() {
+        // Check PAT is configured before attempting fetch
+        String pat = UserConfig.getPublishPat();
+        if (pat == null || pat.trim().isEmpty()) {
+            int choice = JOptionPane.showConfirmDialog(
+                this,
+                "A GitHub PAT is required to browse the plugin registry.\n\n" +
+                "Set one via Profile (toolbar icon) with 'Contents: Read & Write'\n" +
+                "access on the plugins repo.\n\nOpen Profile now?",
+                "PAT Required",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            if (choice == JOptionPane.YES_OPTION) {
+                firePropertyChange("openProfile", null, true);
+            }
+            statusLabel.setText("No plugins found in registry.");
+            return;
+        }
+
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
             @Override

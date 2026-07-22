@@ -1,0 +1,8 @@
+#Plugin info
+#Wed Jul 22 19:26:08 GMT+08:00 2026
+actions=printTest
+author=INGenious Plugins Team
+description=print test
+displayName=Print Test
+name=print-test
+version=1.0.0
