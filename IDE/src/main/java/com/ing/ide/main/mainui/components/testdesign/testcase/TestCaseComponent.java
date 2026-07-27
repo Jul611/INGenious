@@ -152,6 +152,8 @@ public class TestCaseComponent extends JPanel implements ActionListener {
 
     private volatile String liveRecordingPageName;
 
+    private volatile File liveRecordingUserDataDir;
+
     public static long INSTANCE_START_TIME;
 
     private boolean globalShortcutsRegistered = false;
@@ -935,7 +937,23 @@ public class TestCaseComponent extends JPanel implements ActionListener {
             .getAbsolutePath()
             .replace("\\", "\\\\")
             .replace("\"", "\\\"");
-        String processArgs = "codegen --target java --output \"" + escapedPath + "\"";
+
+        // Create a temporary user-data-dir so the recorder browser starts
+        // in an isolated (incognito-like) session, matching how Run Tests
+        // creates a fresh BrowserContext via PlaywrightDriverFactory.createContext().
+        File userDataDir = Files.createTempDirectory("ingenious-recorder-").toFile();
+        liveRecordingUserDataDir = userDataDir;
+        String escapedUserDataDir = userDataDir
+            .getAbsolutePath()
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"");
+
+        String processArgs =
+            "codegen --target java --output \"" +
+            escapedPath +
+            "\" --user-data-dir \"" +
+            escapedUserDataDir +
+            "\" --incognito";
         runPlaywrightProcess(processArgs);
         logPlaywright(
             "============================== Playwright Log Ended =============================="
@@ -1046,6 +1064,30 @@ public class TestCaseComponent extends JPanel implements ActionListener {
         }
     }
 
+    /**
+     * Recursively deletes the temporary user-data-dir used for the
+     * isolated incognito recorder browser session. Silently swallows
+     * errors so cleanup never interferes with the main recording flow.
+     */
+    private void cleanupUserDataDir() {
+        File dir = liveRecordingUserDataDir;
+        if (dir == null || !dir.exists()) {
+            return;
+        }
+        try {
+            try (java.util.stream.Stream<Path> walk = Files.walk(dir.toPath())) {
+                walk
+                    .sorted(java.util.Comparator.reverseOrder())
+                    .map(java.nio.file.Path::toFile)
+                    .forEach(File::delete);
+            }
+        } catch (Exception ex) {
+            Logger
+                .getLogger(TestCaseComponent.class.getName())
+                .log(Level.FINE, "Unable to clean up recorder user-data-dir", ex);
+        }
+    }
+
     private void finalizeLiveRecording() {
         synchronized (this) {
             if (liveRecordingFinalized) {
@@ -1088,6 +1130,10 @@ public class TestCaseComponent extends JPanel implements ActionListener {
         liveRecordingTarget = null;
         liveRecordingOutputFile = null;
         recorderReadySignaled = false;
+
+        // Clean up the isolated user-data-dir created for incognito recorder session.
+        cleanupUserDataDir();
+        liveRecordingUserDataDir = null;
 
         SwingUtilities.invokeLater(
             () -> {
