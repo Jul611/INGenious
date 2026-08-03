@@ -18,6 +18,7 @@ import com.ing.ide.main.ui.AboutUI;
 import com.ing.ide.main.ui.InjectScript;
 import com.ing.ide.main.ui.NewProject;
 import com.ing.ide.main.ui.Options;
+import com.ing.ide.main.ui.ProfileDialog;
 import com.ing.ide.main.utils.CMProjectCreator;
 import com.ing.ide.main.utils.Utils;
 import com.ing.ide.util.Notification;
@@ -156,6 +157,9 @@ public class AppActionListener implements ActionListener {
                 break;
             case "Archetype Configurations":
                 driverSettings.open();
+                break;
+            case "Profile":
+                openProfile();
                 break;
             case "AzureDevOps TestPlan Configuration":
                 tmSettings.open();
@@ -447,6 +451,11 @@ public class AppActionListener implements ActionListener {
         if (file != null) {
             sMainFrame.loadProject(file.getAbsolutePath());
         }
+    }
+
+    private void openProfile() {
+        ProfileDialog dialog = new ProfileDialog(sMainFrame);
+        dialog.setVisible(true);
     }
 
     private void openSettings() {

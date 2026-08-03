@@ -40,3 +40,7 @@ Thumbs.db
 
 # other files
 recent.items
+
+# User profile (SUT + PCode)
+Configuration/userProfile.properties
+Resources/Configuration/userProfile.properties
