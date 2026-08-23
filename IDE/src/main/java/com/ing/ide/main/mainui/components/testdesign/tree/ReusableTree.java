@@ -10,13 +10,18 @@ import com.ing.ide.main.mainui.components.testdesign.tree.model.ScenarioNode;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.TestCaseNode;
 import com.ing.ide.util.Notification;
 import com.ing.ide.util.Validator;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.tree.TreePath;
 
 /**
@@ -274,7 +279,7 @@ public class ReusableTree extends ProjectTree {
             Notification.showWarning(
                 "Scenario '" +
                 scenarioName +
-                "' already exists in another scope (Test Plan, Reusable, or Shared Reusable)."
+                "' already exists in Project Reusables. Please choose a different Project Reusable scenario name."
             );
             return;
         }
@@ -332,11 +337,27 @@ public class ReusableTree extends ProjectTree {
     private void deleteGroups() {
         List<GroupNode> groupNodes = getSelectedGroupNodes();
         if (!groupNodes.isEmpty()) {
-            String question =
-                "<html><body><p style='width: 200px;'>" +
-                "Are you sure want to delete the following Groups?<br>" +
-                groupNodes +
-                "</p></body></html>";
+            JPanel messagePanel = new JPanel(new java.awt.BorderLayout(0, 8));
+            messagePanel.add(
+                new JLabel("Are you sure want to delete the following Groups?"),
+                java.awt.BorderLayout.NORTH
+            );
+
+            JTextArea groupsArea = new JTextArea();
+            groupsArea.setEditable(false);
+            groupsArea.setLineWrap(false);
+            groupsArea.setWrapStyleWord(false);
+
+            StringBuilder content = new StringBuilder();
+            for (GroupNode groupNode : groupNodes) {
+                content.append(groupNode).append(System.lineSeparator());
+            }
+            groupsArea.setText(content.toString());
+            groupsArea.setCaretPosition(0);
+
+            JScrollPane scrollPane = new JScrollPane(groupsArea);
+            scrollPane.setPreferredSize(new Dimension(360, 180));
+            messagePanel.add(scrollPane, java.awt.BorderLayout.CENTER);
 
             JCheckBox confirmBox = new JCheckBox(
                 "Move Reusables inside Group to TestPlan instead of deleting"
@@ -344,7 +365,7 @@ public class ReusableTree extends ProjectTree {
 
             int option = JOptionPane.showConfirmDialog(
                 null,
-                new Object[] { question, confirmBox },
+                new Object[] { messagePanel, confirmBox },
                 "Delete TestCase",
                 JOptionPane.YES_NO_OPTION
             );
@@ -398,19 +419,36 @@ public class ReusableTree extends ProjectTree {
      * @return unique scenario name
      */
     private String fetchNewReusableScenarioName() {
-        String newScenarioName = "NewScenario";
-        for (int i = 0;; i++) {
-            // Check if scenario exists in Reusable scope
+        String base = "NewScenario";
+        // prefer plain base name if available (and not present in the tree)
+        if (getProject().getReusableScenarioByName(base) == null && !treeHasScenarioName(base)) {
+            return base;
+        }
+        int i = 0;
+        String newScenarioName;
+        for (;;) {
+            newScenarioName = base + i;
             if (
                 getProject().getReusableScenarioByName(newScenarioName) == null &&
-                getProject().getScenarioByName(newScenarioName) == null &&
-                getProject().getSharedReusableScenarioByName(newScenarioName) == null
+                !treeHasScenarioName(newScenarioName)
             ) {
                 break;
             }
-            newScenarioName = "NewScenario" + i;
+            i++;
         }
         return newScenarioName;
+    }
+
+    private boolean treeHasScenarioName(String name) {
+        if (getTreeModel() == null || getTreeModel().getRoot() == null) return false;
+        for (GroupNode group : GroupNode.toList(getTreeModel().getRoot().children())) {
+            for (ScenarioNode sc : ScenarioNode.toList(group.children())) {
+                if (sc.getScenario().getName().equalsIgnoreCase(name)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

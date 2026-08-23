@@ -45,6 +45,7 @@ import com.ing.ide.util.Notification;
 import com.ing.ide.util.Validator;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.FontMetrics;
@@ -74,7 +75,11 @@ import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -623,15 +628,11 @@ public abstract class ObjectTree implements ActionListener {
         List<ORObjectInf> objects = getSelectedObjects();
         if (!objects.isEmpty()) {
             String extra = isSharedScope() ? sharedProjectsInfo() : "";
-            int option = JOptionPane.showConfirmDialog(
-                null,
-                "<html><body><p style='width: 300px;'>" +
-                "Are you sure you want to delete the following Objects?<br/>" +
-                objects +
-                extra +
-                "</p></body></html>",
+            int option = showScrollableDeleteConfirmation(
                 isSharedScope() ? "Delete SHARED Object" : "Delete Object",
-                JOptionPane.YES_NO_OPTION
+                "Objects",
+                objects,
+                extra
             );
             if (option == JOptionPane.YES_OPTION) {
                 ObjectRepository repo = getProject().getObjectRepository();
@@ -708,16 +709,11 @@ public abstract class ObjectTree implements ActionListener {
                     }
                 }
                 if (!unusedWebObjects.isEmpty()) {
-                    int option = JOptionPane.showConfirmDialog(
-                        null,
-                        "<html><body><p style='width: 260px;'>" +
-                        "Delete the following Web objects from page [ " +
-                        pageName +
-                        " ]?<br>" +
-                        unusedWebObjects +
-                        "</p></body></html>",
+                    int option = showScrollableDeleteConfirmation(
                         "Delete Web Objects",
-                        JOptionPane.YES_NO_OPTION
+                        "Web objects from page [ " + pageName + " ]",
+                        unusedWebObjects,
+                        ""
                     );
                     if (option == JOptionPane.YES_OPTION) {
                         Iterator<ObjectGroup<WebORObject>> it = webPage
@@ -751,16 +747,11 @@ public abstract class ObjectTree implements ActionListener {
                         }
                     }
                     if (!unusedMobileObjects.isEmpty()) {
-                        int option = JOptionPane.showConfirmDialog(
-                            null,
-                            "<html><body><p style='width: 260px;'>" +
-                            "Delete the following Mobile objects from page [ " +
-                            pageName +
-                            " ]?<br>" +
-                            unusedMobileObjects +
-                            "</p></body></html>",
+                        int option = showScrollableDeleteConfirmation(
                             "Delete Mobile Objects",
-                            JOptionPane.YES_NO_OPTION
+                            "Mobile objects from page [ " + pageName + " ]",
+                            unusedMobileObjects,
+                            ""
                         );
                         if (option == JOptionPane.YES_OPTION) {
                             Iterator<ObjectGroup<MobileORObject>> it = mobilePage
@@ -797,16 +788,11 @@ public abstract class ObjectTree implements ActionListener {
                         }
                     }
                     if (!unusedStructuredDataObjects.isEmpty()) {
-                        int option = JOptionPane.showConfirmDialog(
-                            null,
-                            "<html><body><p style='width: 260px;'>" +
-                            "Delete the following Structured Data objects from page [ " +
-                            pageName +
-                            " ]?<br>" +
-                            unusedStructuredDataObjects +
-                            "</p></body></html>",
+                        int option = showScrollableDeleteConfirmation(
                             "Delete Structured Data Objects",
-                            JOptionPane.YES_NO_OPTION
+                            "Structured Data objects from page [ " + pageName + " ]",
+                            unusedStructuredDataObjects,
+                            ""
                         );
                         if (option == JOptionPane.YES_OPTION) {
                             Iterator<ObjectGroup<StructuredDataORObject>> it = structuredDataPage
@@ -841,16 +827,11 @@ public abstract class ObjectTree implements ActionListener {
                         }
                     }
                     if (!unusedSapObjects.isEmpty()) {
-                        int option = JOptionPane.showConfirmDialog(
-                            null,
-                            "<html><body><p style='width: 260px;'>" +
-                            "Delete the following SAP objects from page [ " +
-                            pageName +
-                            " ]?<br>" +
-                            unusedSapObjects +
-                            "</p></body></html>",
+                        int option = showScrollableDeleteConfirmation(
                             "Delete SAP Objects",
-                            JOptionPane.YES_NO_OPTION
+                            "SAP objects from page [ " + pageName + " ]",
+                            unusedSapObjects,
+                            ""
                         );
                         if (option == JOptionPane.YES_OPTION) {
                             Iterator<ObjectGroup<SapORObject>> it = sapPage
@@ -1043,15 +1024,11 @@ public abstract class ObjectTree implements ActionListener {
         List<ObjectGroup> objects = getSelectedObjectGroups();
         if (!objects.isEmpty()) {
             String extra = isSharedScope() ? sharedProjectsInfo() : "";
-            int option = JOptionPane.showConfirmDialog(
-                null,
-                "<html><body><p style='width: 300px;'>" +
-                "Are you sure you want to delete the following ObjectGroups?<br/>" +
-                objects +
-                extra +
-                "</p></body></html>",
+            int option = showScrollableDeleteConfirmation(
                 isSharedScope() ? "Delete SHARED ObjectGroup" : "Delete ObjectGroup",
-                JOptionPane.YES_NO_OPTION
+                "ObjectGroups",
+                objects,
+                extra
             );
             if (option == JOptionPane.YES_OPTION) {
                 for (ObjectGroup object : objects) {
@@ -1069,15 +1046,11 @@ public abstract class ObjectTree implements ActionListener {
         List<ORPageInf> pages = getSelectedPages();
         if (!pages.isEmpty()) {
             String extra = isSharedScope() ? sharedProjectsInfo() : "";
-            int option = JOptionPane.showConfirmDialog(
-                null,
-                "<html><body><p style='width: 300px;'>" +
-                "Are you sure you want to delete the following Pages?<br/>" +
-                pages +
-                extra +
-                "</p></body></html>",
+            int option = showScrollableDeleteConfirmation(
                 isSharedScope() ? "Delete SHARED Page" : "Delete Page",
-                JOptionPane.YES_NO_OPTION
+                "Pages",
+                pages,
+                extra
             );
             if (option == JOptionPane.YES_OPTION) {
                 ObjectRepository repo = getProject().getObjectRepository();
@@ -1090,6 +1063,56 @@ public abstract class ObjectTree implements ActionListener {
                 repo.save();
             }
         }
+    }
+
+    /**
+     * Shows a delete confirmation dialog with a scrollable list so action buttons stay visible.
+     * @param title dialog title
+     * @param itemType label for the selected item type
+     * @param selectedItems selected items to display
+     * @param extraHtml optional extra HTML content (e.g. shared project warning)
+     * @return JOptionPane option value
+     */
+    private int showScrollableDeleteConfirmation(
+        String title,
+        String itemType,
+        List<?> selectedItems,
+        String extraHtml
+    ) {
+        JPanel messagePanel = new JPanel(new java.awt.BorderLayout(0, 8));
+        messagePanel.add(
+            new JLabel("Are you sure you want to delete the following " + itemType + "?"),
+            java.awt.BorderLayout.NORTH
+        );
+
+        JTextArea itemsArea = new JTextArea();
+        itemsArea.setEditable(false);
+        itemsArea.setLineWrap(false);
+        itemsArea.setWrapStyleWord(false);
+
+        StringBuilder content = new StringBuilder();
+        for (Object item : selectedItems) {
+            content.append(item).append(System.lineSeparator());
+        }
+        itemsArea.setText(content.toString());
+        itemsArea.setCaretPosition(0);
+
+        JScrollPane scrollPane = new JScrollPane(itemsArea);
+        scrollPane.setPreferredSize(new Dimension(420, 180));
+        messagePanel.add(scrollPane, java.awt.BorderLayout.CENTER);
+
+        if (extraHtml != null && !extraHtml.isBlank()) {
+            JLabel extraLabel = new JLabel("<html><body>" + extraHtml + "</body></html>");
+            messagePanel.add(extraLabel, java.awt.BorderLayout.SOUTH);
+        }
+
+        return JOptionPane.showConfirmDialog(
+            null,
+            messagePanel,
+            title,
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
     }
 
     private void getImpactedTestCases() {
@@ -1803,12 +1826,27 @@ public abstract class ObjectTree implements ActionListener {
         ORObjectInf source = cb.getObject();
         boolean cut = cb.isCut();
         ORPageInf targetPage = getSelectedPage();
-        if (targetPage == null && getSelectedObjectGroup() != null) {
-            targetPage = getSelectedObjectGroup().getParent();
+
+        if (targetPage == null) {
+            ObjectGroup selectedGroup = getSelectedObjectGroup();
+
+            if (selectedGroup != null) {
+                targetPage = selectedGroup.getParent();
+            }
         }
+
+        if (targetPage == null) {
+            ORObjectInf selectedObject = getSelectedObject();
+
+            if (selectedObject != null) {
+                targetPage = selectedObject.getPage();
+            }
+        }
+
         if (targetPage == null || source == null) {
             return;
         }
+
         ORRootInf currentOR = getOR();
         ORRootInf sourceOR = (ORRootInf) source.getPage().getParent();
         ObjectGroup sourceGroup = source.getParent();
@@ -2079,344 +2117,59 @@ public abstract class ObjectTree implements ActionListener {
             }
             return;
         }
-        if (isSharedToProject(sourceOR, currentOR) && currentOR instanceof MobileOR) {
+        if (isSharedToProject(sourceOR, currentOR) && currentOR instanceof SapOR) {
             String newGroupName;
-            // Only append suffix if target page already contains group with same name
+
             if (targetPage.getObjectGroupByName(sourceGroup.getName()) == null) {
                 newGroupName = sourceGroup.getName();
             } else {
                 String baseName = sourceGroup.getName().replaceAll("_\\d+$", "");
                 int i = 1;
+
                 do {
                     newGroupName = baseName + "_" + i++;
                 } while (targetPage.getObjectGroupByName(newGroupName) != null);
             }
-            ObjectGroup<MobileORObject> newGroup = new ObjectGroup<>(
+
+            ObjectGroup<SapORObject> newGroup = new ObjectGroup<>(
                 newGroupName,
-                (MobileORPage) targetPage
+                (SapORPage) targetPage
             );
-            for (Object o : sourceGroup.getObjects()) {
-                MobileORObject srcObj = (MobileORObject) o;
-                MobileORObject cloned = new MobileORObject();
 
-                String newObjectName = computeCopyName(targetPage, srcObj);
+            for (Object object : sourceGroup.getObjects()) {
+                SapORObject sourceObject = (SapORObject) object;
+                SapORObject clonedObject = new SapORObject();
 
-                cloned.setName(newObjectName);
-                cloned.setParent(newGroup);
-                srcObj.clone(cloned);
-                newGroup.getObjects().add(cloned);
-                pastedObject = cloned;
+                String newObjectName = objectNameExists(targetPage, sourceObject.getName())
+                    ? computeCopyName(targetPage, sourceObject)
+                    : sourceObject.getName();
+
+                clonedObject.setName(newObjectName);
+                clonedObject.setParent(newGroup);
+                sourceObject.clone(clonedObject);
+
+                newGroup.getObjects().add(clonedObject);
+                pastedObject = clonedObject;
             }
+
             targetPage.getObjectGroups().add(newGroup);
-            ((MobileOR) currentOR).setSaved(false);
-            repo.saveMobilePageNow((MobileORPage) targetPage);
+
+            ((SapOR) currentOR).setSaved(false);
+            repo.saveSapPageNow((SapORPage) targetPage);
+            repo.save();
+
             reload();
-            final ORObjectInf highlight = pastedObject;
-            if (highlight != null) {
-                SwingUtilities.invokeLater(
-                    () -> {
-                        selectAndSrollTo(highlight.getTreePath());
-                    }
-                );
+
+            if (pastedObject != null) {
+                ORObjectInf highlightedObject = pastedObject;
+                SwingUtilities.invokeLater(() -> selectAndSrollTo(highlightedObject.getTreePath()));
             }
+
             return;
         }
-        if (isSharedToProject(sourceOR, currentOR) && currentOR instanceof StructuredDataOR) {
-            String newGroupName;
-            // Only append suffix if target page already contains group with same name
-            if (targetPage.getObjectGroupByName(sourceGroup.getName()) == null) {
-                newGroupName = sourceGroup.getName();
-            } else {
-                String baseName = sourceGroup.getName().replaceAll("_\\d+$", "");
-                int i = 1;
-                do {
-                    newGroupName = baseName + "_" + i++;
-                } while (targetPage.getObjectGroupByName(newGroupName) != null);
-            }
-            ObjectGroup<StructuredDataORObject> newGroup = new ObjectGroup<>(
-                newGroupName,
-                (StructuredDataORPage) targetPage
-            );
-            for (Object o : sourceGroup.getObjects()) {
-                StructuredDataORObject srcObj = (StructuredDataORObject) o;
-                StructuredDataORObject cloned = new StructuredDataORObject();
 
-                String newObjectName = computeCopyName(targetPage, srcObj);
-
-                cloned.setName(newObjectName);
-                cloned.setParent(newGroup);
-                srcObj.clone(cloned);
-                newGroup.getObjects().add(cloned);
-                pastedObject = cloned;
-            }
-            targetPage.getObjectGroups().add(newGroup);
-            ((StructuredDataOR) currentOR).setSaved(false);
-            repo.saveStructuredDataPageNow((StructuredDataORPage) targetPage);
-            reload();
-            final ORObjectInf highlight = pastedObject;
-            if (highlight != null) {
-                SwingUtilities.invokeLater(
-                    () -> {
-                        selectAndSrollTo(highlight.getTreePath());
-                    }
-                );
-            }
-            return;
-        }
-        if (isSharedToProject(sourceOR, currentOR) && currentOR instanceof MobileOR) {
-            String newGroupName;
-            // Only append suffix if target page already contains group with same name
-            if (targetPage.getObjectGroupByName(sourceGroup.getName()) == null) {
-                newGroupName = sourceGroup.getName();
-            } else {
-                String baseName = sourceGroup.getName().replaceAll("_\\d+$", "");
-                int i = 1;
-                do {
-                    newGroupName = baseName + "_" + i++;
-                } while (targetPage.getObjectGroupByName(newGroupName) != null);
-            }
-            ObjectGroup<MobileORObject> newGroup = new ObjectGroup<>(
-                newGroupName,
-                (MobileORPage) targetPage
-            );
-            for (Object o : sourceGroup.getObjects()) {
-                MobileORObject srcObj = (MobileORObject) o;
-                MobileORObject cloned = new MobileORObject();
-
-                String newObjectName = computeCopyName(targetPage, srcObj);
-
-                cloned.setName(newObjectName);
-                cloned.setParent(newGroup);
-                srcObj.clone(cloned);
-                newGroup.getObjects().add(cloned);
-                pastedObject = cloned;
-            }
-            targetPage.getObjectGroups().add(newGroup);
-            ((MobileOR) currentOR).setSaved(false);
-            repo.saveMobilePageNow((MobileORPage) targetPage);
-            reload();
-            final ORObjectInf highlight = pastedObject;
-            if (highlight != null) {
-                SwingUtilities.invokeLater(
-                    () -> {
-                        selectAndSrollTo(highlight.getTreePath());
-                    }
-                );
-            }
-            return;
-        }
-        if (isSharedToProject(sourceOR, currentOR) && currentOR instanceof StructuredDataOR) {
-            String newGroupName;
-            // Only append suffix if target page already contains group with same name
-            if (targetPage.getObjectGroupByName(sourceGroup.getName()) == null) {
-                newGroupName = sourceGroup.getName();
-            } else {
-                String baseName = sourceGroup.getName().replaceAll("_\\d+$", "");
-                int i = 1;
-                do {
-                    newGroupName = baseName + "_" + i++;
-                } while (targetPage.getObjectGroupByName(newGroupName) != null);
-            }
-            ObjectGroup<StructuredDataORObject> newGroup = new ObjectGroup<>(
-                newGroupName,
-                (StructuredDataORPage) targetPage
-            );
-            for (Object o : sourceGroup.getObjects()) {
-                StructuredDataORObject srcObj = (StructuredDataORObject) o;
-                StructuredDataORObject cloned = new StructuredDataORObject();
-
-                String newObjectName = computeCopyName(targetPage, srcObj);
-
-                cloned.setName(newObjectName);
-                cloned.setParent(newGroup);
-                srcObj.clone(cloned);
-                newGroup.getObjects().add(cloned);
-                pastedObject = cloned;
-            }
-            targetPage.getObjectGroups().add(newGroup);
-            ((StructuredDataOR) currentOR).setSaved(false);
-            repo.saveStructuredDataPageNow((StructuredDataORPage) targetPage);
-            reload();
-            final ORObjectInf highlight = pastedObject;
-            if (highlight != null) {
-                SwingUtilities.invokeLater(
-                    () -> {
-                        selectAndSrollTo(highlight.getTreePath());
-                    }
-                );
-            }
-            return;
-        }
-        if (isSharedToProject(sourceOR, currentOR) && currentOR instanceof MobileOR) {
-            String newGroupName;
-            // Only append suffix if target page already contains group with same name
-            if (targetPage.getObjectGroupByName(sourceGroup.getName()) == null) {
-                newGroupName = sourceGroup.getName();
-            } else {
-                String baseName = sourceGroup.getName().replaceAll("_\\d+$", "");
-                int i = 1;
-                do {
-                    newGroupName = baseName + "_" + i++;
-                } while (targetPage.getObjectGroupByName(newGroupName) != null);
-            }
-            ObjectGroup<MobileORObject> newGroup = new ObjectGroup<>(
-                newGroupName,
-                (MobileORPage) targetPage
-            );
-            for (Object o : sourceGroup.getObjects()) {
-                MobileORObject srcObj = (MobileORObject) o;
-                MobileORObject cloned = new MobileORObject();
-
-                String newObjectName = computeCopyName(targetPage, srcObj);
-
-                cloned.setName(newObjectName);
-                cloned.setParent(newGroup);
-                srcObj.clone(cloned);
-                newGroup.getObjects().add(cloned);
-                pastedObject = cloned;
-            }
-            targetPage.getObjectGroups().add(newGroup);
-            ((MobileOR) currentOR).setSaved(false);
-            repo.saveMobilePageNow((MobileORPage) targetPage);
-            reload();
-            final ORObjectInf highlight = pastedObject;
-            if (highlight != null) {
-                SwingUtilities.invokeLater(
-                    () -> {
-                        selectAndSrollTo(highlight.getTreePath());
-                    }
-                );
-            }
-            return;
-        }
-        if (isSharedToProject(sourceOR, currentOR) && currentOR instanceof StructuredDataOR) {
-            String newGroupName;
-            // Only append suffix if target page already contains group with same name
-            if (targetPage.getObjectGroupByName(sourceGroup.getName()) == null) {
-                newGroupName = sourceGroup.getName();
-            } else {
-                String baseName = sourceGroup.getName().replaceAll("_\\d+$", "");
-                int i = 1;
-                do {
-                    newGroupName = baseName + "_" + i++;
-                } while (targetPage.getObjectGroupByName(newGroupName) != null);
-            }
-            ObjectGroup<StructuredDataORObject> newGroup = new ObjectGroup<>(
-                newGroupName,
-                (StructuredDataORPage) targetPage
-            );
-            for (Object o : sourceGroup.getObjects()) {
-                StructuredDataORObject srcObj = (StructuredDataORObject) o;
-                StructuredDataORObject cloned = new StructuredDataORObject();
-
-                String newObjectName = computeCopyName(targetPage, srcObj);
-
-                cloned.setName(newObjectName);
-                cloned.setParent(newGroup);
-                srcObj.clone(cloned);
-                newGroup.getObjects().add(cloned);
-                pastedObject = cloned;
-            }
-            targetPage.getObjectGroups().add(newGroup);
-            ((StructuredDataOR) currentOR).setSaved(false);
-            repo.saveStructuredDataPageNow((StructuredDataORPage) targetPage);
-            reload();
-            final ORObjectInf highlight = pastedObject;
-            if (highlight != null) {
-                SwingUtilities.invokeLater(
-                    () -> {
-                        selectAndSrollTo(highlight.getTreePath());
-                    }
-                );
-            }
-            return;
-        }
-        if (isSharedToProject(sourceOR, currentOR) && currentOR instanceof MobileOR) {
-            String newGroupName;
-            // Only append suffix if target page already contains group with same name
-            if (targetPage.getObjectGroupByName(sourceGroup.getName()) == null) {
-                newGroupName = sourceGroup.getName();
-            } else {
-                String baseName = sourceGroup.getName().replaceAll("_\\d+$", "");
-                int i = 1;
-                do {
-                    newGroupName = baseName + "_" + i++;
-                } while (targetPage.getObjectGroupByName(newGroupName) != null);
-            }
-            ObjectGroup<MobileORObject> newGroup = new ObjectGroup<>(
-                newGroupName,
-                (MobileORPage) targetPage
-            );
-            for (Object o : sourceGroup.getObjects()) {
-                MobileORObject srcObj = (MobileORObject) o;
-                MobileORObject cloned = new MobileORObject();
-
-                String newObjectName = computeCopyName(targetPage, srcObj);
-
-                cloned.setName(newObjectName);
-                cloned.setParent(newGroup);
-                srcObj.clone(cloned);
-                newGroup.getObjects().add(cloned);
-                pastedObject = cloned;
-            }
-            targetPage.getObjectGroups().add(newGroup);
-            ((MobileOR) currentOR).setSaved(false);
-            repo.saveMobilePageNow((MobileORPage) targetPage);
-            reload();
-            final ORObjectInf highlight = pastedObject;
-            if (highlight != null) {
-                SwingUtilities.invokeLater(
-                    () -> {
-                        selectAndSrollTo(highlight.getTreePath());
-                    }
-                );
-            }
-            return;
-        }
-        if (isSharedToProject(sourceOR, currentOR) && currentOR instanceof StructuredDataOR) {
-            String newGroupName;
-            // Only append suffix if target page already contains group with same name
-            if (targetPage.getObjectGroupByName(sourceGroup.getName()) == null) {
-                newGroupName = sourceGroup.getName();
-            } else {
-                String baseName = sourceGroup.getName().replaceAll("_\\d+$", "");
-                int i = 1;
-                do {
-                    newGroupName = baseName + "_" + i++;
-                } while (targetPage.getObjectGroupByName(newGroupName) != null);
-            }
-            ObjectGroup<StructuredDataORObject> newGroup = new ObjectGroup<>(
-                newGroupName,
-                (StructuredDataORPage) targetPage
-            );
-            for (Object o : sourceGroup.getObjects()) {
-                StructuredDataORObject srcObj = (StructuredDataORObject) o;
-                StructuredDataORObject cloned = new StructuredDataORObject();
-
-                String newObjectName = computeCopyName(targetPage, srcObj);
-
-                cloned.setName(newObjectName);
-                cloned.setParent(newGroup);
-                srcObj.clone(cloned);
-                newGroup.getObjects().add(cloned);
-                pastedObject = cloned;
-            }
-            targetPage.getObjectGroups().add(newGroup);
-            ((StructuredDataOR) currentOR).setSaved(false);
-            repo.saveStructuredDataPageNow((StructuredDataORPage) targetPage);
-            reload();
-            final ORObjectInf highlight = pastedObject;
-            if (highlight != null) {
-                SwingUtilities.invokeLater(
-                    () -> {
-                        selectAndSrollTo(highlight.getTreePath());
-                    }
-                );
-            }
-            return;
-        }
         // Project to Shared paste sections with smart naming
-        if (isProjectToShared(sourceOR, currentOR)) {
+        if (isProjectToShared(sourceOR, currentOR) && currentOR instanceof WebOR) {
             String newGroupName;
             // Only append suffix if target page already contains group with same name
             if (targetPage.getObjectGroupByName(sourceGroup.getName()) == null) {
@@ -3148,7 +2901,7 @@ public abstract class ObjectTree implements ActionListener {
             ObjectGroup<?> group = (ObjectGroup<?>) groupObj;
             for (Object obj : group.getObjects()) {
                 ORObjectInf orObj = (ORObjectInf) obj;
-                if (objectName.equals(orObj.getName())) {
+                if (objectName.equalsIgnoreCase(orObj.getName())) {
                     return orObj;
                 }
             }
@@ -3164,7 +2917,7 @@ public abstract class ObjectTree implements ActionListener {
                 Object child = children.nextElement();
                 if (child instanceof ORObjectInf) {
                     ORObjectInf obj = (ORObjectInf) child;
-                    if (name.equals(obj.getName())) {
+                    if (name.equalsIgnoreCase(obj.getName())) {
                         return true;
                     }
                 }

@@ -2,9 +2,114 @@
 
 All notable changes to this project will be documented in this file.
 
-## Version 3.0.0
+## Version 4.0.0
 
 Release Date: <insert date of release>
+
+### General/UI
+
+#### Added
+- Added multi-cell deletion support in the Test Datasheet for improved data management and editing efficiency.
+
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+- Fixed incorrect cell deletion mapping in Test Datasheet data columns to ensure correct cell references is removed
+
+### Browser/Playwright Testing
+
+#### Added
+#### Changed
+#### Deprecate
+#### Removed
+#### Fixed
+
+### Mobile App Testing
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+
+### API Testing
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+
+### Message Testing
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+
+### Database Testing
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+
+### SAP Testing
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+
+### Synthetic Data
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+
+### Framework Enhancements
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+
+### Security Fixes
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+
+### Unit Testing
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+
+### Contribution
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+
+---------------------------------------------------------------------
+
+## Version 3.0.0
+
+Release Date: August 10, 2026
 
 ### General/UI
 
@@ -55,7 +160,8 @@ Release Date: <insert date of release>
 - Enhanced Web Object Repository role selection with dynamic filtering based on user-entered text
 - Added cross-environment datasheet renaming functionality and its accompanying UI confirmation dialog
 - Action 'assertVariable' can now assert runtime and global variables
-  
+- Added the JVM parameter `-Djdk.internal.httpclient.disableHostnameVerification=true` in ingenious.command and ingenious.bat startup scripts to allow connections to align behavior with Postman and Bruno when SSL verification is disabled.
+
 #### Changed
 
 - Enabled reordering of data tabs
@@ -63,6 +169,13 @@ Release Date: <insert date of release>
 - Reorganised Configurations menu with renames
 - Updated the Dashboard tree model to expand at Test Release level on load
 - Updated reports to reference resources in Results/media for storage optimization
+- Disabled edit mode on `Scope` field in Test datasheet to prevent user edits while maintaining visibility of the configured scope.
+- Updated the list and display order of test cases in Test Data and Test Plan to improve usability and maintain a consistent user experience.
+- Ensured Shared Reusables continue to correctly reference and inherit their associated Test Datasheet scope.
+- Enhanced all bulk Delete confirmation dialog to support scrolling, improving usability when deleting a large number of test cases, objects, releases and test sets
+- Disabled edit mode on `Scope` field in Test datasheet to prevent user edits while maintaining visibility of the configured scope.
+- Updated the list and display order of test cases in Test Data and Test Plan to improve usability and maintain a consistent user experience.
+- Ensured Shared Reusables continue to correctly reference and inherit their associated Test Datasheet scope.
 
 #### Deprecated
 
@@ -84,9 +197,26 @@ Release Date: <insert date of release>
 - Added missing Web Objects for sample project Tutorial
 - Fixed column add/delete behavior in datasheet related to frozen columns
 - Fixed OR Tables' add row (+) button 
-- Updated suffix handling for copied objects/pages so it is only applied when another object or page with the same name already exists
+- Updated suffix handling for copied scenarios, test cases, objects, and pages to apply only when an item with the same name already exists
 - Resolved issues with multi-object and multi-page copy-paste and cut-paste operations in the Object Repository
-
+- Fixed issue where enabling or disabling the LambdaTest option in the Manange Devices caused the Properties table to display empty entries.
+- Corrected Save button behavior that becomes disabled after switching applications using Alt+Tab, despite having unsaved changes.
+- Fixed behavior in the LambdaTest Remote URL field where the cursor unexpectedly jumped to the beginning of the text after typing characters beyond the @ symbol.
+- Add Row (+) button is restricted to the first column hover
+- Enhanced Object Repository and Test Data sheet name validation to prevent the creation of duplicate names, regardless of letter casing (e.g., LoginButton, loginbutton, and LOGINBUTTON are now treated as duplicates)
+- Fix context menu options for Reusable Component Test Cases for `New Group` option
+- Added missing Test Manager option under TM Settings dropdown
+- Resolved issues with Test datasheet references in Reusable components.
+- Fixed the delete confirmation message for Impacted Assets to ensure correct notification and confirmation behavior during deletion actions.
+- Fixed "ghost submenu" whenever switching from INGenious to other applications
+- Allow reuse of deleted scenarios in Project Reusable Components
+- Fix incorrect reference when executing test cases when resolving test datasheets with reusables components
+- Fix Param Loop error when using reusable compenents with test data
+- Fixed Test Data `Scope` being reset/mismatched on project reload for duplicate scenario/test case names across Test Plan, Project Reusables, and Shared Reusables, and ensured conversions between these locations update `Scope` explicitly.
+- Fixed HTML report step details disappearing from Detailed/Summary reports when Azure DevOps reporting is enabled, caused by `AzureTestCaseHandler` incorrectly becoming the primary report data source instead of `HtmlTestCaseHandler`.
+- Fixed shared HTML report assets (JS/CSS/fonts) never refreshing after an engine upgrade, which left migrated projects serving stale, incompatible report scripts.
+- Fixed copy-paste between Project and Shared SAP Objects
+- Fixed copy-paste behavior in Object Repository to mirror test cases
 
 ### Browser/Playwright Testing
 
@@ -117,6 +247,15 @@ Release Date: <insert date of release>
 - Fixed Playwright recordings to correctly capture and insert page/tab switch actions in multi-tab scenarios.
 - Fixed iframe element detection during live Playwright recording to correctly populate frame-related Object Repository attributes.
 - Fixed `Record From Here` recordings being inserted at the beginning of a test case instead of immediately after the selected step.
+- Fixed Live Recorder to prevent test case overwrite by appending suffix to duplicate names
+- Fixed Hard Assertions waiting for timeout instead of failing immediately
+- Fixed Debug Mode resume behavior for reusable test case breakpoints
+- Restored Har Compare static asset routing after Jetty 12 dropped its `"/*"` → root context-path normalization
+- Resolved Har Compare static resources 404ing due to Jetty 12's stricter resource-alias check on the unnormalized `./web` base path
+- Fixed Har Compare WebSocket handshake failing with `IllegalStateException: WebSocketComponents has not been created` by explicitly registering `JettyWebSocketServletContainerInitializer`
+- Fixed Dashboard server incorrectly attempting to rebind its port on repeated "Har Compare" opens by checking actual Jetty server state instead of the wrapper thread's liveness
+- Hardened Dashboard server's local port availability check against false positives from lingering `TIME_WAIT` sockets
+- Fixed Har Compare throwing `NullPointerException` when `config.json` was empty or corrupted
 
 ### Mobile App Testing
 
@@ -135,6 +274,7 @@ Release Date: <insert date of release>
 
 - Renamed "LambdaTest Capabilities" to "LambdaTest Grid Capabilities"
 - Unified Mobile Scroll for Android + iOS
+- Allowed shake to execute for IOS devices
 
 #### Deprecated
 
@@ -194,6 +334,7 @@ Release Date: <insert date of release>
     - Added defensive fallback in `APIHttpClient`
     - Dropped client-managed headers (`Content-Length`, `Accept-Encoding`) silently
 - Conversion from API Request to Test Case now transfers username and password fields when using Basic Auth
+- Fixed Bruno importer parsing of URLs containing `//`
 
 ### Message Testing
 
@@ -256,6 +397,7 @@ Release Date: <insert date of release>
 - Applied Prettier formatting updates
 - Enhanced HTML summary clickable rows (Tabulator v6 fix)
 - Implemented HTML report in-page Console Viewer with working filter under `file://`
+- Updated `project upgrade` and `project validate` CLI, included migration of Test data new `Scope` field and disabled auto-migration of project for `validate` command
 
 #### Deprecated
 
@@ -272,6 +414,34 @@ Release Date: <insert date of release>
 
 #### Added
 #### Changed
+
+- Upgraded `jackson-core`/`jackson-databind`/`jackson-annotations`/`jackson-dataformat-xml`/`jackson-dataformat-yaml` from 2.15.2 to 2.18.9 (fixes async-parser DoS advisories GHSA-72hv-8253-57qq and GHSA-r7wm-3cxj-wff9)
+- Pinned `bcprov-jdk18on`/`bcpkix-jdk18on`/`bcutil-jdk18on` (transitive via the IBM MQ client) to 1.85 via `dependencyManagement`, fixing six CVEs including three Critical-severity issues present in 1.83
+- Upgraded `io.appium:java-client` from 10.0.0 to 10.1.1 (fixes CVE-2026-43910, SSRF via `directConnect`)
+- Upgraded `org.assertj:assertj-core` from 3.26.3 to 3.27.7 (fixes CVE-2026-24400, XXE in `isXmlEqualTo`)
+- Upgraded Jetty from 9.4.57.v20241219 to 12.0.38, migrating the IDE's embedded dashboard server from `jetty-servlet`/`websocket-servlet` to the Jetty 12 EE8 equivalents (`jetty-ee8-servlet`, `jetty-ee8-websocket-jetty-server`) while retaining the `javax.servlet` namespace (fixes CVE-2025-5115, CVE-2024-6763, CVE-2026-6790)
+
 #### Deprecated
 #### Removed
 #### Fixed
+
+### Unit Testing
+
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+
+#### Fixed
+
+- Fixed unit test for EnvTest Data Cross Environment Rename
+
+### Contribution
+
+#### Added
+- by Bulearca, C.I. (Cristian - Irinel) [@cristianbulearca-0588](https://github.com/cristianbulearca-0588): Added support for JSON responses containing the security prefix `)]}'` by automatically stripping the prefix before processing.
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+- by Palmieri, G. (Gianluca) [@palmierigianlu](https://github.com/palmierigianlu): Fixed SQL query editor error that occurs after formatting queries with Beautify or inserting manual line breaks.

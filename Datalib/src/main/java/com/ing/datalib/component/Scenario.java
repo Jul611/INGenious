@@ -4,7 +4,6 @@ import com.ing.datalib.component.io.TestCaseStoreFactory;
 import com.ing.datalib.component.utils.FileUtils;
 import com.ing.datalib.component.utils.SortOrderStore;
 import com.ing.datalib.or.web.WebOR.ORScope;
-import com.ing.datalib.or.web.WebOR.ORScope;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +38,12 @@ public class Scenario extends DataModel {
     private String name;
 
     private final Source source;
+
+    /**
+     * When true, skips migrations on scenario/test case load to ensure read-only validation.
+     * Propagated from parent Project when loaded in read-only mode.
+     */
+    private boolean readOnlyMode = false;
 
     /**
      * Constructs a scenario in the Test Plan.
@@ -119,6 +124,21 @@ public class Scenario extends DataModel {
     }
 
     /**
+     * Returns a short, human-readable label for this scenario's scope, for display purposes
+     * (e.g. the Test Design search box), reflecting which scope is currently active.
+     * @return "TestPlan", "Project", or "Shared"
+     */
+    public String getScopeLabel() {
+        if (source == Source.REUSABLE_COMPONENTS) {
+            return "Project";
+        }
+        if (source == Source.SHARED_REUSABLE_COMPONENTS) {
+            return "Shared";
+        }
+        return "TestPlan";
+    }
+
+    /**
      * Returns the parent project.
      * @return parent project
      */
@@ -132,6 +152,20 @@ public class Scenario extends DataModel {
      */
     public List<TestCase> getTestCases() {
         return testCases;
+    }
+
+    /**
+     * Sets the read-only mode for this Scenario and propagates to all child TestCases.
+     * When true, prevents scenario and test case migrations during load.
+     *
+     * @param readOnly true to enable read-only mode
+     */
+    public void setReadOnlyMode(boolean readOnly) {
+        this.readOnlyMode = readOnly;
+        // Propagate to all child test cases
+        for (TestCase tc : testCases) {
+            tc.setReadOnlyMode(readOnly);
+        }
     }
 
     /**
@@ -672,16 +706,22 @@ public class Scenario extends DataModel {
     }
 
     /**
-     * Renames this scenario.
+     * Renames this scenario in Reusable Components.
+     * Removes stale scenarios whose directories no longer exist on disk before checking uniqueness.
      * @param newName new scenario name
      * @return true if successful, false if a scenario with the new name already exists
      */
 
     public Boolean renameReusable(String newName) {
-        Scenario existing = getProject().getReusableScenarioByName(newName);
+        Project p = getProject();
+        // Clean up stale reusable scenarios first
+        List<Scenario> reusables = p.getReusableScenarios();
+        reusables.removeIf(s -> !new File(s.getLocation()).exists());
+
+        Scenario existing = p.getReusableScenarioByName(newName);
         if (existing == null || existing == this) {
             if (FileUtils.renameFile(getLocation(), newName)) {
-                getProject().refactorScenario(name, newName);
+                p.refactorScenario(name, newName);
                 name = newName;
                 return true;
             }
@@ -692,13 +732,19 @@ public class Scenario extends DataModel {
 
     /**
      * Renames this shared reusable scenario.
+     * Removes stale scenarios whose directories no longer exist on disk before checking uniqueness.
      * @param newName new scenario name
      * @return true if successful, false if a scenario with the new name already exists
      */
     public Boolean renameSharedReusable(String newName) {
-        if (getProject().getSharedReusableScenarioByName(newName) == null) {
+        Project p = getProject();
+        // Clean up stale shared reusable scenarios first
+        List<Scenario> sharedReusables = p.getSharedScenarios();
+        sharedReusables.removeIf(s -> !new File(s.getLocation()).exists());
+
+        if (p.getSharedReusableScenarioByName(newName) == null) {
             if (FileUtils.renameFile(getLocation(), newName)) {
-                getProject().refactorScenario(name, newName);
+                p.refactorScenario(name, newName);
                 name = newName;
                 return true;
             }

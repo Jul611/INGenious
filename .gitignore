@@ -13,6 +13,7 @@ target/
 .idea/
 *.ipr
 *.iws
+.vscode/
 *.swp
 *~
 
