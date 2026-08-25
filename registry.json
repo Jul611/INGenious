@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "name": "demo-helloworld",
+      "displayName": "Hello World Demo",
+      "description": "A demo plugin that adds Hello World and custom greeting actions. Shows how plugins integrate with the INGenious step builder.",
+      "author": "INGenious Plugins Team",
+      "authorEmail": "plugins@company.com",
+      "version": "1.0.0",
+      "minEngineVersion": "3.0.0",
+      "maxEngineVersion": "",
+      "mavenGroupId": "com.ing.plugins",
+      "mavenArtifactId": "demo-helloworld",
+      "objectTypes": ["General"],
+      "actionCount": 2,
+      "actions": ["sayHelloWorld", "sayCustomGreeting"],
+      "homepageUrl": "",
+      "license": "MIT",
+      "releaseNotes": "Dummy entry for Browse/Install smoke testing.",
+      "dateAdded": "2026-08-26",
+      "featured": true,
+      "githubRepo": ""
+    }
+  ]
+}
