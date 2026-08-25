@@ -11,16 +11,21 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 /**
  * Modal dialog for pointing the Plugin Marketplace at a registry repo and
- * Azure Artifacts feed. This is the one place all of that lives — swapping
+ * Azure Artifacts feed. This is the one place all of that lives -- swapping
  * from a personal setup to the real company org/feed later means changing
- * the values here, not touching code.
+ * the values here, not touching code. The ADO PAT field is write-only: it
+ * writes straight into the user's real ~/.m2/settings.xml (via
+ * PluginRegistryCliService.saveAdoCredential) so nobody has to hand-edit
+ * that file, and it's never redisplayed once saved.
  */
 public final class PluginRegistrySettingsDialog {
 
@@ -76,14 +81,27 @@ public final class PluginRegistrySettingsDialog {
         JTextField adoFeedField = new JTextField(config.getAdoFeedName(), 28);
         row = addField(form, c, row, "Feed name:", adoFeedField);
         JTextField adoServerIdField = new JTextField(config.getAdoFeedServerId(), 28);
+        row = addField(form, c, row, "Maven server id (internal label):", adoServerIdField);
+
+        JPasswordField adoPatField = new JPasswordField(28);
         row =
             addField(
                 form,
                 c,
                 row,
-                "Maven <server> id (must match ~/.m2/settings.xml):",
-                adoServerIdField
+                "ADO PAT (Packaging: Read) -- leave blank to keep current:",
+                adoPatField
             );
+
+        JLabel patHint = new JLabel(
+            "<html><small>Pasting a PAT here writes it into ~/.m2/settings.xml for you --" +
+            " nothing to hand-edit.</small></html>"
+        );
+        c.gridx = 0;
+        c.gridy = row++;
+        c.gridwidth = 2;
+        form.add(patHint, c);
+        c.gridwidth = 1;
 
         JLabel statusHeader = new JLabel("Local machine status");
         statusHeader.setFont(statusHeader.getFont().deriveFont(Font.BOLD));
@@ -117,6 +135,24 @@ public final class PluginRegistrySettingsDialog {
                 config.setAdoProject(adoProjectField.getText().trim());
                 config.setAdoFeedName(adoFeedField.getText().trim());
                 config.setAdoFeedServerId(adoServerIdField.getText().trim());
+
+                char[] patChars = adoPatField.getPassword();
+                String pat = new String(patChars).trim();
+                java.util.Arrays.fill(patChars, ' ');
+                if (!pat.isEmpty()) {
+                    try {
+                        new PluginRegistryCliService()
+                        .saveAdoCredential(adoServerIdField.getText().trim(), pat);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(
+                            dialog,
+                            "Saved the other settings, but could not update ~/.m2/settings.xml:\n" +
+                            ex.getMessage(),
+                            "ADO Credential Not Saved",
+                            JOptionPane.WARNING_MESSAGE
+                        );
+                    }
+                }
                 dialog.dispose();
             }
         );
@@ -185,13 +221,13 @@ public final class PluginRegistrySettingsDialog {
                     html.append(
                         auth.authenticated
                             ? "gh: signed in as " + auth.username + "<br>"
-                            : "gh: not signed in — run 'gh auth login --web'<br>"
+                            : "gh: not signed in -- run 'gh auth login --web'<br>"
                     );
                 }
                 html.append(
                     adoConfigured
-                        ? "~/.m2/settings.xml: has a matching &lt;server&gt; entry"
-                        : "~/.m2/settings.xml: no matching &lt;server&gt; entry yet — needed to install/publish"
+                        ? "ADO credential: configured in ~/.m2/settings.xml"
+                        : "ADO credential: not set yet -- paste a PAT above and Save"
                 );
                 html.append("</html>");
                 return html.toString();

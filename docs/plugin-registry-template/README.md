@@ -46,8 +46,11 @@ your-plugin-registry-repo/
    fine to unblock testing).
 6. In INGenious's Plugin Manager (the "Registry Settings..." button), point
    the 8 config values at this repo and your Azure Artifacts feed. For local
-   installs, add a matching `<server>` entry with a **read-scoped** ADO PAT
-   to your own `~/.m2/settings.xml`.
+   installs, generate a personal ADO PAT scoped to **Packaging: Read** and
+   paste it into the PAT field in that same dialog — the app writes it into
+   your real `~/.m2/settings.xml` for you (preserving anything else already
+   there), so nobody has to hand-edit that file. The field is write-only and
+   never redisplays the saved value.
 
 Everything above is configuration, not code — this same layout and these
 same two workflows work unchanged whether they're pointed at a personal

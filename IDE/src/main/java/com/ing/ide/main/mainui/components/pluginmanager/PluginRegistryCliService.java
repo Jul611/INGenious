@@ -17,10 +17,11 @@ import java.util.regex.Pattern;
 /**
  * Shells out to {@code git}, {@code gh}, and {@code mvn} to publish plugin
  * submissions as GitHub pull requests and to resolve published plugin
- * artifacts from the Azure Artifacts feed. No PAT is ever read, stored, or
- * handled here — every credential is managed by the CLI tools themselves
- * (git via HTTPS + Git Credential Manager, gh via {@code gh auth login},
- * Maven via the user's own {@code ~/.m2/settings.xml}).
+ * artifacts from the Azure Artifacts feed. GitHub credentials are never
+ * read, stored, or handled here — git/gh manage their own. Maven-against-ADO
+ * uses a PAT the user pastes once into Registry Settings; this class writes
+ * it straight into the user's real {@code ~/.m2/settings.xml} (preserving
+ * anything else already there) so nobody has to hand-edit that file.
  */
 public class PluginRegistryCliService {
     private static final long TOOL_CHECK_TIMEOUT_MS = 10_000;
@@ -154,10 +155,7 @@ public class PluginRegistryCliService {
      */
     public boolean isAdoMavenServerConfigured(String serverId) {
         if (serverId == null || serverId.isEmpty()) return false;
-        File settingsFile = new File(
-            System.getProperty("user.home"),
-            ".m2" + File.separator + "settings.xml"
-        );
+        File settingsFile = adoSettingsFile();
         if (!settingsFile.exists()) return false;
         try {
             String content = new String(
@@ -168,6 +166,74 @@ public class PluginRegistryCliService {
         } catch (IOException e) {
             return false;
         }
+    }
+
+    /**
+     * Writes (or replaces) a <server> entry for the ADO feed in the user's
+     * real ~/.m2/settings.xml, preserving anything else already in that
+     * file -- this is what lets a contributor just paste a PAT into
+     * Registry Settings instead of hand-editing XML themselves.
+     */
+    public void saveAdoCredential(String serverId, String pat) throws IOException {
+        File settingsFile = adoSettingsFile();
+        settingsFile.getParentFile().mkdirs();
+        try {
+            javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+            org.w3c.dom.Document doc;
+            if (settingsFile.exists()) {
+                doc = dbf.newDocumentBuilder().parse(settingsFile);
+            } else {
+                doc = dbf.newDocumentBuilder().newDocument();
+                doc.appendChild(doc.createElement("settings"));
+            }
+            org.w3c.dom.Element root = doc.getDocumentElement();
+            org.w3c.dom.NodeList serversList = root.getElementsByTagName("servers");
+            org.w3c.dom.Element serversEl;
+            if (serversList.getLength() == 0) {
+                serversEl = doc.createElement("servers");
+                root.appendChild(serversEl);
+            } else {
+                serversEl = (org.w3c.dom.Element) serversList.item(0);
+            }
+            org.w3c.dom.NodeList serverNodes = serversEl.getElementsByTagName("server");
+            for (int i = serverNodes.getLength() - 1; i >= 0; i--) {
+                org.w3c.dom.Element serverEl = (org.w3c.dom.Element) serverNodes.item(i);
+                org.w3c.dom.NodeList idNodes = serverEl.getElementsByTagName("id");
+                if (idNodes.getLength() > 0 && serverId.equals(idNodes.item(0).getTextContent())) {
+                    serversEl.removeChild(serverEl);
+                }
+            }
+            org.w3c.dom.Element newServer = doc.createElement("server");
+            org.w3c.dom.Element idEl = doc.createElement("id");
+            idEl.setTextContent(serverId);
+            org.w3c.dom.Element userEl = doc.createElement("username");
+            userEl.setTextContent("ado");
+            org.w3c.dom.Element passEl = doc.createElement("password");
+            passEl.setTextContent(pat);
+            newServer.appendChild(idEl);
+            newServer.appendChild(userEl);
+            newServer.appendChild(passEl);
+            serversEl.appendChild(newServer);
+
+            javax.xml.transform.Transformer transformer = javax
+                .xml.transform.TransformerFactory.newInstance()
+                .newTransformer();
+            transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            transformer.transform(
+                new javax.xml.transform.dom.DOMSource(doc),
+                new javax.xml.transform.stream.StreamResult(settingsFile)
+            );
+        } catch (Exception e) {
+            throw new IOException(
+                "Could not update " + settingsFile.getAbsolutePath() + ": " + e.getMessage(),
+                e
+            );
+        }
+    }
+
+    private static File adoSettingsFile() {
+        return new File(System.getProperty("user.home"), ".m2" + File.separator + "settings.xml");
     }
 
     private String resolveAuthenticatedUser() throws IOException {
@@ -565,9 +631,10 @@ public class PluginRegistryCliService {
                 artifactId +
                 " " +
                 version +
-                " from the Azure Artifacts feed. Check that ~/.m2/settings.xml has a <server> with id '" +
+                " from the Azure Artifacts feed. Check that ~/.m2/settings.xml has a <server> " +
+                "with id '" +
                 config.getAdoFeedServerId() +
-                "' and a valid, read-scoped ADO PAT.",
+                "' and a valid, read-scoped ADO PAT -- set one via Registry Settings.",
                 result.exitCode,
                 result.output
             );
@@ -597,20 +664,12 @@ public class PluginRegistryCliService {
         File libDestDir,
         Consumer<String> progress
     )
-        throws CliException {
+        throws IOException {
         PluginRegistryConfig config = new PluginRegistryConfig();
         progress.accept("Resolving dependencies for " + artifactId + "...");
-        File shimDir;
+        File shimDir = null;
         try {
             shimDir = Files.createTempDirectory("ingenious-plugin-shim-").toFile();
-        } catch (IOException e) {
-            throw new CliException(
-                "Could not create a temp folder to work in: " + e.getMessage(),
-                -1,
-                ""
-            );
-        }
-        try {
             File shimPom = new File(shimDir, "pom.xml");
             String pomXml =
                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\">\n" +
@@ -655,14 +714,6 @@ public class PluginRegistryCliService {
                     result.output
                 );
             }
-        } catch (IOException e) {
-            throw (e instanceof CliException)
-                ? (CliException) e
-                : new CliException(
-                    "Failed to resolve dependencies for " + artifactId + ": " + e.getMessage(),
-                    -1,
-                    ""
-                );
         } finally {
             deleteRecursive(shimDir);
         }
