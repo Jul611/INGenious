@@ -23,6 +23,22 @@
         </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>ado-plugin-feed-write</id>
+            <url>https://pkgs.dev.azure.com/{org}/{project}/_packaging/{feed}/maven/v1</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>ado-plugin-feed-write</id>
+            <url>https://pkgs.dev.azure.com/{org}/{project}/_packaging/{feed}/maven/v1</url>
+        </repository>
+    </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
