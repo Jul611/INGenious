@@ -20,7 +20,6 @@ import java.util.logging.Logger;
 public class PluginManagerService {
     private static final Logger LOG = Logger.getLogger(PluginManagerService.class.getName());
     private static final String PLUGINS_DIR = "plugins";
-    private static final String REGISTRY_FILE = "plugins/registry.json";
     private static final String PLUGIN_INFO_FILE = ".plugininfo";
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -40,48 +39,11 @@ public class PluginManagerService {
         return Collections.emptyList();
     }
 
-    public List<PluginRegistryEntry> fetchRegistryLocal() {
-        List<PluginRegistryEntry> local = tryFetchLocal();
-        if (local != null && !local.isEmpty()) {
-            return local;
-        }
-        return Collections.emptyList();
-    }
-
     private List<PluginRegistryEntry> tryFetchRemote() {
         try {
             String contentJson = cliService.fetchRegistryJsonRaw(s -> {});
             Map<String, Object> root = mapper.readValue(
                 contentJson,
-                new TypeReference<Map<String, Object>>() {}
-            );
-            Object pluginsObj = root.get("plugins");
-            if (pluginsObj instanceof List) {
-                List<PluginRegistryEntry> entries = mapper.convertValue(
-                    pluginsObj,
-                    new TypeReference<List<PluginRegistryEntry>>() {}
-                );
-                List<PluginRegistryEntry> local = tryFetchLocal();
-                if (local != null && !local.isEmpty()) {
-                    Set<String> localNames = new HashSet<>();
-                    for (PluginRegistryEntry l : local) localNames.add(l.getName());
-                    entries.removeIf(e -> localNames.contains(e.getName()));
-                    entries.addAll(local);
-                }
-                return entries;
-            }
-        } catch (Exception e) {
-            LOG.log(Level.WARNING, "Remote registry fetch failed: {0}", e.getMessage());
-        }
-        return null;
-    }
-
-    private List<PluginRegistryEntry> tryFetchLocal() {
-        try {
-            File regFile = new File(REGISTRY_FILE);
-            if (!regFile.exists()) return null;
-            Map<String, Object> root = mapper.readValue(
-                regFile,
                 new TypeReference<Map<String, Object>>() {}
             );
             Object pluginsObj = root.get("plugins");
@@ -92,7 +54,7 @@ public class PluginManagerService {
                 );
             }
         } catch (Exception e) {
-            LOG.log(Level.SEVERE, "Failed to parse local registry", e);
+            LOG.log(Level.WARNING, "Remote registry fetch failed: {0}", e.getMessage());
         }
         return null;
     }
@@ -240,10 +202,6 @@ public class PluginManagerService {
         return PLUGINS_DIR;
     }
 
-    public static String getRegistryFilePath() {
-        return REGISTRY_FILE;
-    }
-
     // ─── Local Plugin Publishing (staging for local testing) ─────────
 
     public String publishPlugin(File jarFile, PluginRegistryEntry entry) throws IOException {
@@ -293,23 +251,6 @@ public class PluginManagerService {
         try (OutputStream os = new FileOutputStream(new File(pluginDir, PLUGIN_INFO_FILE))) {
             info.store(os, "Plugin info (published)");
         }
-
-        File regFile = new File(REGISTRY_FILE);
-        Map<String, Object> registry = regFile.exists()
-            ? mapper.readValue(regFile, new TypeReference<Map<String, Object>>() {})
-            : new LinkedHashMap<>(Map.of("version", 1, "plugins", new ArrayList<>()));
-        List<Map<String, Object>> pluginsList = (List<Map<String, Object>>) registry.get("plugins");
-        List<Map<String, Object>> updated = new ArrayList<>();
-        boolean replaced = false;
-        for (Map<String, Object> p : pluginsList) {
-            if (entry.getName().equals(p.get("name"))) {
-                updated.add(entryToMap(entry));
-                replaced = true;
-            } else updated.add(p);
-        }
-        if (!replaced) updated.add(entryToMap(entry));
-        registry.put("plugins", updated);
-        mapper.writerWithDefaultPrettyPrinter().writeValue(regFile, registry);
         return entry.getName();
     }
 

@@ -20,12 +20,14 @@ APP_CLASSPATH="lib/*:lib/clib/*"
 if [ "$#" -eq 0 ]; then
     # No args -> IDE
     exec java -Xms128m -Xmx1024m -Dfile.encoding=UTF-8 \
+        -Djdk.internal.httpclient.disableHostnameVerification=true \
         -Djdk.httpclient.allowRestrictedHeaders=host,connection,content-length,upgrade,expect,via,date,accept-encoding \
-        -cp "ingenious-ide-3.0.0.jar:$APP_CLASSPATH" \
+        -cp "ingenious-ide-4.0.0.jar:$APP_CLASSPATH" \
         com.ing.ide.main.Main
 else
     # Args -> CLI
     exec java -Xms128m -Xmx1024m -Dfile.encoding=UTF-8 \
+        -Djdk.internal.httpclient.disableHostnameVerification=true \
         -Djdk.httpclient.allowRestrictedHeaders=host,connection,content-length,upgrade,expect,via,date,accept-encoding \
         -cp "$APP_CLASSPATH" \
         com.ing.engine.core.Control "$@"
