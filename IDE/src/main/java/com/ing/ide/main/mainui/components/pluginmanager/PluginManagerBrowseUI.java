@@ -4,7 +4,6 @@ import com.ing.ide.main.ui.About;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.logging.Level;
@@ -175,25 +174,7 @@ public class PluginManagerBrowseUI extends JPanel {
     }
 
     public void loadData() {
-        // Check PAT is configured before attempting fetch
-        String pat = UserConfig.getPublishPat();
-        if (pat == null || pat.trim().isEmpty()) {
-            int choice = JOptionPane.showConfirmDialog(
-                this,
-                "A GitHub PAT is required to browse the plugin registry.\n\n" +
-                "Set one via Profile (toolbar icon) with 'Contents: Read & Write'\n" +
-                "access on the plugins repo.\n\nOpen Profile now?",
-                "PAT Required",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
-            );
-            if (choice == JOptionPane.YES_OPTION) {
-                firePropertyChange("openProfile", null, true);
-            }
-            statusLabel.setText("No plugins found in registry.");
-            return;
-        }
-
+        statusLabel.setText("Loading plugins...");
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
             @Override
@@ -213,7 +194,10 @@ public class PluginManagerBrowseUI extends JPanel {
     private void populateTable() {
         tableModel.setRowCount(0);
         if (plugins == null || plugins.isEmpty()) {
-            statusLabel.setText("No plugins found in registry.");
+            statusLabel.setText(
+                "No plugins found. If this is unexpected, run 'gh auth status' and check the " +
+                "registry repo in Registry Settings."
+            );
             return;
         }
 
@@ -400,37 +384,67 @@ public class PluginManagerBrowseUI extends JPanel {
         }
 
         // 3. Proceed with install
-        try {
-            service.downloadPlugin(plugin);
-            int choice = JOptionPane.showConfirmDialog(
-                this,
-                "Plugin \"" +
-                plugin.getDisplayName() +
-                "\" installed successfully.\n" +
-                "Restart INGenious now for the changes to take effect?",
-                "Plugin Installed",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.INFORMATION_MESSAGE
-            );
-            if (choice == JOptionPane.YES_OPTION) {
-                // Trigger restart via frame
-                Container parent = getTopLevelAncestor();
-                if (parent instanceof com.ing.ide.main.mainui.AppMainFrame) {
-                    ((com.ing.ide.main.mainui.AppMainFrame) parent).restart();
+        String previousStatus = statusLabel.getText();
+        statusLabel.setText("Installing " + plugin.getDisplayName() + "...");
+        SwingWorker<Void, String> worker = new SwingWorker<Void, String>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                service.downloadPlugin(plugin, this::publish);
+                return null;
+            }
+
+            @Override
+            protected void process(List<String> chunks) {
+                if (!chunks.isEmpty()) {
+                    statusLabel.setText(chunks.get(chunks.size() - 1));
                 }
             }
-            if (onInstallCallback != null) {
-                onInstallCallback.run();
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    int choice = JOptionPane.showConfirmDialog(
+                        PluginManagerBrowseUI.this,
+                        "Plugin \"" +
+                        plugin.getDisplayName() +
+                        "\" installed successfully.\n" +
+                        "Restart INGenious now for the changes to take effect?",
+                        "Plugin Installed",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                    if (choice == JOptionPane.YES_OPTION) {
+                        // Trigger restart via frame
+                        Container parent = getTopLevelAncestor();
+                        if (parent instanceof com.ing.ide.main.mainui.AppMainFrame) {
+                            ((com.ing.ide.main.mainui.AppMainFrame) parent).restart();
+                        }
+                    }
+                    if (onInstallCallback != null) {
+                        onInstallCallback.run();
+                    }
+                    statusLabel.setText(previousStatus);
+                } catch (Exception e) {
+                    LOG.log(Level.SEVERE, "Failed to install plugin", e);
+                    JOptionPane.showMessageDialog(
+                        PluginManagerBrowseUI.this,
+                        "Failed to install plugin: " + rootMessage(e),
+                        "Install Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                    statusLabel.setText(previousStatus);
+                }
             }
-        } catch (IOException e) {
-            LOG.log(Level.SEVERE, "Failed to install plugin", e);
-            JOptionPane.showMessageDialog(
-                this,
-                "Failed to install plugin: " + e.getMessage(),
-                "Install Error",
-                JOptionPane.ERROR_MESSAGE
-            );
-        }
+        };
+        worker.execute();
+    }
+
+    private static String rootMessage(Throwable t) {
+        Throwable cur = t;
+        while (cur.getCause() != null && cur.getCause() != cur) cur = cur.getCause();
+        return cur.getMessage() != null ? cur.getMessage() : cur.toString();
     }
 
     // Renders the Install cell as a clickable button

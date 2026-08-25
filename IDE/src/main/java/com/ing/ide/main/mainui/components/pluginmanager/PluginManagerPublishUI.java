@@ -14,14 +14,18 @@ import java.util.logging.Logger;
 import javax.swing.*;
 
 /**
- * "Publish" tab for the Plugin Manager.
- * Plugin authors select a built JAR, review metadata, select a README.md,
- * and publish directly to the GitHub registry.
+ * "Publish" tab for the Plugin Manager. Plugin authors point at their plugin's
+ * Maven source project, review metadata extracted from a local build, select
+ * a README.md, and submit — this builds the jar locally to extract metadata,
+ * then opens a pull request against the registry repo via git/gh. Nothing is
+ * merged directly: a human reviewer approves, then CI builds the real
+ * artifact, publishes it to Azure Artifacts, and updates the registry.
  */
 public class PluginManagerPublishUI extends JPanel {
     private static final Logger LOG = Logger.getLogger(PluginManagerPublishUI.class.getName());
 
     private final PluginManagerService service;
+    private final PluginRegistryCliService cliService = new PluginRegistryCliService();
     private final Runnable onPublishCallback;
 
     private JLabel fileLabel;
@@ -31,6 +35,7 @@ public class PluginManagerPublishUI extends JPanel {
     private JLabel manifestAuthorLabel;
     private JLabel manifestActionsLabel;
     private JLabel readmeFileLabel;
+    private JTextArea progressArea;
 
     private JTextField pluginNameField;
     private JTextField descriptionArea;
@@ -39,9 +44,10 @@ public class PluginManagerPublishUI extends JPanel {
     private JTextField versionField;
     private JTextField minEngineField;
     private JTextField maxEngineField;
-    private JButton publishDirectButton;
+    private JButton submitButton;
 
-    private File selectedJar;
+    private File selectedSourceDir;
+    private File builtJar;
     private File selectedReadme;
     private String extractedEntryClasses;
     private List<PluginRegistryEntry.ActionInfo> extractedActions;
@@ -83,30 +89,32 @@ public class PluginManagerPublishUI extends JPanel {
         GridBagConstraints gbc = new GridBagConstraints();
         int row = 0;
 
-        // Step 1: Select JAR
+        // Step 1: Select plugin source
         resetLabelGbc(gbc, row);
         gbc.gridwidth = 2;
-        JLabel step1 = new JLabel("Step 1: Select a built plugin JAR");
+        JLabel step1 = new JLabel(
+            "Step 1: Select your plugin's source project (folder with pom.xml)"
+        );
         step1.setFont(new Font("SansSerif", Font.BOLD, 14));
         mainPanel.add(step1, gbc);
         row++;
 
         resetLabelGbc(gbc, row);
         JButton browseButton = new JButton("Browse...");
-        browseButton.addActionListener(this::browseJar);
+        browseButton.addActionListener(this::browseSourceDir);
         mainPanel.add(browseButton, gbc);
         resetValueGbc(gbc, row);
-        fileLabel = new JLabel("No file selected");
+        fileLabel = new JLabel("No folder selected");
         fileLabel.setForeground(Color.GRAY);
         mainPanel.add(fileLabel, gbc);
         row++;
 
         separator(mainPanel, gbc, row++);
 
-        // Manifest review (auto-populated)
+        // Manifest review (auto-populated from a local build)
         resetLabelGbc(gbc, row);
         gbc.gridwidth = 2;
-        JLabel manifestHeader = new JLabel("Manifest metadata (auto-extracted)");
+        JLabel manifestHeader = new JLabel("Manifest metadata (from a local build)");
         manifestHeader.setFont(new Font("SansSerif", Font.BOLD, 14));
         mainPanel.add(manifestHeader, gbc);
         row++;
@@ -199,22 +207,37 @@ public class PluginManagerPublishUI extends JPanel {
 
         separator(mainPanel, gbc, row++);
 
-        // Publish button
+        // Submit button
         resetLabelGbc(gbc, row);
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
-        publishDirectButton = new JButton("Publish Directly to Registry");
-        publishDirectButton.setFont(new Font("SansSerif", Font.BOLD, 14));
-        publishDirectButton.setEnabled(false);
-        publishDirectButton.addActionListener(this::publishDirectly);
-        mainPanel.add(publishDirectButton, gbc);
+        submitButton = new JButton("Submit for Review");
+        submitButton.setFont(new Font("SansSerif", Font.BOLD, 14));
+        submitButton.setEnabled(false);
+        submitButton.addActionListener(this::submitForReview);
+        mainPanel.add(submitButton, gbc);
+        row++;
+
+        // Progress narration
+        resetLabelGbc(gbc, row);
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0;
+        progressArea = new JTextArea(6, 40);
+        progressArea.setEditable(false);
+        progressArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        JScrollPane progressScroll = new JScrollPane(progressArea);
+        progressScroll.setBorder(BorderFactory.createTitledBorder("Progress"));
+        mainPanel.add(progressScroll, gbc);
 
         // Instructions at the bottom
         JPanel bottomPanel = new JPanel(new BorderLayout());
         JTextArea instructions = new JTextArea(
-            "Publishes a new plugin release to GitHub.\n" +
-            "Creates a release, uploads the JAR, and updates the registry.\n" +
-            "Requires a PAT with write access, configured in Profile."
+            "Builds your plugin from source and opens a pull request against the registry repo.\n" +
+            "A reviewer approves and merges it; CI then builds the real artifact, publishes it to\n" +
+            "Azure Artifacts, and updates the registry automatically. No PAT needed — this uses your\n" +
+            "existing git/gh sign-in (run 'gh auth login --web' once if you haven't already)."
         );
         instructions.setEditable(false);
         instructions.setBackground(getBackground());
@@ -267,19 +290,26 @@ public class PluginManagerPublishUI extends JPanel {
         panel.add(new JSeparator(), gbc);
     }
 
-    private void browseJar(ActionEvent e) {
+    private void browseSourceDir(ActionEvent e) {
         JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Select Plugin JAR");
-        fc.setFileFilter(
-            new javax.swing.filechooser.FileNameExtensionFilter("JAR files (*.jar)", "jar")
-        );
+        fc.setDialogTitle("Select Plugin Source Project");
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         int result = fc.showOpenDialog(this);
         if (result != JFileChooser.APPROVE_OPTION) return;
-        selectedJar = fc.getSelectedFile();
-        fileLabel.setText(selectedJar.getAbsolutePath());
+        File dir = fc.getSelectedFile();
+        if (!new File(dir, "pom.xml").exists()) {
+            showError(
+                "No pom.xml found in " +
+                dir.getAbsolutePath() +
+                ".\nSelect the root folder of a Maven plugin project."
+            );
+            return;
+        }
+        selectedSourceDir = dir;
+        builtJar = null;
+        fileLabel.setText(selectedSourceDir.getAbsolutePath());
         fileLabel.setForeground(Color.BLACK);
-        extractAndPopulateMetadata();
-        checkReady();
+        buildAndPopulateMetadata();
     }
 
     private void browseReadme(ActionEvent e) {
@@ -297,20 +327,52 @@ public class PluginManagerPublishUI extends JPanel {
     }
 
     private void checkReady() {
-        publishDirectButton.setEnabled(
-            selectedJar != null &&
+        submitButton.setEnabled(
+            selectedSourceDir != null &&
+            builtJar != null &&
             selectedReadme != null &&
             extractedEntryClasses != null &&
             !extractedEntryClasses.trim().isEmpty()
         );
     }
 
-    private void extractAndPopulateMetadata() {
-        if (selectedJar == null) return;
+    private void buildAndPopulateMetadata() {
+        if (selectedSourceDir == null) return;
+        manifestEntryClassesLabel.setText("Building...");
+        manifestNameLabel.setText("-");
+        manifestVersionLabel.setText("-");
+        manifestAuthorLabel.setText("-");
+        manifestActionsLabel.setText("-");
+        submitButton.setEnabled(false);
+
+        SwingWorker<File, Void> worker = new SwingWorker<File, Void>() {
+
+            @Override
+            protected File doInBackground() throws Exception {
+                return cliService.buildLocally(selectedSourceDir, s -> {});
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    builtJar = get();
+                    populateMetadataFromJar(builtJar);
+                } catch (Exception ex) {
+                    LOG.log(Level.WARNING, "Local build failed", ex);
+                    manifestEntryClassesLabel.setText("BUILD FAILED — see error");
+                    showError("Build failed:\n" + rootMessage(ex));
+                }
+                checkReady();
+            }
+        };
+        worker.execute();
+    }
+
+    private void populateMetadataFromJar(File jar) {
         String entryClasses = null, manifestName = null, manifestVersion = null, manifestAuthor =
             null;
-        try (JarFile jar = new JarFile(selectedJar)) {
-            Manifest mf = jar.getManifest();
+        try (JarFile jf = new JarFile(jar)) {
+            Manifest mf = jf.getManifest();
             if (mf != null) {
                 Attributes attrs = mf.getMainAttributes();
                 entryClasses = attrs.getValue("pluginEntryClasses");
@@ -319,19 +381,19 @@ public class PluginManagerPublishUI extends JPanel {
                 manifestAuthor = attrs.getValue("Plugin-Author");
             }
         } catch (Exception ex) {
-            LOG.log(Level.WARNING, "Failed to read manifest from {0}", selectedJar.getName());
+            LOG.log(Level.WARNING, "Failed to read manifest from {0}", jar.getName());
         }
         extractedEntryClasses = entryClasses;
         if (entryClasses != null) {
-            extractedActions = service.extractActionsFromJar(selectedJar, entryClasses);
+            extractedActions = service.extractActionsFromJar(jar, entryClasses);
         } else {
             extractedActions = null;
         }
         manifestEntryClassesLabel.setText(
-            entryClasses != null ? entryClasses : "NOT FOUND \u2014 required!"
+            entryClasses != null ? entryClasses : "NOT FOUND — required!"
         );
 
-        String jarName = selectedJar.getName();
+        String jarName = jar.getName();
         if (jarName.endsWith(".jar")) jarName = jarName.substring(0, jarName.length() - 4);
         if (manifestName != null) {
             manifestNameLabel.setText(manifestName);
@@ -378,10 +440,9 @@ public class PluginManagerPublishUI extends JPanel {
         return sb.toString();
     }
 
-    private void publishDirectly(ActionEvent e) {
-        if (selectedJar == null) return;
+    private void submitForReview(ActionEvent e) {
+        if (selectedSourceDir == null || builtJar == null) return;
 
-        // Validate required fields
         String pluginName = pluginNameField.getText().trim();
         if (pluginName.isEmpty()) {
             showError("Plugin Name is required.");
@@ -394,12 +455,11 @@ public class PluginManagerPublishUI extends JPanel {
         }
         if (extractedEntryClasses == null || extractedEntryClasses.trim().isEmpty()) {
             showError(
-                "The JAR is missing 'pluginEntryClasses' in MANIFEST.MF.\nThis is required for the engine to load the plugin."
+                "The build is missing 'pluginEntryClasses' in MANIFEST.MF.\nThis is required for the engine to load the plugin."
             );
             return;
         }
 
-        // Validate README
         String readmeContent = "";
         if (selectedReadme != null && selectedReadme.exists()) {
             try {
@@ -415,23 +475,6 @@ public class PluginManagerPublishUI extends JPanel {
             return;
         }
 
-        // Check PAT is configured
-        String pat = UserConfig.getPublishPat();
-        if (pat == null || pat.trim().isEmpty()) {
-            int choice = JOptionPane.showConfirmDialog(
-                this,
-                "You haven't configured a GitHub Publishing PAT in your Profile.\n\n" +
-                "Click Help to learn how, or set it via Profile (toolbar icon).\n\nOpen Profile now?",
-                "PAT Required",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
-            );
-            if (choice == JOptionPane.YES_OPTION) {
-                firePropertyChange("openProfile", null, true);
-            }
-            return;
-        }
-
         // Conflict check
         List<PluginRegistryEntry> existingRegistry = service.fetchRegistry();
         String[] newActionNames = extractedActions != null
@@ -442,15 +485,15 @@ public class PluginManagerPublishUI extends JPanel {
             : new String[0];
         boolean hasConflict = false;
         StringBuilder conflictMsg = new StringBuilder();
+        String pluginId = pluginName.toLowerCase().replaceAll("[^a-z0-9-]", "-");
         if (newActionNames.length > 0) {
-            String pluginId = pluginName.toLowerCase().replaceAll("[^a-z0-9-]", "-");
             for (PluginRegistryEntry regEntry : existingRegistry) {
                 if (regEntry.getName().equals(pluginId)) continue;
                 for (String existingAction : regEntry.getActions()) {
                     for (String newAction : newActionNames) {
                         if (existingAction.equals(newAction)) {
                             conflictMsg
-                                .append("  \u2022 '")
+                                .append("  • '")
                                 .append(newAction)
                                 .append("' already used by '")
                                 .append(regEntry.getDisplayName())
@@ -474,7 +517,7 @@ public class PluginManagerPublishUI extends JPanel {
 
         // Build registry entry
         PluginRegistryEntry entry = new PluginRegistryEntry();
-        entry.setName(pluginName.toLowerCase().replaceAll("[^a-z0-9-]", "-"));
+        entry.setName(pluginId);
         entry.setDisplayName(pluginName);
         entry.setDescription(descriptionArea.getText().trim());
         entry.setAuthor(authorField.getText().trim());
@@ -495,72 +538,120 @@ public class PluginManagerPublishUI extends JPanel {
         }
         entry.setEntryClasses(extractedEntryClasses);
 
-        // Show progress dialog
-        JDialog progressDialog = new JDialog(
-            SwingUtilities.getWindowAncestor(this),
-            "Publishing Plugin...",
-            Dialog.ModalityType.MODELESS
-        );
-        progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-        JPanel progressPanel = new JPanel(new BorderLayout(10, 10));
-        progressPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
-        progressPanel.add(
-            new JLabel("Creating GitHub release and uploading JAR..."),
-            BorderLayout.NORTH
-        );
-        JProgressBar progressBar = new JProgressBar();
-        progressBar.setIndeterminate(true);
-        progressPanel.add(progressBar, BorderLayout.CENTER);
-        progressDialog.add(progressPanel);
-        progressDialog.pack();
-        progressDialog.setLocationRelativeTo(this);
-        progressDialog.setVisible(true);
+        progressArea.setText("");
+        submitButton.setEnabled(false);
+        String readmeContentFinal = readmeContent;
 
-        // Run publish in background
-        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+        SwingWorker<PluginRegistryCliService.PrResult, String> worker = new SwingWorker<PluginRegistryCliService.PrResult, String>() {
+            File stagingDir;
 
             @Override
-            protected String doInBackground() throws Exception {
-                return service.publishDirectly(selectedJar, entry, pat);
+            protected PluginRegistryCliService.PrResult doInBackground() throws Exception {
+                publish("Staging submission files...");
+                stagingDir =
+                    service.stagePluginSubmission(selectedSourceDir, entry, readmeContentFinal);
+                try {
+                    return cliService.submitPlugin(
+                        stagingDir,
+                        entry.getName(),
+                        entry.getVersion(),
+                        "Add plugin: " + entry.getDisplayName() + " v" + entry.getVersion(),
+                        buildPrBody(entry),
+                        this::publish
+                    );
+                } finally {
+                    deleteQuietly(stagingDir);
+                }
+            }
+
+            @Override
+            protected void process(List<String> chunks) {
+                for (String line : chunks) {
+                    progressArea.append(line + "\n");
+                }
             }
 
             @Override
             protected void done() {
-                progressDialog.dispose();
                 try {
-                    String downloadUrl = get();
+                    PluginRegistryCliService.PrResult result = get();
+                    progressArea.append("Pull request opened: " + result.url + "\n");
                     try {
-                        service.publishPlugin(selectedJar, entry);
+                        service.publishPlugin(builtJar, entry);
                     } catch (Exception localEx) {
-                        LOG.log(Level.WARNING, "Local staging failed after publish", localEx);
+                        LOG.log(Level.WARNING, "Local staging failed after submission", localEx);
                     }
-                    JOptionPane.showMessageDialog(
+                    int choice = JOptionPane.showConfirmDialog(
                         PluginManagerPublishUI.this,
-                        "Plugin published successfully!\n\nRelease created and JAR uploaded.\nDownload URL: " +
-                        downloadUrl +
-                        "\n\nThe registry has been updated on GitHub.",
-                        "Publish Successful",
+                        "Pull request opened:\n" + result.url + "\n\nOpen it in your browser now?",
+                        "Submitted for Review",
+                        JOptionPane.YES_NO_OPTION,
                         JOptionPane.INFORMATION_MESSAGE
                     );
-                    publishDirectButton.setEnabled(false);
-                    fileLabel.setText("No file selected");
-                    fileLabel.setForeground(Color.GRAY);
-                    readmeFileLabel.setText("No file selected");
-                    readmeFileLabel.setForeground(Color.GRAY);
-                    selectedJar = null;
-                    selectedReadme = null;
-                    extractedActions = null;
-                    extractedEntryClasses = null;
+                    if (choice == JOptionPane.YES_OPTION) {
+                        try {
+                            java.awt.Desktop.getDesktop().browse(java.net.URI.create(result.url));
+                        } catch (Exception ex) {
+                            LOG.log(Level.WARNING, "Could not open PR URL", ex);
+                        }
+                    }
+                    resetForm();
                     if (onPublishCallback != null) onPublishCallback.run();
                 } catch (Exception ex) {
-                    LOG.log(Level.SEVERE, "Direct publish failed", ex);
-                    showError("Publish failed: " + ex.getMessage());
+                    LOG.log(Level.SEVERE, "Submission failed", ex);
+                    showError("Submission failed: " + rootMessage(ex));
                 }
-                publishDirectButton.setEnabled(true);
+                submitButton.setEnabled(true);
             }
         };
-        publishDirectButton.setEnabled(false);
         worker.execute();
+    }
+
+    private String buildPrBody(PluginRegistryEntry entry) {
+        return (
+            "**Plugin:** " +
+            entry.getDisplayName() +
+            "\n**Version:** " +
+            entry.getVersion() +
+            "\n**Author:** " +
+            entry.getAuthor() +
+            "\n\n" +
+            (entry.getDescription() == null ? "" : entry.getDescription()) +
+            "\n\nSubmitted from INGenious's Plugin Manager."
+        );
+    }
+
+    private void resetForm() {
+        submitButton.setEnabled(false);
+        fileLabel.setText("No folder selected");
+        fileLabel.setForeground(Color.GRAY);
+        readmeFileLabel.setText("No file selected");
+        readmeFileLabel.setForeground(Color.GRAY);
+        selectedSourceDir = null;
+        builtJar = null;
+        selectedReadme = null;
+        extractedActions = null;
+        extractedEntryClasses = null;
+        manifestEntryClassesLabel.setText("-");
+        manifestNameLabel.setText("-");
+        manifestVersionLabel.setText("-");
+        manifestAuthorLabel.setText("-");
+        manifestActionsLabel.setText("-");
+    }
+
+    private static void deleteQuietly(File file) {
+        if (file == null || !file.exists()) return;
+        File[] children = file.listFiles();
+        if (children != null) {
+            for (File c : children) deleteQuietly(c);
+        }
+        file.delete();
+    }
+
+    private static String rootMessage(Throwable t) {
+        Throwable cur = t;
+        while (cur.getCause() != null && cur.getCause() != cur) cur = cur.getCause();
+        return cur.getMessage() != null ? cur.getMessage() : cur.toString();
     }
 
     private void showError(String msg) {

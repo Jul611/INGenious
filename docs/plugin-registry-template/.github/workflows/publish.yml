@@ -1,0 +1,94 @@
+name: Publish Plugin
+
+# Runs only on push to main, i.e. only after a human has approved and
+# merged a submission PR. This is the only workflow with access to ADO_PAT.
+
+on:
+  push:
+    branches: [main]
+    paths: ['plugins/**']
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Determine changed plugin directory
+        id: changed
+        run: |
+          CHANGED=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" -- 'plugins/*' | awk -F/ '{print $2}' | sort -u)
+          [ "$(echo "$CHANGED" | grep -c . || true)" -eq 1 ] || { echo "::error::Expected exactly one changed plugin dir"; exit 1; }
+          echo "name=$CHANGED" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with: { java-version: '17', distribution: 'temurin', cache: maven }
+
+      - name: Seed local repo with ingenious-api
+        run: mvn -B install:install-file -Dfile=ci/vendor/ingenious-api-3.0.jar -DgroupId=com.ing -DartifactId=ingenious-api -Dversion=3.0 -Dpackaging=jar
+
+      - name: Read submission metadata
+        id: meta
+        run: |
+          NAME="${{ steps.changed.outputs.name }}"
+          echo "artifactId=$(mvn -q -f plugins/$NAME/pom.xml help:evaluate -Dexpression=project.artifactId -DforceStdout)" >> "$GITHUB_OUTPUT"
+          echo "version=$(mvn -q -f plugins/$NAME/pom.xml help:evaluate -Dexpression=project.version -DforceStdout)" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Maven credentials for ADO feed
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<'EOF'
+          <settings>
+            <servers>
+              <server>
+                <id>${{ vars.ADO_FEED_SERVER_ID }}</id>
+                <username>ado</username>
+                <password>${env.ADO_PAT}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+        # Single-quoted heredoc ('EOF') is deliberate: bash leaves ${env.ADO_PAT}
+        # untouched, so that literal text lands in settings.xml. Maven resolves
+        # it from the process environment at `mvn deploy` time below — the
+        # actual secret value never appears inside this file.
+
+      - name: Build and deploy to Azure Artifacts
+        env:
+          ADO_PAT: ${{ secrets.ADO_PAT }}
+        run: |
+          NAME="${{ steps.changed.outputs.name }}"
+          FEED_URL="https://pkgs.dev.azure.com/${{ vars.ADO_ORGANIZATION }}/${{ vars.ADO_PROJECT }}/_packaging/${{ vars.ADO_FEED_NAME }}/maven/v1"
+          mvn -B -f "plugins/$NAME/pom.xml" clean deploy -DskipTests \
+            -DaltDeploymentRepository=${{ vars.ADO_FEED_SERVER_ID }}::default::"$FEED_URL"
+
+      - name: Patch registry.json and open auto-merge PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NAME="${{ steps.changed.outputs.name }}"
+          python3 - "$NAME" "${{ steps.meta.outputs.artifactId }}" "${{ steps.meta.outputs.version }}" "${{ vars.PLUGIN_MAVEN_GROUP_ID }}" <<'PYEOF'
+          import json, sys, datetime
+          name, artifact_id, version, group_id = sys.argv[1:5]
+          entry = json.load(open(f"plugins/{name}/.submission.json"))
+          entry.update(name=name, version=version, mavenGroupId=group_id, mavenArtifactId=artifact_id)
+          entry.setdefault("dateAdded", datetime.date.today().isoformat())
+          registry = json.load(open("registry.json"))
+          registry["plugins"] = [p for p in registry.get("plugins", []) if p.get("name") != name] + [entry]
+          json.dump(registry, open("registry.json", "w"), indent=2)
+          PYEOF
+
+          BRANCH="bot/registry-update-$NAME-${{ steps.meta.outputs.version }}"
+          git config user.name "ingenious-bot"
+          git config user.email "actions@github.com"
+          git checkout -b "$BRANCH"
+          git add registry.json
+          git commit -m "Register $NAME v${{ steps.meta.outputs.version }}"
+          git push origin "$BRANCH"
+          PR_URL=$(gh pr create --base main --head "$BRANCH" --title "Register $NAME v${{ steps.meta.outputs.version }}" --body "Automated registry update after publishing to Azure Artifacts.")
+          gh pr merge "$PR_URL" --auto --squash

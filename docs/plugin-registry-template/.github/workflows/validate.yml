@@ -1,0 +1,66 @@
+name: Validate Plugin Submission
+
+# Runs on every PR that touches plugins/**. Uses the default, read-only
+# GITHUB_TOKEN and no repository secrets — this must stay safe to run
+# against a stranger's fork, since it builds their submitted source before
+# any human has reviewed it.
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['plugins/**']
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Determine changed plugin directory
+        id: changed
+        run: |
+          CHANGED=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" -- 'plugins/*' | awk -F/ '{print $2}' | sort -u)
+          COUNT=$(echo "$CHANGED" | grep -c . || true)
+          if [ "$COUNT" -ne 1 ]; then
+            echo "::error::Exactly one plugins/<name>/ directory must change per PR (found: $CHANGED)"
+            exit 1
+          fi
+          echo "name=$CHANGED" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with: { java-version: '17', distribution: 'temurin', cache: maven }
+
+      - name: Seed local repo with ingenious-api
+        run: mvn -B install:install-file -Dfile=ci/vendor/ingenious-api-3.0.jar -DgroupId=com.ing -DartifactId=ingenious-api -Dversion=3.0 -Dpackaging=jar
+
+      - name: Required files present
+        run: |
+          NAME="${{ steps.changed.outputs.name }}"
+          test -f "plugins/$NAME/pom.xml" || { echo "::error::Missing pom.xml"; exit 1; }
+          test -f "plugins/$NAME/README.md" || { echo "::error::Missing README.md"; exit 1; }
+          test -f "plugins/$NAME/.submission.json" || { echo "::error::Missing .submission.json"; exit 1; }
+
+      - name: README has at least 50 words
+        run: |
+          NAME="${{ steps.changed.outputs.name }}"
+          WORDS=$(wc -w < "plugins/$NAME/README.md")
+          [ "$WORDS" -ge 50 ] || { echo "::error::README.md has only $WORDS words (minimum 50)"; exit 1; }
+
+      - name: pom.xml groupId matches required namespace
+        run: |
+          NAME="${{ steps.changed.outputs.name }}"
+          GROUP_ID=$(mvn -q -f "plugins/$NAME/pom.xml" help:evaluate -Dexpression=project.groupId -DforceStdout)
+          [ "$GROUP_ID" = "${{ vars.PLUGIN_MAVEN_GROUP_ID }}" ] || { echo "::error::groupId '$GROUP_ID' must be '${{ vars.PLUGIN_MAVEN_GROUP_ID }}'"; exit 1; }
+
+      - name: Build plugin from source
+        run: mvn -B -f "plugins/${{ steps.changed.outputs.name }}/pom.xml" clean package
+
+      - name: Manifest has pluginEntryClasses
+        run: |
+          NAME="${{ steps.changed.outputs.name }}"
+          JAR=$(find "plugins/$NAME/target" -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' | head -1)
+          unzip -p "$JAR" META-INF/MANIFEST.MF | tr -d '\r' | grep -q '^pluginEntryClasses' || { echo "::error::$JAR missing pluginEntryClasses"; exit 1; }

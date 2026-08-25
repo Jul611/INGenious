@@ -14,8 +14,17 @@ public class PluginRegistryEntry {
     private String version;
     private String minEngineVersion;
     private String maxEngineVersion;
+
+    /** @deprecated superseded by mavenGroupId/mavenArtifactId — kept for older registry entries. */
+    @Deprecated
     private String downloadUrl;
+
+    /** @deprecated dependencies are now resolved transitively from the Maven feed. */
+    @Deprecated
     private List<String> libUrls;
+
+    private String mavenGroupId;
+    private String mavenArtifactId;
     private List<String> objectTypes;
     private int actionCount;
     private List<String> actions;
@@ -240,6 +249,22 @@ public class PluginRegistryEntry {
 
     public void setEntryClasses(String entryClasses) {
         this.entryClasses = entryClasses;
+    }
+
+    public String getMavenGroupId() {
+        return mavenGroupId;
+    }
+
+    public void setMavenGroupId(String mavenGroupId) {
+        this.mavenGroupId = mavenGroupId;
+    }
+
+    public String getMavenArtifactId() {
+        return mavenArtifactId;
+    }
+
+    public void setMavenArtifactId(String mavenArtifactId) {
+        this.mavenArtifactId = mavenArtifactId;
     }
 
     @Override

@@ -35,7 +35,15 @@ public class AppSettings {
         AI_GITHUB_TOKEN("githubModelsToken", ""),
         AI_GITHUB_LOGIN("githubModelsLogin", ""),
         AI_SELECTED_MODEL("githubModelsModel", "openai/gpt-4o-mini"),
-        AI_GITHUB_CLIENT_ID("githubOAuthClientId", "");
+        AI_GITHUB_CLIENT_ID("githubOAuthClientId", ""),
+        PLUGIN_REGISTRY_REPO("pluginRegistryRepo", ""),
+        PLUGIN_REGISTRY_BRANCH("pluginRegistryBranch", "main"),
+        PLUGIN_REGISTRY_PATH("pluginRegistryPath", "registry.json"),
+        PLUGIN_MAVEN_GROUP_ID("pluginMavenGroupId", "com.ing.plugins"),
+        ADO_ORGANIZATION("adoOrganization", ""),
+        ADO_PROJECT("adoProject", ""),
+        ADO_FEED_NAME("adoFeedName", ""),
+        ADO_FEED_SERVER_ID("adoFeedServerId", "ado-plugin-feed");
 
         private final String key;
         private final String val;

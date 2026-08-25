@@ -20,6 +20,8 @@ public class PluginManager extends JPanel {
     private final PluginManagerPublishUI publishUI;
     private final JLabel statusLabel;
     private final JButton installFromFileButton;
+    private final JButton registrySettingsButton;
+    private final PluginRegistryConfig registryConfig = new PluginRegistryConfig();
 
     /**
      * Creates the Plugin Manager tab.
@@ -59,7 +61,19 @@ public class PluginManager extends JPanel {
         installFromFileButton = new JButton("Import from File...");
         installFromFileButton.setToolTipText("Install a plugin from a local JAR file");
         installFromFileButton.addActionListener(e -> importFromFile());
-        statusPanel.add(installFromFileButton, BorderLayout.EAST);
+
+        registrySettingsButton = new JButton("Registry Settings...");
+        registrySettingsButton.setToolTipText(
+            "Configure the registry repo and Azure Artifacts feed this Plugin Manager talks to"
+        );
+        registrySettingsButton.addActionListener(
+            e -> PluginRegistrySettingsDialog.show(PluginManager.this, registryConfig)
+        );
+
+        JPanel eastButtons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 4, 0));
+        eastButtons.add(registrySettingsButton);
+        eastButtons.add(installFromFileButton);
+        statusPanel.add(eastButtons, BorderLayout.EAST);
 
         add(statusPanel, BorderLayout.SOUTH);
     }
