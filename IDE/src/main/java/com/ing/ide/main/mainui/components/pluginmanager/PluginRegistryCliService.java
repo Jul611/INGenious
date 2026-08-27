@@ -38,6 +38,14 @@ public class PluginRegistryCliService {
      * since git normally chains multiple helper entries rather than
      * replacing them (same two-step pattern `gh auth setup-git` itself
      * writes into ~/.gitconfig, just not persisted here).
+     * <p>
+     * Applied to every network git operation in the submission flow
+     * (clone, push, and gh pr create's own internal git use) so the whole
+     * flow depends on exactly one already-verified credential — gh's own,
+     * confirmed via {@code gh auth status} before anything else runs —
+     * instead of also depending on git's separate credential helper (e.g.
+     * Git Credential Manager) being configured and caching correctly on
+     * the user's machine, which isn't something this app can guarantee.
      */
     private static final Map<String, String> GH_OWN_GIT_CREDENTIAL_ENV = Map.of(
         "GIT_CONFIG_COUNT",
@@ -275,34 +283,6 @@ public class PluginRegistryCliService {
         return result.output.trim();
     }
 
-    /**
-     * Best-effort check for whether gh is already registered as git's
-     * credential helper for github.com. If not, this only surfaces a
-     * suggestion to run 'gh auth setup-git' — it deliberately never runs
-     * that command itself, since it would mutate the user's global git
-     * config (affecting every git operation on their machine, not just
-     * this app), and that's not this app's call to make on their behalf.
-     */
-    private void suggestGhGitCredentialHelperIfMissing(Consumer<String> progress) {
-        try {
-            ProcResult result = run(
-                List.of("git", "config", "--get", "credential.https://github.com.helper"),
-                null,
-                TOOL_CHECK_TIMEOUT_MS
-            );
-            if (result.exitCode == 0 && result.output.contains("gh auth git-credential")) {
-                return;
-            }
-        } catch (IOException ignored) {
-            // Fall through to the suggestion below either way.
-        }
-        progress.accept(
-            "Note: if GitHub asks you to sign in twice during this, that's git and gh using " +
-            "separate credential stores. Run 'gh auth setup-git' yourself if you'd like them " +
-            "to share one sign-in — this app won't change that setting for you."
-        );
-    }
-
     // ─── Fork-or-branch resolution ───────────────────────────────────
 
     /**
@@ -435,7 +415,6 @@ public class PluginRegistryCliService {
         String repo = parts[1];
         String branch = config.getRegistryBranch();
 
-        suggestGhGitCredentialHelperIfMissing(progress);
         WorkRepo work = resolveWorkRepo(owner, repo, progress);
 
         File cloneDir;
@@ -490,7 +469,8 @@ public class PluginRegistryCliService {
             runOrThrow(
                 List.of("git", "push", "origin", "HEAD:" + branchName),
                 cloneDir,
-                "Failed to push branch"
+                "Failed to push branch",
+                GH_OWN_GIT_CREDENTIAL_ENV
             );
 
             progress.accept("Opening pull request...");
@@ -566,7 +546,8 @@ public class PluginRegistryCliService {
                             targetDir.getAbsolutePath()
                         ),
                         null,
-                        CLONE_TIMEOUT_MS
+                        CLONE_TIMEOUT_MS,
+                        GH_OWN_GIT_CREDENTIAL_ENV
                     );
             } catch (IOException e) {
                 throw new CliException(
@@ -827,8 +808,18 @@ public class PluginRegistryCliService {
 
     private void runOrThrow(List<String> command, File workingDir, String failureMessage)
         throws CliException {
+        runOrThrow(command, workingDir, failureMessage, Map.of());
+    }
+
+    private void runOrThrow(
+        List<String> command,
+        File workingDir,
+        String failureMessage,
+        Map<String, String> extraEnv
+    )
+        throws CliException {
         try {
-            ProcResult result = run(command, workingDir, DEFAULT_TIMEOUT_MS);
+            ProcResult result = run(command, workingDir, DEFAULT_TIMEOUT_MS, extraEnv);
             if (result.exitCode != 0) {
                 throw new CliException(failureMessage, result.exitCode, result.output);
             }
