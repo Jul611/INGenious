@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -28,6 +29,28 @@ public class PluginRegistryCliService {
     private static final long DEFAULT_TIMEOUT_MS = 30_000;
     private static final long CLONE_TIMEOUT_MS = 60_000;
     private static final long MVN_TIMEOUT_MS = 300_000;
+
+    /**
+     * Hands gh's own git credential helper to a single process via git's
+     * GIT_CONFIG_COUNT env-var config override — scoped to just that one
+     * invocation, never written to any config file. The empty VALUE_0
+     * resets any credential.helper already configured for this URL first,
+     * since git normally chains multiple helper entries rather than
+     * replacing them (same two-step pattern `gh auth setup-git` itself
+     * writes into ~/.gitconfig, just not persisted here).
+     */
+    private static final Map<String, String> GH_OWN_GIT_CREDENTIAL_ENV = Map.of(
+        "GIT_CONFIG_COUNT",
+        "2",
+        "GIT_CONFIG_KEY_0",
+        "credential.https://github.com.helper",
+        "GIT_CONFIG_VALUE_0",
+        "",
+        "GIT_CONFIG_KEY_1",
+        "credential.https://github.com.helper",
+        "GIT_CONFIG_VALUE_1",
+        "!gh auth git-credential"
+    );
 
     // ─── Result / status types ──────────────────────────────────────
 
@@ -252,6 +275,34 @@ public class PluginRegistryCliService {
         return result.output.trim();
     }
 
+    /**
+     * Best-effort check for whether gh is already registered as git's
+     * credential helper for github.com. If not, this only surfaces a
+     * suggestion to run 'gh auth setup-git' — it deliberately never runs
+     * that command itself, since it would mutate the user's global git
+     * config (affecting every git operation on their machine, not just
+     * this app), and that's not this app's call to make on their behalf.
+     */
+    private void suggestGhGitCredentialHelperIfMissing(Consumer<String> progress) {
+        try {
+            ProcResult result = run(
+                List.of("git", "config", "--get", "credential.https://github.com.helper"),
+                null,
+                TOOL_CHECK_TIMEOUT_MS
+            );
+            if (result.exitCode == 0 && result.output.contains("gh auth git-credential")) {
+                return;
+            }
+        } catch (IOException ignored) {
+            // Fall through to the suggestion below either way.
+        }
+        progress.accept(
+            "Note: if GitHub asks you to sign in twice during this, that's git and gh using " +
+            "separate credential stores. Run 'gh auth setup-git' yourself if you'd like them " +
+            "to share one sign-in — this app won't change that setting for you."
+        );
+    }
+
     // ─── Fork-or-branch resolution ───────────────────────────────────
 
     /**
@@ -384,6 +435,7 @@ public class PluginRegistryCliService {
         String repo = parts[1];
         String branch = config.getRegistryBranch();
 
+        suggestGhGitCredentialHelperIfMissing(progress);
         WorkRepo work = resolveWorkRepo(owner, repo, progress);
 
         File cloneDir;
@@ -456,7 +508,12 @@ public class PluginRegistryCliService {
             prCmd.add(prTitle);
             prCmd.add("--body");
             prCmd.add(prBody);
-            ProcResult prResult = run(prCmd, cloneDir, DEFAULT_TIMEOUT_MS);
+            ProcResult prResult = run(
+                prCmd,
+                cloneDir,
+                DEFAULT_TIMEOUT_MS,
+                GH_OWN_GIT_CREDENTIAL_ENV
+            );
             if (prResult.exitCode != 0) {
                 throw new CliException(
                     "Failed to open pull request",
@@ -791,9 +848,29 @@ public class PluginRegistryCliService {
      */
     private ProcResult run(List<String> command, File workingDir, long timeoutMs)
         throws IOException {
+        return run(command, workingDir, timeoutMs, Map.of());
+    }
+
+    /**
+     * Same as {@link #run(List, File, long)}, but with extra environment
+     * variables set for just this one process — never touching any actual
+     * git config file. Used to hand gh's own git credential helper to a
+     * single {@code gh pr create} invocation (see {@code GIT_CONFIG_COUNT}
+     * env-based config override, supported by modern git) instead of
+     * globally registering it via {@code gh auth setup-git}, which would
+     * change the user's git behavior everywhere, not just for this app.
+     */
+    private ProcResult run(
+        List<String> command,
+        File workingDir,
+        long timeoutMs,
+        Map<String, String> extraEnv
+    )
+        throws IOException {
         List<String> full = withPlatformPrefix(command);
         ProcessBuilder pb = new ProcessBuilder(full);
         if (workingDir != null) pb.directory(workingDir);
+        if (!extraEnv.isEmpty()) pb.environment().putAll(extraEnv);
         pb.redirectErrorStream(true);
         Process process = pb.start();
 
