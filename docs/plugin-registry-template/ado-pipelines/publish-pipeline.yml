@@ -1,0 +1,132 @@
+# Publish Plugin (Azure Pipelines)
+#
+# Runs on push to the registry branch, i.e. only after a human has
+# approved and merged a submission PR. Ported from the old GitHub Actions
+# publish.yml, now using the MavenAuthenticate@0 task + $(System.AccessToken)
+# to reach the Azure Artifacts feed instead of a manually-managed ADO_PAT
+# secret -- this pipeline already runs natively inside the same ADO
+# org/project as the feed, so there's no separate credential to own or
+# rotate for that part.
+#
+# The one credential this pipeline still needs is a GitHub credential for
+# the last step, to push the bot's registry-patch branch and open+auto-merge
+# its PR back on GitHub -- unlike a GitHub Actions job, which gets a free
+# ambient github.token, an Azure Pipeline has no automatic GitHub credential.
+# A standing GitHub PAT isn't allowed here, so this uses the
+# create-github-app-token@1 task instead: it exchanges the org's already-
+# installed GitHub App connection for a short-lived (~1hr) installation
+# token, fetched just before it's needed rather than at pipeline start.
+# https://github.com/tspascoal/azure-pipelines-create-github-app-token-task
+#
+# Required pipeline variables to set up before running (Pipelines -> Edit
+# -> Variables, or a variable group):
+#   - GITHUB_REPO_SLUG     e.g. "your-org/your-registry-repo" -- this pipeline
+#                          has no equivalent of GitHub Actions' github.repository.
+#   - ADO_FEED_URL         the full Maven feed URL, e.g.
+#                          https://pkgs.dev.azure.com/<org>/<project>/_packaging/<feed>/maven/v1
+# Plus one thing set in the YAML itself, not a variable: the
+# create-github-app-token@1 step's `githubAppConnection` input below needs
+# the actual name of the org's GitHub App service connection -- ask
+# whoever set that up if it's not obvious from Project Settings -> Service
+# connections.
+
+pr: none
+
+trigger:
+  branches:
+    include:
+      - marketplace-registry
+  paths:
+    include:
+      - plugins/*
+
+pool:
+  vmImage: "ubuntu-latest" # TODO: replace with your org's pool name if Microsoft-hosted agents aren't allowed
+
+variables:
+  PLUGIN_MAVEN_GROUP_ID: "com.ing.plugins"
+  ADO_FEED_SERVER_ID: "ado-plugin-feed" # must match Registry Settings' "Maven server id" value
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+
+  - task: UseJavaVersion@1
+    inputs:
+      versionSpec: "17"
+      jdkArchitectureOption: "x64"
+
+  - script: |
+      set -e
+      CHANGED=$(git diff --name-only HEAD^ HEAD -- 'plugins/*' | awk -F/ '{print $2}' | sort -u)
+      COUNT=$(echo "$CHANGED" | grep -c . || true)
+      if [ "$COUNT" -ne 1 ]; then
+        echo "##vso[task.logissue type=error]Expected exactly one changed plugin dir (found: $CHANGED)"
+        exit 1
+      fi
+      echo "##vso[task.setvariable variable=pluginName]$CHANGED"
+    displayName: "Determine changed plugin directory"
+
+  - script: |
+      mvn -B install:install-file -Dfile=ci/vendor/ingenious-api-3.0.jar -DgroupId=com.ing -DartifactId=ingenious-api -Dversion=3.0 -Dpackaging=jar
+    displayName: "Seed local repo with ingenious-api"
+
+  - script: |
+      set -e
+      NAME="$(pluginName)"
+      echo "##vso[task.setvariable variable=artifactId]$(mvn -q -f plugins/$NAME/pom.xml help:evaluate -Dexpression=project.artifactId -DforceStdout)"
+      echo "##vso[task.setvariable variable=pluginVersion]$(mvn -q -f plugins/$NAME/pom.xml help:evaluate -Dexpression=project.version -DforceStdout)"
+    displayName: "Read submission metadata"
+
+  - task: MavenAuthenticate@0
+    displayName: "Authenticate Maven to Azure Artifacts feed"
+    # No serviceConnections input needed for a feed in this same ADO org/project --
+    # this task wires the right <server> entry into settings.xml automatically
+    # via $(System.AccessToken). The build service account (not a PAT) needs
+    # Contributor access on the feed for this to succeed.
+
+  - script: |
+      set -e
+      NAME="$(pluginName)"
+      mvn -B -f "plugins/$NAME/pom.xml" clean deploy -DskipTests \
+        "-DaltDeploymentRepository=$(ADO_FEED_SERVER_ID)::default::$(ADO_FEED_URL)"
+    displayName: "Build and deploy to Azure Artifacts"
+
+  - task: create-github-app-token@1
+    name: githubAuth
+    inputs:
+      githubAppConnection: "TODO-your-github-app-service-connection-name"
+      owner: "" # TODO: the GitHub org/user that owns GITHUB_REPO_SLUG
+      repositories: "" # TODO: just the repo name (not owner/repo) to scope the token narrowly
+    displayName: "Get GitHub App installation token"
+
+  - script: |
+      set -e
+      NAME="$(pluginName)"
+      python3 - "$NAME" "$(artifactId)" "$(pluginVersion)" "$(PLUGIN_MAVEN_GROUP_ID)" <<'PYEOF'
+      import json, sys, datetime
+      name, artifact_id, version, group_id = sys.argv[1:5]
+      entry = json.load(open(f"plugins/{name}/.submission.json"))
+      entry.update(name=name, version=version, mavenGroupId=group_id, mavenArtifactId=artifact_id)
+      entry.setdefault("dateAdded", datetime.date.today().isoformat())
+      registry = json.load(open("registry.json"))
+      registry["plugins"] = [p for p in registry.get("plugins", []) if p.get("name") != name] + [entry]
+      json.dump(registry, open("registry.json", "w"), indent=2)
+      PYEOF
+
+      BRANCH="bot/registry-update-$NAME-$(pluginVersion)"
+      git config user.name "ingenious-bot"
+      git config user.email "azure-pipelines@dev.azure.com"
+      git checkout -b "$BRANCH"
+      git add registry.json
+      git commit -m "Register $NAME v$(pluginVersion)"
+      git remote set-url origin "https://x-access-token:$(githubAuth.installationToken)@github.com/$(GITHUB_REPO_SLUG).git"
+      git push origin "$BRANCH"
+
+      PR_URL=$(gh pr create --repo "$(GITHUB_REPO_SLUG)" --base marketplace-registry --head "$BRANCH" \
+        --title "Register $NAME v$(pluginVersion)" \
+        --body "Automated registry update after publishing to Azure Artifacts.")
+      gh pr merge "$PR_URL" --repo "$(GITHUB_REPO_SLUG)" --auto --squash
+    displayName: "Patch registry.json and open auto-merge PR"
+    env:
+      GH_TOKEN: $(githubAuth.installationToken)

@@ -467,7 +467,7 @@ public class PluginRegistryCliService {
 
             progress.accept("Pushing branch...");
             runOrThrow(
-                List.of("git", "push", "origin", "HEAD:" + branchName),
+                List.of("git", "push", "--force", "origin", "HEAD:" + branchName),
                 cloneDir,
                 "Failed to push branch",
                 GH_OWN_GIT_CREDENTIAL_ENV

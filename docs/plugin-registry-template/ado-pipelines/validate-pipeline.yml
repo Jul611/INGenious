@@ -1,0 +1,87 @@
+# Validate Plugin Submission (Azure Pipelines)
+#
+# Runs on every PR that touches plugins/** against the registry branch.
+# Ported from the old GitHub Actions validate.yml: GitHub-hosted Actions
+# runners are not available for this org, so this pipeline is triggered
+# instead via Azure Pipelines' native GitHub PR integration (requires the
+# GitHub App / service connection already set up for this repo) and
+# reports its result back onto the PR as a GitHub status check, the same
+# way the old `validate` check did.
+#
+# Uses no secrets and no ADO feed credentials -- safe to run against an
+# untrusted fork PR's source, same intent as the GitHub Actions version.
+
+trigger: none
+
+pr:
+  branches:
+    include:
+      - marketplace-registry
+  paths:
+    include:
+      - plugins/*
+
+pool:
+  vmImage: "ubuntu-latest" # TODO: replace with your org's pool name if Microsoft-hosted agents aren't allowed
+
+variables:
+  PLUGIN_MAVEN_GROUP_ID: "com.ing.plugins" # matches every plugin-examples/*/pom.xml groupId
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+
+  - task: UseJavaVersion@1
+    inputs:
+      versionSpec: "17"
+      jdkArchitectureOption: "x64"
+
+  - script: |
+      set -e
+      TARGET_BRANCH=$(echo "$(System.PullRequest.TargetBranch)" | sed 's#refs/heads/##')
+      git fetch origin "$TARGET_BRANCH"
+      CHANGED=$(git diff --name-only "origin/$TARGET_BRANCH...HEAD" -- 'plugins/*' | awk -F/ '{print $2}' | sort -u)
+      COUNT=$(echo "$CHANGED" | grep -c . || true)
+      if [ "$COUNT" -ne 1 ]; then
+        echo "##vso[task.logissue type=error]Exactly one plugins/<name>/ directory must change per PR (found: $CHANGED)"
+        exit 1
+      fi
+      echo "##vso[task.setvariable variable=pluginName]$CHANGED"
+    displayName: "Determine changed plugin directory"
+
+  - script: |
+      mvn -B install:install-file -Dfile=ci/vendor/ingenious-api-3.0.jar -DgroupId=com.ing -DartifactId=ingenious-api -Dversion=3.0 -Dpackaging=jar
+    displayName: "Seed local repo with ingenious-api"
+
+  - script: |
+      set -e
+      NAME="$(pluginName)"
+      test -f "plugins/$NAME/pom.xml" || { echo "##vso[task.logissue type=error]Missing pom.xml"; exit 1; }
+      test -f "plugins/$NAME/README.md" || { echo "##vso[task.logissue type=error]Missing README.md"; exit 1; }
+      test -f "plugins/$NAME/.submission.json" || { echo "##vso[task.logissue type=error]Missing .submission.json"; exit 1; }
+    displayName: "Required files present"
+
+  - script: |
+      set -e
+      NAME="$(pluginName)"
+      WORDS=$(wc -w < "plugins/$NAME/README.md")
+      [ "$WORDS" -ge 50 ] || { echo "##vso[task.logissue type=error]README.md has only $WORDS words (minimum 50)"; exit 1; }
+    displayName: "README has at least 50 words"
+
+  - script: |
+      set -e
+      NAME="$(pluginName)"
+      GROUP_ID=$(mvn -q -f "plugins/$NAME/pom.xml" help:evaluate -Dexpression=project.groupId -DforceStdout)
+      [ "$GROUP_ID" = "$(PLUGIN_MAVEN_GROUP_ID)" ] || { echo "##vso[task.logissue type=error]groupId '$GROUP_ID' must be '$(PLUGIN_MAVEN_GROUP_ID)'"; exit 1; }
+    displayName: "pom.xml groupId matches required namespace"
+
+  - script: |
+      mvn -B -f "plugins/$(pluginName)/pom.xml" clean package
+    displayName: "Build plugin from source"
+
+  - script: |
+      set -e
+      NAME="$(pluginName)"
+      JAR=$(find "plugins/$NAME/target" -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' | head -1)
+      unzip -p "$JAR" META-INF/MANIFEST.MF | tr -d '\r' | grep -q '^pluginEntryClasses' || { echo "##vso[task.logissue type=error]$JAR missing pluginEntryClasses"; exit 1; }
+    displayName: "Manifest has pluginEntryClasses"

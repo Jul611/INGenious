@@ -1,0 +1,110 @@
+# Plugin Contributor Pipeline Template (Azure Pipelines)
+#
+# Hand this file to plugin authors to drop into their OWN repo and their
+# OWN Azure DevOps project. It builds their plugin, runs the same sanity
+# checks the marketplace expects, and publishes the resulting jar into the
+# shared ADO Artifacts feed -- using the contributor's own pipeline and
+# their own scoped publish PAT, not marketplace-owned infrastructure.
+#
+# Publishing here is NOT the same as being listed in the marketplace.
+# A separate, marketplace-owned pipeline watches the feed for new versions
+# and runs its own validation and security checks before anything gets
+# added to registry.json -- that pipeline is not this one, and doesn't
+# run on the contributor's side at all.
+
+trigger:
+  branches:
+    include:
+      - main # TODO: change if you publish from a different branch, or switch to a tag trigger for versioned releases
+
+pr: none # this pipeline ends by publishing a real artifact -- don't run it on PRs into your own repo
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  PLUGIN_PATH: "." # TODO: path to this plugin's pom.xml, if not at repo root
+  PLUGIN_MAVEN_GROUP_ID: "com.ing.plugins" # required namespace -- confirm with the marketplace team if unsure
+  ADO_FEED_SERVER_ID: "ado-plugin-feed" # arbitrary label -- just needs to match the <server> id used below
+  ADO_FEED_URL: "https://pkgs.dev.azure.com/<org>/<project>/_packaging/<feed>/maven/v1" # TODO: fill in -- ask the marketplace team
+  # ADO_PUBLISH_PAT is NOT set here -- add it as a separate SECRET pipeline
+  # variable (Pipelines -> Edit -> Variables -> "Keep this value secret").
+  # The marketplace team issues this PAT; it should be scoped to Packaging
+  # (Read & Write) on the feed above and nothing else.
+
+steps:
+  - checkout: self
+
+  - task: UseJavaVersion@1
+    inputs:
+      versionSpec: "17"
+      jdkArchitectureOption: "x64"
+
+  - script: |
+      mvn -B install:install-file -Dfile=ci/vendor/ingenious-api-3.0.jar -DgroupId=com.ing -DartifactId=ingenious-api -Dversion=3.0 -Dpackaging=jar
+    displayName: "Seed local repo with ingenious-api"
+    # Get this jar from the marketplace team, or build it yourself from the
+    # INGenious source: mvn -q -f ingenious-api/pom.xml clean package -DskipTests
+    # then copy target/ingenious-api-3.0.jar to ci/vendor/ in this repo.
+    # It isn't published anywhere authenticated today, so it has to be
+    # vendored like this rather than resolved as a normal dependency.
+
+  - script: |
+      set -e
+      test -f "$(PLUGIN_PATH)/pom.xml" || { echo "##vso[task.logissue type=error]Missing pom.xml"; exit 1; }
+      test -f "$(PLUGIN_PATH)/README.md" || { echo "##vso[task.logissue type=error]Missing README.md"; exit 1; }
+      test -f "$(PLUGIN_PATH)/.submission.json" || { echo "##vso[task.logissue type=error]Missing .submission.json"; exit 1; }
+    displayName: "Required files present"
+
+  - script: |
+      set -e
+      WORDS=$(wc -w < "$(PLUGIN_PATH)/README.md")
+      [ "$WORDS" -ge 50 ] || { echo "##vso[task.logissue type=error]README.md has only $WORDS words (minimum 50)"; exit 1; }
+    displayName: "README has at least 50 words"
+
+  - script: |
+      set -e
+      GROUP_ID=$(mvn -q -f "$(PLUGIN_PATH)/pom.xml" help:evaluate -Dexpression=project.groupId -DforceStdout)
+      [ "$GROUP_ID" = "$(PLUGIN_MAVEN_GROUP_ID)" ] || { echo "##vso[task.logissue type=error]groupId '$GROUP_ID' must be '$(PLUGIN_MAVEN_GROUP_ID)'"; exit 1; }
+    displayName: "pom.xml groupId matches required namespace"
+
+  - script: |
+      mvn -B -f "$(PLUGIN_PATH)/pom.xml" clean package
+    displayName: "Build plugin from source"
+
+  - script: |
+      set -e
+      JAR=$(find "$(PLUGIN_PATH)/target" -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' | head -1)
+      unzip -p "$JAR" META-INF/MANIFEST.MF | tr -d '\r' | grep -q '^pluginEntryClasses' || { echo "##vso[task.logissue type=error]$JAR missing pluginEntryClasses"; exit 1; }
+    displayName: "Manifest has pluginEntryClasses"
+
+  - script: |
+      mkdir -p ~/.m2
+      cat > ~/.m2/settings.xml <<'EOF'
+      <settings>
+        <servers>
+          <server>
+            <id>$(ADO_FEED_SERVER_ID)</id>
+            <username>ado</username>
+            <password>${env.ADO_PUBLISH_PAT}</password>
+          </server>
+        </servers>
+      </settings>
+      EOF
+    displayName: "Configure Maven credentials for ADO feed"
+    # Single-quoted heredoc ('EOF') is deliberate: bash leaves
+    # ${env.ADO_PUBLISH_PAT} untouched, so that literal text lands in
+    # settings.xml. Maven resolves it from the process environment at
+    # `mvn deploy` time below -- the actual secret value never appears
+    # inside this file. ($(ADO_FEED_SERVER_ID) is a plain, non-secret
+    # variable, so ADO's own macro substitution fills that one in normally.)
+
+  - script: |
+      mvn -B -f "$(PLUGIN_PATH)/pom.xml" clean deploy -DskipTests \
+        "-DaltDeploymentRepository=$(ADO_FEED_SERVER_ID)::default::$(ADO_FEED_URL)"
+    displayName: "Publish to Azure Artifacts feed"
+    env:
+      ADO_PUBLISH_PAT: $(ADO_PUBLISH_PAT)
+      # Secret variables are deliberately NOT available via $(...) macro
+      # substitution in script text -- this explicit env: mapping is the
+      # correct, required way to expose one to the process environment.
