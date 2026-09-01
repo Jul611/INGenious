@@ -1,0 +1,62 @@
+# TEST PIPELINE -- throwaway diagnostic, not part of the real CI wiring.
+# Confirms create-github-app-token@1 (or GitHubAppToken@1) actually works
+# in this ADO project before it gets wired into the real publish/cleanup
+# pipelines. Delete this file and its ADO pipeline once it's answered the
+# question either way.
+#
+# Answers three things in one run:
+#   1. Does the token task itself resolve? (right task name)
+#   2. Does the githubAppConnection input resolve? (right connection name)
+#   3. Does the resulting token actually have READ and WRITE access to the
+#      target repo? (creates a throwaway branch ref, then deletes it --
+#      nothing is left behind in either the success or failure case)
+
+trigger: none
+pr: none
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  GITHUB_REPO_SLUG: "" # TODO: fill in via the ADO pipeline's own Variables UI -- e.g. "your-org/your-repo"
+
+steps:
+  - script: |
+      SLUG="$(GITHUB_REPO_SLUG)"
+      echo "##vso[task.setvariable variable=GITHUB_OWNER]${SLUG%%/*}"
+      echo "##vso[task.setvariable variable=GITHUB_REPO_NAME]${SLUG##*/}"
+    displayName: "Split GITHUB_REPO_SLUG into owner/repo"
+
+  - task: create-github-app-token@1 # TODO: swap to GitHubAppToken@1 if that's what's actually installed
+    name: githubAuth
+    inputs:
+      githubAppConnection: "TODO-your-github-app-service-connection-name"
+      owner: $(GITHUB_OWNER)
+      repositories: $(GITHUB_REPO_NAME)
+    displayName: "Step 1 - Get GitHub App installation token"
+
+  - script: |
+      echo "Token minted OK, expires at $(githubAuth.tokenExpiration)"
+    displayName: "Confirm token was generated"
+
+  - script: |
+      set -e
+      echo "Read access check:"
+      gh api "repos/$(GITHUB_REPO_SLUG)" --jq '.full_name, .permissions'
+    displayName: "Step 2 - Confirm read access"
+    env:
+      GH_TOKEN: $(githubAuth.installationToken)
+
+  - script: |
+      set -e
+      SHA=$(gh api "repos/$(GITHUB_REPO_SLUG)/git/refs/heads/marketplace-registry" --jq '.object.sha')
+      TEST_BRANCH="pipeline-token-test-$(Build.BuildId)"
+      echo "Creating throwaway branch $TEST_BRANCH..."
+      gh api --method POST "repos/$(GITHUB_REPO_SLUG)/git/refs" \
+        -f ref="refs/heads/$TEST_BRANCH" -f sha="$SHA"
+      echo "Write access confirmed. Deleting throwaway branch..."
+      gh api --method DELETE "repos/$(GITHUB_REPO_SLUG)/git/refs/heads/$TEST_BRANCH"
+      echo "Cleaned up -- nothing left behind either way."
+    displayName: "Step 3 - Confirm write access (create + delete a throwaway branch)"
+    env:
+      GH_TOKEN: $(githubAuth.installationToken)
