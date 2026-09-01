@@ -92,12 +92,18 @@ steps:
         "-DaltDeploymentRepository=$(ADO_FEED_SERVER_ID)::default::$(ADO_FEED_URL)"
     displayName: "Build and deploy to Azure Artifacts"
 
+  - script: |
+      SLUG="$(GITHUB_REPO_SLUG)"
+      echo "##vso[task.setvariable variable=GITHUB_OWNER]${SLUG%%/*}"
+      echo "##vso[task.setvariable variable=GITHUB_REPO_NAME]${SLUG##*/}"
+    displayName: "Split GITHUB_REPO_SLUG into owner/repo"
+
   - task: create-github-app-token@1
     name: githubAuth
     inputs:
       githubAppConnection: "TODO-your-github-app-service-connection-name"
-      owner: "" # TODO: the GitHub org/user that owns GITHUB_REPO_SLUG
-      repositories: "" # TODO: just the repo name (not owner/repo) to scope the token narrowly
+      owner: $(GITHUB_OWNER)
+      repositories: $(GITHUB_REPO_NAME)
     displayName: "Get GitHub App installation token"
 
   - script: |
