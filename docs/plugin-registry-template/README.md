@@ -72,11 +72,15 @@ your-plugin-registry-repo/
    request, target only that one branch (not "All branches" — the IDE's
    own `plugin/**` submission branches and the bot's `bot/registry-update-**`
    branches need to stay unprotected so those flows can push/force-push
-   freely). Hold off on requiring the `validate` pipeline's status check
-   until it's confirmed to run on every PR type you care about — it's
-   scoped to `paths: plugins/*`, so PRs that don't touch that path (like
-   the bot's own registry-patch PR) will never produce that check and
-   would get stuck waiting on it forever if it's marked required.
+   freely). Once you've set that up, check "Require status checks to pass
+   before merging" and add `validate` (or whatever name Azure Pipelines
+   reports it under on your PRs — check an actual PR's checks list to get
+   the exact name) as a required check. This is now safe to require
+   unconditionally: `validate-pipeline.yml` deliberately isn't path-filtered
+   to `plugins/**` anymore, specifically so it still runs (and passes
+   through cleanly) on PRs that don't touch that path — like the bot's own
+   registry-patch PR — instead of never firing and leaving a required check
+   stuck forever.
 6. In INGenious's Plugin Manager (the "Registry Settings..." button), point
    the 8 config values at this repo and your Azure Artifacts feed. For local
    installs, generate a personal ADO PAT scoped to **Packaging: Read** and
