@@ -1,6 +1,7 @@
 package com.ing.ide.main.mainui.components.pluginmanager;
 
 import com.ing.ide.main.ui.About;
+import com.ing.ide.main.utils.table.TableColor;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -9,24 +10,23 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableRowSorter;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  * Browse tab for the Plugin Manager marketplace.
- * Shows available plugins from the registry with Install buttons.
- * Includes pre-install conflict detection and version compatibility checks.
+ * Shows available plugins from the registry as an expandable card list, each
+ * with an Install button. Includes pre-install conflict detection and
+ * version compatibility checks.
  */
 public class PluginManagerBrowseUI extends JPanel {
     private static final Logger LOG = Logger.getLogger(PluginManagerBrowseUI.class.getName());
-    private static final int INSTALL_COL = 5;
 
     private final PluginManagerService service;
     private final Runnable onInstallCallback;
-    private JTable table;
-    private DefaultTableModel tableModel;
     private List<PluginRegistryEntry> plugins;
+    private final List<PluginCard> cards = new ArrayList<>();
+    private JPanel cardsContainer;
     private JLabel statusLabel;
     private JTextField searchField;
 
@@ -39,16 +39,36 @@ public class PluginManagerBrowseUI extends JPanel {
 
     private void initUI() {
         // Header
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        JPanel headerPanel = new JPanel(new BorderLayout(10, 0));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(12, 12, 10, 12));
 
-        JLabel titleLabel = new JLabel("Plugin Marketplace");
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+        JLabel titleLabel = new JLabel("Marketplace");
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 18f));
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
         searchField = new JTextField();
-        searchField.setToolTipText("Search plugins by name or author");
-        searchField.addActionListener(e -> filterTable());
+        searchField.putClientProperty("JTextField.placeholderText", "Search by name or author...");
+        searchField
+            .getDocument()
+            .addDocumentListener(
+                new DocumentListener() {
+
+                    @Override
+                    public void insertUpdate(DocumentEvent e) {
+                        filterCards();
+                    }
+
+                    @Override
+                    public void removeUpdate(DocumentEvent e) {
+                        filterCards();
+                    }
+
+                    @Override
+                    public void changedUpdate(DocumentEvent e) {
+                        filterCards();
+                    }
+                }
+            );
         headerPanel.add(searchField, BorderLayout.CENTER);
 
         JButton refreshButton = new JButton("Refresh");
@@ -57,119 +77,23 @@ public class PluginManagerBrowseUI extends JPanel {
 
         add(headerPanel, BorderLayout.NORTH);
 
-        // Table
-        tableModel =
-            new DefaultTableModel(
-                new String[] { "", "Plugin", "Author", "Version", "Actions", "Install" },
-                0
-            ) {
+        // Card list
+        cardsContainer = new JPanel();
+        cardsContainer.setLayout(new BoxLayout(cardsContainer, BoxLayout.Y_AXIS));
+        cardsContainer.setBackground(UIManager.getColor("Panel.background"));
+        cardsContainer.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false; // no inline editing; we handle clicks via mouse listener
-                }
-            };
-
-        table = new JTable(tableModel);
-        table.setRowHeight(32);
-        table.setShowGrid(false);
-        table.setIntercellSpacing(new Dimension(0, 0));
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.getTableHeader().setReorderingAllowed(false);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-
-        // Column widths
-        int[] widths = { 30, 220, 140, 70, 80, 100 };
-        for (int i = 0; i < widths.length; i++) {
-            table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
-            if (i == 0 || i == 5) {
-                table.getColumnModel().getColumn(i).setMaxWidth(widths[i]);
-            }
-        }
-
-        // Featured star renderer
-        table
-            .getColumnModel()
-            .getColumn(0)
-            .setCellRenderer(
-                new DefaultTableCellRenderer() {
-
-                    @Override
-                    public Component getTableCellRendererComponent(
-                        JTable t,
-                        Object v,
-                        boolean isSel,
-                        boolean hasFocus,
-                        int row,
-                        int col
-                    ) {
-                        JLabel l = new JLabel();
-                        if (Boolean.TRUE.equals(v)) l.setText("\u2605");
-                        l.setHorizontalAlignment(SwingConstants.CENTER);
-                        return l;
-                    }
-                }
-            );
-
-        // Action count - centered
-        table
-            .getColumnModel()
-            .getColumn(4)
-            .setCellRenderer(
-                new DefaultTableCellRenderer() {
-
-                    @Override
-                    public Component getTableCellRendererComponent(
-                        JTable t,
-                        Object v,
-                        boolean isSel,
-                        boolean hasFocus,
-                        int row,
-                        int col
-                    ) {
-                        JLabel l = (JLabel) super.getTableCellRendererComponent(
-                            t,
-                            v,
-                            isSel,
-                            hasFocus,
-                            row,
-                            col
-                        );
-                        l.setHorizontalAlignment(SwingConstants.CENTER);
-                        return l;
-                    }
-                }
-            );
-
-        // Install column - render as button-like
-        table.getColumnModel().getColumn(INSTALL_COL).setCellRenderer(new InstallRenderer());
-
-        // Mouse listener for Install column clicks
-        table.addMouseListener(
-            new MouseAdapter() {
-
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    int col = table.columnAtPoint(e.getPoint());
-                    int row = table.rowAtPoint(e.getPoint());
-                    if (col == INSTALL_COL && row >= 0) {
-                        int modelRow = table.convertRowIndexToModel(row);
-                        installPlugin(modelRow);
-                    }
-                }
-            }
-        );
-
-        // Sorter
-        table.setRowSorter(new TableRowSorter<>(tableModel));
-
-        JScrollPane scrollPane = new JScrollPane(table);
+        JScrollPane scrollPane = new JScrollPane(cardsContainer);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(UIManager.getColor("Panel.background"));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
 
         // Status bar
         statusLabel = new JLabel("Loading plugins...");
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 12, 8, 12));
+        Color disabledFg = UIManager.getColor("Label.disabledForeground");
+        if (disabledFg != null) statusLabel.setForeground(disabledFg);
         add(statusLabel, BorderLayout.SOUTH);
     }
 
@@ -185,19 +109,23 @@ public class PluginManagerBrowseUI extends JPanel {
 
             @Override
             protected void done() {
-                populateTable();
+                populateCards();
             }
         };
         worker.execute();
     }
 
-    private void populateTable() {
-        tableModel.setRowCount(0);
+    private void populateCards() {
+        cardsContainer.removeAll();
+        cards.clear();
+
         if (plugins == null || plugins.isEmpty()) {
             statusLabel.setText(
                 "No plugins found. If this is unexpected, run 'gh auth status' and check the " +
                 "registry repo in Registry Settings."
             );
+            cardsContainer.revalidate();
+            cardsContainer.repaint();
             return;
         }
 
@@ -211,39 +139,29 @@ public class PluginManagerBrowseUI extends JPanel {
         );
 
         for (PluginRegistryEntry plugin : plugins) {
-            tableModel.addRow(
-                new Object[] {
-                    plugin.isFeatured(),
-                    plugin.getDisplayName(),
-                    plugin.getAuthor(),
-                    plugin.getVersion(),
-                    String.valueOf(plugin.getActionCount()),
-                    "Install"
-                }
-            );
+            PluginCard card = new PluginCard(plugin);
+            cards.add(card);
+            cardsContainer.add(card);
         }
         statusLabel.setText(plugins.size() + " plugin(s) available");
+        cardsContainer.revalidate();
+        cardsContainer.repaint();
     }
 
-    private void filterTable() {
+    private void filterCards() {
         String query = searchField.getText().trim().toLowerCase();
-        @SuppressWarnings("unchecked")
-        TableRowSorter<DefaultTableModel> sorter = (TableRowSorter<DefaultTableModel>) table.getRowSorter();
-        if (query.isEmpty()) {
-            sorter.setRowFilter(null);
-        } else {
-            sorter.setRowFilter(
-                new RowFilter<Object, Object>() {
-
-                    @Override
-                    public boolean include(Entry<?, ?> entry) {
-                        String name = entry.getStringValue(1).toLowerCase();
-                        String author = entry.getStringValue(2).toLowerCase();
-                        return name.contains(query) || author.contains(query);
-                    }
-                }
-            );
+        for (PluginCard card : cards) {
+            boolean matches =
+                query.isEmpty() ||
+                card.plugin.getDisplayName().toLowerCase().contains(query) ||
+                (
+                    card.plugin.getAuthor() != null &&
+                    card.plugin.getAuthor().toLowerCase().contains(query)
+                );
+            card.setVisible(matches);
         }
+        cardsContainer.revalidate();
+        cardsContainer.repaint();
     }
 
     /**
@@ -339,10 +257,7 @@ public class PluginManagerBrowseUI extends JPanel {
         return conflicts;
     }
 
-    private void installPlugin(int modelRow) {
-        if (plugins == null || modelRow < 0 || modelRow >= plugins.size()) return;
-        PluginRegistryEntry plugin = plugins.get(modelRow);
-
+    private void installPlugin(PluginRegistryEntry plugin) {
         // --- Pre-install checks ---
 
         // 1. Version compatibility check
@@ -447,26 +362,230 @@ public class PluginManagerBrowseUI extends JPanel {
         return cur.getMessage() != null ? cur.getMessage() : cur.toString();
     }
 
-    // Renders the Install cell as a clickable button
-    static class InstallRenderer extends JButton implements javax.swing.table.TableCellRenderer {
+    /** One plugin's row in the list: a collapsed summary, expandable to show more detail + README. */
+    private class PluginCard extends JPanel {
+        private final PluginRegistryEntry plugin;
+        private final JLabel chevron;
+        private final JPanel detailPanel;
+        private final JTextArea readmeArea;
+        private boolean expanded = false;
+        private boolean readmeRequested = false;
 
-        public InstallRenderer() {
-            setOpaque(true);
-            setText("Install");
-            setBackground(new Color(0, 120, 215));
-            setForeground(Color.WHITE);
+        PluginCard(PluginRegistryEntry plugin) {
+            this.plugin = plugin;
+            setLayout(new BorderLayout());
+            setAlignmentX(Component.LEFT_ALIGNMENT);
+            setBackground(UIManager.getColor("Panel.background"));
+            Color border = UIManager.getColor("Component.borderColor");
+            setBorder(
+                BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(
+                        0,
+                        0,
+                        1,
+                        0,
+                        border != null ? border : Color.GRAY
+                    ),
+                    BorderFactory.createEmptyBorder(10, 12, 10, 12)
+                )
+            );
+
+            chevron = new JLabel("▸"); // ▸
+            Color disabledFg = UIManager.getColor("Label.disabledForeground");
+            if (disabledFg != null) chevron.setForeground(disabledFg);
+            chevron.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+
+            add(buildSummaryRow(), BorderLayout.NORTH);
+
+            detailPanel = buildDetailPanel();
+            readmeArea = new JTextArea();
+            readmeArea.setEditable(false);
+            readmeArea.setLineWrap(true);
+            readmeArea.setWrapStyleWord(true);
+            readmeArea.setOpaque(false);
+            readmeArea.setFont(readmeArea.getFont().deriveFont(12f));
+
+            detailPanel.setVisible(false);
+            add(detailPanel, BorderLayout.CENTER);
+
+            MouseAdapter toggle = new MouseAdapter() {
+
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    setExpanded(!expanded);
+                }
+            };
+            addMouseListener(toggle);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
 
+        // Stretch to the container's width but never grow taller than the
+        // content actually needs -- recomputed on every layout pass, since
+        // expanding/collapsing changes the preferred height.
         @Override
-        public Component getTableCellRendererComponent(
-            JTable t,
-            Object v,
-            boolean isSel,
-            boolean hasFocus,
-            int row,
-            int col
-        ) {
-            return this;
+        public Dimension getMaximumSize() {
+            return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+        }
+
+        private JPanel buildSummaryRow() {
+            JPanel row = new JPanel(new BorderLayout(10, 0));
+            row.setOpaque(false);
+
+            JPanel titleColumn = new JPanel();
+            titleColumn.setOpaque(false);
+            titleColumn.setLayout(new BoxLayout(titleColumn, BoxLayout.Y_AXIS));
+
+            JPanel titleLine = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            titleLine.setOpaque(false);
+            titleLine.add(chevron);
+            if (plugin.isFeatured()) {
+                JLabel star = new JLabel("★ ");
+                star.setForeground(TableColor.ING_ORANGE);
+                titleLine.add(star);
+            }
+            JLabel nameLabel = new JLabel(plugin.getDisplayName());
+            nameLabel.setFont(nameLabel.getFont().deriveFont(Font.BOLD, 13f));
+            titleLine.add(nameLabel);
+            titleColumn.add(titleLine);
+
+            String author = plugin.getAuthor() != null && !plugin.getAuthor().isEmpty()
+                ? plugin.getAuthor()
+                : "Unknown author";
+            int actionCount = plugin.getActionCount();
+            JLabel metaLabel = new JLabel(
+                author +
+                "  ·  v" +
+                plugin.getVersion() +
+                "  ·  " +
+                actionCount +
+                (actionCount == 1 ? " action" : " actions")
+            );
+            metaLabel.setFont(metaLabel.getFont().deriveFont(11f));
+            Color disabledFg = UIManager.getColor("Label.disabledForeground");
+            if (disabledFg != null) metaLabel.setForeground(disabledFg);
+            metaLabel.setBorder(BorderFactory.createEmptyBorder(2, 16, 0, 0));
+            titleColumn.add(metaLabel);
+
+            row.add(titleColumn, BorderLayout.CENTER);
+            row.add(buildInstallButton(), BorderLayout.EAST);
+            return row;
+        }
+
+        private JButton buildInstallButton() {
+            JButton installButton = new JButton("Install");
+            installButton.setBackground(TableColor.ING_PURPLE);
+            installButton.setForeground(Color.WHITE);
+            installButton.setFocusPainted(false);
+            installButton.setOpaque(true);
+            installButton.setBorderPainted(false);
+            installButton.addActionListener(e -> installPlugin(plugin));
+            return installButton;
+        }
+
+        private JPanel buildDetailPanel() {
+            JPanel panel = new JPanel();
+            panel.setOpaque(false);
+            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 16, 0, 0));
+
+            if (plugin.getDescription() != null && !plugin.getDescription().isEmpty()) {
+                JTextArea description = new JTextArea(plugin.getDescription());
+                description.setEditable(false);
+                description.setLineWrap(true);
+                description.setWrapStyleWord(true);
+                description.setOpaque(false);
+                description.setAlignmentX(Component.LEFT_ALIGNMENT);
+                panel.add(description);
+                panel.add(Box.createVerticalStrut(8));
+            }
+
+            StringBuilder meta = new StringBuilder();
+            if (plugin.getLicense() != null && !plugin.getLicense().isEmpty()) {
+                meta.append("License: ").append(plugin.getLicense()).append("   ");
+            }
+            if (plugin.getMinEngineVersion() != null && !plugin.getMinEngineVersion().isEmpty()) {
+                meta.append("Min engine: ").append(plugin.getMinEngineVersion()).append("   ");
+            }
+            if (plugin.getMaxEngineVersion() != null && !plugin.getMaxEngineVersion().isEmpty()) {
+                meta.append("Max engine: ").append(plugin.getMaxEngineVersion());
+            }
+            if (meta.length() > 0) {
+                JLabel metaDetail = new JLabel(meta.toString().trim());
+                metaDetail.setFont(metaDetail.getFont().deriveFont(11f));
+                metaDetail.setAlignmentX(Component.LEFT_ALIGNMENT);
+                Color disabledFg = UIManager.getColor("Label.disabledForeground");
+                if (disabledFg != null) metaDetail.setForeground(disabledFg);
+                panel.add(metaDetail);
+                panel.add(Box.createVerticalStrut(8));
+            }
+
+            if (plugin.getActions() != null && !plugin.getActions().isEmpty()) {
+                JLabel actionsHeader = new JLabel("Actions:");
+                actionsHeader.setFont(actionsHeader.getFont().deriveFont(Font.BOLD, 11f));
+                actionsHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
+                panel.add(actionsHeader);
+                JLabel actionsList = new JLabel(
+                    "<html>" + String.join(", ", plugin.getActions()) + "</html>"
+                );
+                actionsList.setFont(actionsList.getFont().deriveFont(11f));
+                actionsList.setAlignmentX(Component.LEFT_ALIGNMENT);
+                panel.add(actionsList);
+                panel.add(Box.createVerticalStrut(8));
+            }
+
+            JLabel readmeHeader = new JLabel("README:");
+            readmeHeader.setFont(readmeHeader.getFont().deriveFont(Font.BOLD, 11f));
+            readmeHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panel.add(readmeHeader);
+
+            return panel;
+        }
+
+        private void setExpanded(boolean expand) {
+            expanded = expand;
+            chevron.setText(expanded ? "▾" : "▸"); // ▾ : ▸
+            detailPanel.setVisible(expanded);
+            if (expanded && !readmeRequested) {
+                readmeRequested = true;
+                loadReadmeAsync();
+            }
+            revalidate();
+            repaint();
+            cardsContainer.revalidate();
+            cardsContainer.repaint();
+        }
+
+        private void loadReadmeAsync() {
+            readmeArea.setText("Loading README...");
+            detailPanel.add(readmeArea);
+            SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+
+                @Override
+                protected String doInBackground() {
+                    return service.fetchReadme(plugin.getName());
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        String readme = get();
+                        readmeArea.setText(
+                            readme != null && !readme.isEmpty()
+                                ? readme
+                                : "No README available for this plugin."
+                        );
+                    } catch (Exception e) {
+                        readmeArea.setText("Couldn't load README: " + rootMessage(e));
+                    }
+                    detailPanel.revalidate();
+                    detailPanel.repaint();
+                    revalidate();
+                    repaint();
+                    cardsContainer.revalidate();
+                    cardsContainer.repaint();
+                }
+            };
+            worker.execute();
         }
     }
 }

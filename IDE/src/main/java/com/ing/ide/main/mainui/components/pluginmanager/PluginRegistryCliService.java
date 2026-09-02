@@ -636,6 +636,51 @@ public class PluginRegistryCliService {
         return result.output;
     }
 
+    /**
+     * Reads {@code plugins/<pluginName>/README.md} from the registry repo, the
+     * same way {@link #fetchRegistryJsonRaw} reads registry.json. Returns
+     * {@code null} (rather than throwing) when the file simply doesn't exist --
+     * a missing README is an expected, non-error state for a plugin entry,
+     * not something to interrupt the user over.
+     */
+    public String fetchPluginReadmeRaw(String pluginName, Consumer<String> progress)
+        throws IOException {
+        PluginRegistryConfig config = new PluginRegistryConfig();
+        String registryRepo = config.getRegistryRepo();
+        if (registryRepo == null) {
+            throw new CliException(
+                "No plugin registry repo configured. Set one in Registry Settings.",
+                -1,
+                ""
+            );
+        }
+        progress.accept("Loading README for " + pluginName + "...");
+        List<String> cmd = List.of(
+            "gh",
+            "api",
+            "repos/" +
+            registryRepo +
+            "/contents/plugins/" +
+            pluginName +
+            "/README.md?ref=" +
+            config.getRegistryBranch(),
+            "-H",
+            "Accept: application/vnd.github.raw"
+        );
+        ProcResult result = run(cmd, null, DEFAULT_TIMEOUT_MS);
+        if (result.exitCode != 0) {
+            if (result.output != null && result.output.contains("404")) {
+                return null;
+            }
+            throw new CliException(
+                "Could not read the README for " + pluginName + ".",
+                result.exitCode,
+                result.output
+            );
+        }
+        return result.output;
+    }
+
     // ─── Artifact resolution (install) ───────────────────────────────
 
     public File resolvePluginArtifact(

@@ -109,9 +109,9 @@ public class FXToolBar extends JFXPanel {
     }
 
     private Button createPluginManagerButton() {
-        Button btn = new Button("Plugins");
+        Button btn = new Button("Marketplace");
         btn.getStyleClass().add("workbench-btn");
-        btn.setTooltip(new Tooltip("Open Plugin Manager - Browse and install plugins"));
+        btn.setTooltip(new Tooltip("Open the Marketplace - Browse and install plugins"));
 
         org.kordamp.ikonli.javafx.FontIcon icon = INGIcons.fx(
             "PluginManager",

@@ -87,6 +87,25 @@ public class PluginManagerService {
         return result;
     }
 
+    /**
+     * Loads a plugin's README from the registry repo, or {@code null} if it
+     * doesn't have one. Best-effort -- returns null on failure too, since this
+     * is for optional detail display, not something worth interrupting the
+     * user over.
+     */
+    public String fetchReadme(String pluginName) {
+        try {
+            return cliService.fetchPluginReadmeRaw(pluginName, s -> {});
+        } catch (Exception e) {
+            LOG.log(
+                Level.FINE,
+                "README fetch failed for {0}: {1}",
+                new Object[] { pluginName, e.getMessage() }
+            );
+            return null;
+        }
+    }
+
     private List<PluginRegistryEntry> tryFetchRemote() {
         try {
             String contentJson = cliService.fetchRegistryJsonRaw(s -> {});
