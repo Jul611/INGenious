@@ -178,6 +178,7 @@ public class PluginManagerPublishUI extends JPanel {
 
         versionField = new JTextField(10);
         versionField.setEditable(false);
+        versionField.setEnabled(false);
         versionField.setToolTipText(
             "Read from this plugin's pom.xml -- edit the version there and re-select " +
             "the project to rebuild, rather than typing a version here. What actually " +
@@ -297,7 +298,7 @@ public class PluginManagerPublishUI extends JPanel {
     }
 
     private void browseSourceDir(ActionEvent e) {
-        JFileChooser fc = new JFileChooser();
+        JFileChooser fc = new JFileChooser(new File(System.getProperty("user.dir")));
         fc.setDialogTitle("Select Plugin Source Project");
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         int result = fc.showOpenDialog(this);
@@ -319,7 +320,10 @@ public class PluginManagerPublishUI extends JPanel {
     }
 
     private void browseReadme(ActionEvent e) {
-        JFileChooser fc = new JFileChooser();
+        File startIn = selectedSourceDir != null
+            ? selectedSourceDir
+            : new File(System.getProperty("user.dir"));
+        JFileChooser fc = new JFileChooser(startIn);
         fc.setDialogTitle("Select README.md");
         fc.setFileFilter(
             new javax.swing.filechooser.FileNameExtensionFilter("Markdown files (*.md)", "md")
