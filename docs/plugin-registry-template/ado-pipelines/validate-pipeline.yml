@@ -60,6 +60,7 @@ steps:
       else
         echo "##vso[task.setvariable variable=pluginName]$CHANGED"
       fi
+      echo "##vso[task.setvariable variable=targetBranch]$TARGET_BRANCH"
     displayName: "Determine changed plugin directory"
 
   - script: |
@@ -90,6 +91,51 @@ steps:
       GROUP_ID=$(mvn -q -f "plugins/$NAME/pom.xml" help:evaluate -Dexpression=project.groupId -DforceStdout)
       [ "$GROUP_ID" = "$(PLUGIN_MAVEN_GROUP_ID)" ] || { echo "##vso[task.logissue type=error]groupId '$GROUP_ID' must be '$(PLUGIN_MAVEN_GROUP_ID)'"; exit 1; }
     displayName: "pom.xml groupId matches required namespace"
+    condition: ne(variables['pluginName'], '')
+
+  - script: |
+      echo "##vso[task.setvariable variable=pluginVersion]$(mvn -q -f plugins/$(pluginName)/pom.xml help:evaluate -Dexpression=project.version -DforceStdout)"
+    displayName: "Read plugin version"
+    condition: ne(variables['pluginName'], '')
+
+  - script: |
+      set -e
+      git show "origin/$(targetBranch):registry.json" > /tmp/target-registry.json
+      python3 - "$(pluginName)" "$(pluginVersion)" /tmp/target-registry.json <<'PYEOF'
+      # Same rule publish-pipeline.yml enforces authoritatively at merge
+      # time -- this copy catches it earlier, at PR time, so a bad version
+      # blocks the merge itself instead of landing and needing cleanup
+      # after the fact. Reads the TARGET branch's current registry.json
+      # (not this PR branch's own copy, which could be stale) so it's
+      # checking against what's actually live right now.
+      import json, sys
+
+      def version_key(v):
+          parts = []
+          for part in v.split("."):
+              parts.append(int(part) if part.isdigit() else part)
+          return parts
+
+      name, new_version, registry_path = sys.argv[1:4]
+      registry = json.load(open(registry_path))
+      existing = next((p for p in registry.get("plugins", []) if p.get("name") == name), None)
+      if existing is None:
+          print(f"No existing registry entry for '{name}' -- first publish, nothing to compare.")
+          sys.exit(0)
+
+      old_version = existing.get("version", "0")
+      try:
+          is_newer = version_key(new_version) > version_key(old_version)
+      except TypeError:
+          print(f"::error::Can't compare version '{new_version}' against published '{old_version}' for '{name}' -- mismatched version formats.")
+          sys.exit(1)
+
+      if not is_newer:
+          print(f"##vso[task.logissue type=error]Version {new_version} is not newer than the currently published {old_version} for '{name}'. Bump the version in your pom.xml and push again.")
+          sys.exit(1)
+      print(f"OK: {new_version} > {old_version}")
+      PYEOF
+    displayName: "Reject non-newer version against registry.json"
     condition: ne(variables['pluginName'], '')
 
   - script: |
