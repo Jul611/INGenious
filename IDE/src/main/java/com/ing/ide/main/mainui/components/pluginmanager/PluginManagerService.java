@@ -39,6 +39,54 @@ public class PluginManagerService {
         return Collections.emptyList();
     }
 
+    /**
+     * Best-effort client-side warning: throws if {@code newVersion} isn't
+     * strictly newer than whatever's already published for a plugin named
+     * {@code name}. This is advisory only, not the real gate — it fails
+     * open (returns quietly) if the registry can't be fetched, and a
+     * submission can always reach the registry repo by some route other
+     * than this dialog. publish-pipeline.yml enforces the same rule
+     * server-side; that's the check that actually can't be skipped.
+     */
+    public void checkVersionIsNewer(String name, String newVersion) throws IOException {
+        PluginRegistryEntry existing = fetchRegistry()
+            .stream()
+            .filter(p -> name.equals(p.getName()))
+            .findFirst()
+            .orElse(null);
+        if (existing == null) return;
+        if (compareVersions(newVersion, existing.getVersion()) <= 0) {
+            throw new IOException(
+                "Version " +
+                newVersion +
+                " is not newer than the currently published " +
+                existing.getVersion() +
+                " for \"" +
+                name +
+                "\" — bump the version in your pom.xml."
+            );
+        }
+    }
+
+    /** Same numeric dotted-version comparison approach as PluginManagerBrowseUI's engine-version check. */
+    private int compareVersions(String a, String b) {
+        return Integer.compare(parseVersion(a), parseVersion(b));
+    }
+
+    private int parseVersion(String version) {
+        if (version == null || version.isEmpty()) return 0;
+        String[] parts = version.split("\\.");
+        int result = 0;
+        for (int i = 0; i < Math.min(parts.length, 3); i++) {
+            try {
+                result = result * 1000 + Integer.parseInt(parts[i]);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return result;
+    }
+
     private List<PluginRegistryEntry> tryFetchRemote() {
         try {
             String contentJson = cliService.fetchRegistryJsonRaw(s -> {});

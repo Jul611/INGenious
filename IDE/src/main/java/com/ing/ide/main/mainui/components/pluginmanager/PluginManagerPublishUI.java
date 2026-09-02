@@ -177,6 +177,12 @@ public class PluginManagerPublishUI extends JPanel {
         row = addField(mainPanel, gbc, row, "Author Email:", authorEmailField);
 
         versionField = new JTextField(10);
+        versionField.setEditable(false);
+        versionField.setToolTipText(
+            "Read from this plugin's pom.xml -- edit the version there and re-select " +
+            "the project to rebuild, rather than typing a version here. What actually " +
+            "gets published always comes from the pom.xml, not this field."
+        );
         row = addField(mainPanel, gbc, row, "Version:", versionField);
 
         minEngineField = new JTextField(10);
@@ -547,6 +553,9 @@ public class PluginManagerPublishUI extends JPanel {
 
             @Override
             protected PluginRegistryCliService.PrResult doInBackground() throws Exception {
+                publish("Checking published version...");
+                service.checkVersionIsNewer(entry.getName(), entry.getVersion());
+
                 publish("Staging submission files...");
                 stagingDir =
                     service.stagePluginSubmission(selectedSourceDir, entry, readmeContentFinal);
