@@ -699,6 +699,10 @@ public class PluginRegistryCliService {
         List<String> cmd = List.of(
             "mvn",
             "-q",
+            "-U", // bypass Maven's negative-resolution cache -- otherwise a transient failure
+            // (feed not reachable yet, publish still in flight, credentials briefly wrong) leaves
+            // a .lastUpdated marker that blocks retrying the SAME version even after it becomes
+            // resolvable, until the cache naturally expires
             "org.apache.maven.plugins:maven-dependency-plugin:3.6.1:copy",
             "-Dartifact=" + groupId + ":" + artifactId + ":" + version,
             "-DoutputDirectory=" + destDir.getAbsolutePath(),
@@ -779,6 +783,7 @@ public class PluginRegistryCliService {
             List<String> cmd = List.of(
                 "mvn",
                 "-q",
+                "-U", // see resolvePluginArtifact() -- same stale negative-cache concern applies here
                 "-f",
                 shimPom.getAbsolutePath(),
                 "org.apache.maven.plugins:maven-dependency-plugin:3.6.1:copy-dependencies",
