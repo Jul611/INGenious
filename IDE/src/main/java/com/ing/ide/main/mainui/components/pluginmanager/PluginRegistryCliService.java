@@ -807,12 +807,29 @@ public class PluginRegistryCliService {
         try {
             shimDir = Files.createTempDirectory("ingenious-plugin-shim-").toFile();
             File shimPom = new File(shimDir, "pom.xml");
+            // Needs its own <repositories> entry: -DremoteRepositories on the
+            // copy-dependencies goal only affects that goal's own copy step, not
+            // the ordinary project-level dependency resolution that has to run
+            // first to build the graph (i.e. resolving this shim's own declared
+            // dependency on the plugin itself, below) -- that only ever consults
+            // a project's declared repositories or Central, same as any other
+            // Maven project's dependency resolution would.
             String pomXml =
                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\">\n" +
                 "  <modelVersion>4.0.0</modelVersion>\n" +
                 "  <groupId>com.ing.plugins.shim</groupId>\n" +
                 "  <artifactId>dependency-resolver-shim</artifactId>\n" +
                 "  <version>1.0.0</version>\n" +
+                "  <repositories>\n" +
+                "    <repository>\n" +
+                "      <id>" +
+                config.getAdoFeedServerId() +
+                "</id>\n" +
+                "      <url>" +
+                config.getAdoFeedMavenUrl() +
+                "</url>\n" +
+                "    </repository>\n" +
+                "  </repositories>\n" +
                 "  <dependencies>\n" +
                 "    <dependency>\n" +
                 "      <groupId>" +
