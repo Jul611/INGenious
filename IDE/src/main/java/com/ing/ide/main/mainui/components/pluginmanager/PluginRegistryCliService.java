@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -696,23 +697,31 @@ public class PluginRegistryCliService {
             "Resolving " + groupId + ":" + artifactId + ":" + version + " from Azure Artifacts..."
         );
         if (!destDir.exists()) destDir.mkdirs();
-        List<String> cmd = List.of(
+
+        // dependency:copy silently ignores -DremoteRepositories when run without a
+        // project pom.xml (a "standalone-pom", which this always is -- an install
+        // has no project context) -- it only ever resolves from settings.xml-
+        // configured repos or Central, regardless of what's passed on the CLI.
+        // dependency:get is the goal that actually honors an ad-hoc repository via
+        // CLI property even in standalone-pom mode, but it only resolves into the
+        // local repo cache rather than copying anywhere -- so this is necessarily
+        // resolve-then-copy, not the one-shot command dependency:copy would be.
+        List<String> getCmd = List.of(
             "mvn",
             "-q",
             "-U", // bypass Maven's negative-resolution cache -- otherwise a transient failure
             // (feed not reachable yet, publish still in flight, credentials briefly wrong) leaves
             // a .lastUpdated marker that blocks retrying the SAME version even after it becomes
             // resolvable, until the cache naturally expires
-            "org.apache.maven.plugins:maven-dependency-plugin:3.6.1:copy",
+            "org.apache.maven.plugins:maven-dependency-plugin:3.6.1:get",
             "-Dartifact=" + groupId + ":" + artifactId + ":" + version,
-            "-DoutputDirectory=" + destDir.getAbsolutePath(),
             "-DremoteRepositories=" +
             config.getAdoFeedServerId() +
             "::default::" +
             config.getAdoFeedMavenUrl()
         );
-        ProcResult result = run(cmd, null, MVN_TIMEOUT_MS);
-        if (result.exitCode != 0) {
+        ProcResult getResult = run(getCmd, null, MVN_TIMEOUT_MS);
+        if (getResult.exitCode != 0) {
             throw new CliException(
                 "Failed to resolve " +
                 artifactId +
@@ -722,20 +731,60 @@ public class PluginRegistryCliService {
                 "with id '" +
                 config.getAdoFeedServerId() +
                 "' and a valid, read-scoped ADO PAT -- set one via Registry Settings.",
-                result.exitCode,
-                result.output
+                getResult.exitCode,
+                getResult.output
+            );
+        }
+
+        File localRepoJar = new File(
+            localRepositoryRoot(),
+            groupId.replace('.', File.separatorChar) +
+            File.separator +
+            artifactId +
+            File.separator +
+            version +
+            File.separator +
+            artifactId +
+            "-" +
+            version +
+            ".jar"
+        );
+        if (!localRepoJar.exists()) {
+            throw new CliException(
+                "Maven reported success but the resolved jar was not found at " +
+                localRepoJar.getAbsolutePath(),
+                0,
+                getResult.output
             );
         }
         File jar = new File(destDir, artifactId + "-" + version + ".jar");
-        if (!jar.exists()) {
-            throw new CliException(
-                "Maven reported success but the expected jar was not found at " +
-                jar.getAbsolutePath(),
-                0,
-                result.output
-            );
-        }
+        Files.copy(localRepoJar.toPath(), jar.toPath(), StandardCopyOption.REPLACE_EXISTING);
         return jar;
+    }
+
+    /**
+     * Asks Maven for the effective local repository path rather than assuming
+     * the conventional {@code ~/.m2/repository} -- some environments override
+     * {@code <localRepository>} in settings.xml. Falls back to the convention
+     * if the lookup itself fails for any reason.
+     */
+    private File localRepositoryRoot() {
+        try {
+            List<String> cmd = List.of(
+                "mvn",
+                "-q",
+                "org.apache.maven.plugins:maven-help-plugin:3.4.0:evaluate",
+                "-Dexpression=settings.localRepository",
+                "-DforceStdout"
+            );
+            ProcResult result = run(cmd, null, MVN_TIMEOUT_MS);
+            if (result.exitCode == 0 && result.output != null && !result.output.trim().isEmpty()) {
+                return new File(result.output.trim());
+            }
+        } catch (IOException ignored) {
+            // Fall through to the conventional default below.
+        }
+        return new File(System.getProperty("user.home"), ".m2" + File.separator + "repository");
     }
 
     /**
