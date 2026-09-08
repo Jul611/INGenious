@@ -28,16 +28,13 @@ always re-validates and re-builds regardless of what happened here.
 
 ## What to hand a contributor
 
-1. `azure-pipelines.yml` from this folder.
-2. A copy of `ingenious-api-3.0.jar` to place at `ci/vendor/ingenious-api-3.0.jar`
-   in their repo (build it yourself: `mvn -q -f ingenious-api/pom.xml clean package -DskipTests`,
-   the jar lands at `ingenious-api/target/ingenious-api-3.0.jar`). It isn't
-   published anywhere authenticated today, so this has to be vendored rather
-   than resolved as a normal Maven dependency.
-3. Confirmation of the required Maven `groupId` namespace (`com.ing.plugins`
+1. `azure-pipelines.yml` from this folder. It builds and installs
+   `ingenious-api` itself, straight from `github.com/ing-bank/INGenious`
+   (public, MIT-licensed) — nothing to build or hand over separately.
+2. Confirmation of the required Maven `groupId` namespace (`com.ing.plugins`
    unless that's changed) and, if their plugin's `pom.xml` isn't at the repo
    root, the right `PLUGIN_PATH` value to fill in.
-4. Their plugin needs a `.submission.json` at its root (or wherever
+3. Their plugin needs a `.submission.json` at its root (or wherever
    `PLUGIN_PATH` points) alongside `pom.xml` and `README.md` — this is the
    metadata INGenious's Publish tab and the registry submission flow expect.
 

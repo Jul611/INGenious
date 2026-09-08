@@ -1,0 +1,15 @@
+{
+  "displayName": "Hello World Demo",
+  "description": "A demo plugin that adds Hello World and custom greeting actions",
+  "author": "INGenious Plugins Team",
+  "authorEmail": "plugins@company.com",
+  "version": "1.0.0",
+  "minEngineVersion": "3.0.0",
+  "maxEngineVersion": "",
+  "libUrls": [],
+  "objectTypes": ["General"],
+  "actionCount": 2,
+  "actions": [],
+  "homepageUrl": "",
+  "license": "MIT"
+}

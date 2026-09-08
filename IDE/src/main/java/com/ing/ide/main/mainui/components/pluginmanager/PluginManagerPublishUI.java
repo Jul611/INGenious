@@ -36,6 +36,7 @@ public class PluginManagerPublishUI extends JPanel {
     private JLabel fileLabel;
     private JTextField repoUrlField;
     private JTextField repoBranchField;
+    private JTextField repoPathField;
     private JButton fetchButton;
     private JLabel manifestEntryClassesLabel;
     private JLabel manifestNameLabel;
@@ -130,6 +131,17 @@ public class PluginManagerPublishUI extends JPanel {
         fetchButton.addActionListener(this::fetchFromRepo);
         branchRow.add(fetchButton, BorderLayout.EAST);
         mainPanel.add(branchRow, gbc);
+        row++;
+
+        resetLabelGbc(gbc, row);
+        mainPanel.add(new JLabel("Path in repo (optional):"), gbc);
+        resetValueGbc(gbc, row);
+        repoPathField = new JTextField();
+        repoPathField.putClientProperty(
+            "JTextField.placeholderText",
+            "leave blank if pom.xml is at the repo root, e.g. plugins/my-plugin otherwise"
+        );
+        mainPanel.add(repoPathField, gbc);
         row++;
 
         resetLabelGbc(gbc, row);
@@ -379,10 +391,17 @@ public class PluginManagerPublishUI extends JPanel {
         String branch = repoBranchField.getText().trim();
         if (branch.isEmpty()) branch = "main";
         final String branchFinal = branch;
+        final String subPath = repoPathField
+            .getText()
+            .trim()
+            .replaceAll("^/+", "")
+            .replaceAll("/+$", "");
+        final String locationDesc =
+            repoUrl + " @ " + branchFinal + (subPath.isEmpty() ? "" : " (" + subPath + ")");
 
         cleanupClonedSource();
         fetchButton.setEnabled(false);
-        fileLabel.setText("Cloning " + repoUrl + " (" + branchFinal + ")...");
+        fileLabel.setText("Cloning " + locationDesc + "...");
         fileLabel.setForeground(Color.GRAY);
 
         SwingWorker<File, Void> worker = new SwingWorker<File, Void>() {
@@ -398,13 +417,30 @@ public class PluginManagerPublishUI extends JPanel {
                 File cloned = null;
                 try {
                     cloned = get();
-                    if (!new File(cloned, "pom.xml").exists()) {
+                    File pluginRoot = subPath.isEmpty() ? cloned : new File(cloned, subPath);
+                    if (
+                        !subPath.isEmpty() &&
+                        !pluginRoot
+                            .getCanonicalPath()
+                            .startsWith(cloned.getCanonicalPath() + File.separator)
+                    ) {
+                        deleteQuietly(cloned);
+                        fileLabel.setText("No source selected");
+                        fileLabel.setForeground(Color.GRAY);
+                        showError("Path in repo can't point outside the repo: " + subPath);
+                        return;
+                    }
+                    if (!new File(pluginRoot, "pom.xml").exists()) {
                         deleteQuietly(cloned);
                         fileLabel.setText("No source selected");
                         fileLabel.setForeground(Color.GRAY);
                         showError(
-                            "No pom.xml found at the root of " +
-                            repoUrl +
+                            "No pom.xml found at " +
+                            (
+                                subPath.isEmpty()
+                                    ? "the root of " + repoUrl
+                                    : "'" + subPath + "' in " + repoUrl
+                            ) +
                             " (branch " +
                             branchFinal +
                             ")."
@@ -412,9 +448,9 @@ public class PluginManagerPublishUI extends JPanel {
                         return;
                     }
                     clonedSourceDir = cloned;
-                    selectedSourceDir = cloned;
+                    selectedSourceDir = pluginRoot;
                     builtJar = null;
-                    fileLabel.setText(repoUrl + " @ " + branchFinal);
+                    fileLabel.setText(locationDesc);
                     fileLabel.setForeground(Color.BLACK);
                     buildAndPopulateMetadata();
                 } catch (Exception ex) {
@@ -758,6 +794,7 @@ public class PluginManagerPublishUI extends JPanel {
         fileLabel.setText("No source selected");
         fileLabel.setForeground(Color.GRAY);
         repoUrlField.setText("");
+        repoPathField.setText("");
         readmeFileLabel.setText("No file selected");
         readmeFileLabel.setForeground(Color.GRAY);
         selectedSourceDir = null;

@@ -45,13 +45,15 @@ steps:
       jdkSourceOption: "PreInstalled"
 
   - script: |
-      mvn -B install:install-file -Dfile=ci/vendor/ingenious-api-3.0.jar -DgroupId=com.ing -DartifactId=ingenious-api -Dversion=3.0 -Dpackaging=jar
-    displayName: "Seed local repo with ingenious-api"
-    # Get this jar from the marketplace team, or build it yourself from the
-    # INGenious source: mvn -q -f ingenious-api/pom.xml clean package -DskipTests
-    # then copy target/ingenious-api-3.0.jar to ci/vendor/ in this repo.
-    # It isn't published anywhere authenticated today, so it has to be
-    # vendored like this rather than resolved as a normal dependency.
+      set -e
+      git clone --depth 1 https://github.com/ing-bank/INGenious.git "$(Agent.TempDirectory)/ingenious-src" # TODO: pin to a tag/release matching the ingenious-api version your plugin targets, instead of always building against the latest default branch, once INGenious has tagged releases to pin to
+      mvn -q -f "$(Agent.TempDirectory)/ingenious-src/ingenious-api/pom.xml" clean install -DskipTests
+    displayName: "Build and install ingenious-api from the public INGenious repo"
+    # INGenious is public and MIT-licensed (github.com/ing-bank/INGenious), so
+    # contributors are expected to have access to it directly -- no jar
+    # hand-off from the marketplace team needed. This installs ingenious-api
+    # into the agent's own local .m2 cache so the plugin build below (which
+    # depends on it at `provided` scope) can resolve it.
 
   - script: |
       set -e
