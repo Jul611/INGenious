@@ -1,90 +1,80 @@
-# Cleanup Stale Submission Branches (Azure Pipelines)
-#
-# Scheduled housekeeping: deletes plugin/<name>/v<version> branches whose
-# pull request was closed WITHOUT merging (a rejected or abandoned
-# submission), once they've been closed for at least CLEANUP_GRACE_DAYS.
-#
-# Deliberately narrow scope, to avoid ever touching the wrong thing:
-#   - Only branches matching the plugin/** submission naming pattern.
-#   - Only when tied to a PR that is closed AND not merged (never an open
-#     PR, no matter how old).
-#   - Only same-repo branches (isCrossRepository == false) -- a
-#     fork-submitted PR's branch lives on the contributor's own fork, not
-#     here, and this pipeline has no business touching another repo.
-# Merged PRs are handled separately by this repo's own "Automatically
-# delete head branches" setting (Settings -> General -> Pull Requests) --
-# this pipeline only covers the case that setting doesn't: rejected PRs.
-#
-# Authenticates via create-github-app-token@1 (the org's installed GitHub
-# App connection, exchanged for a short-lived installation token) rather
-# than a standing GitHub PAT -- a PAT isn't allowed for this.
-# https://github.com/tspascoal/azure-pipelines-create-github-app-token-task
-#
-# DRY_RUN defaults to true: it will list and log what it WOULD delete
-# without actually deleting anything, until you deliberately set it to
-# false. Safe to leave this pipeline created-but-untrusted against a repo
-# while other pieces are still being wired up.
+# # Cleanup Stale Submission Branches (Azure Pipelines)
+# #
+# # Scheduled housekeeping: deletes plugin/<name>/v<version> branches whose
+# # pull request was closed WITHOUT merging (a rejected or abandoned
+# # submission), once they've been closed for at least CLEANUP_GRACE_DAYS.
+# #
+# # Deliberately narrow scope, to avoid ever touching the wrong thing:
+# #   - Only branches matching the plugin/** submission naming pattern.
+# #   - Only when tied to a PR that is closed AND not merged (never an open
+# #     PR, no matter how old).
+# #   - Only same-repo branches (isCrossRepository == false) -- a
+# #     fork-submitted PR's branch lives on the contributor's own fork, not
+# #     here, and this pipeline has no business touching another repo.
+# # Merged PRs are handled separately by this repo's own "Automatically
+# # delete head branches" setting (Settings -> General -> Pull Requests) --
+# # this pipeline only covers the case that setting doesn't: rejected PRs.
+# #
+# # Authenticates via create-github-app-token@1 (the org's installed GitHub
+# # App connection, exchanged for a short-lived installation token) rather
+# # than a standing GitHub PAT -- a PAT isn't allowed for this.
+# # https://github.com/tspascoal/azure-pipelines-create-github-app-token-task
 
-trigger: none
-pr: none
+# trigger: none
+# pr: none
 
-schedules:
-  - cron: "0 3 * * *" # daily at 03:00 UTC -- adjust to taste
-    displayName: "Daily stale-branch sweep"
-    branches:
-      include:
-        - marketplace-registry
-    always: true # run on schedule even if nothing in the repo changed
+# schedules:
+#   - cron: "0 3 * * *" # daily at 03:00 UTC -- adjust to taste
+#     displayName: "Daily stale-branch sweep"
+#     branches:
+#       include:
+#         - marketplace-registry
+#     always: true # run on schedule even if nothing in the repo changed
 
-pool:
-  vmImage: "ubuntu-latest"
+# pool:
+#   vmImage: "ubuntu-latest"
 
-variables:
-  GITHUB_REPO_SLUG: "" # TODO: fill in, e.g. "your-org/your-registry-repo" -- same value as publish-pipeline.yml, consider a shared variable group
-  CLEANUP_GRACE_DAYS: 7 # how long a rejected PR's branch survives before deletion
-  DRY_RUN: true # when true, only logs what WOULD be deleted -- flip to false once you trust this against a given repo
+# variables:
+#   GITHUB_REPO_SLUG: "" # TODO: fill in, e.g. "your-org/your-registry-repo" -- same value as publish-pipeline.yml, consider a shared variable group
+#   CLEANUP_GRACE_DAYS: 7 # how long a rejected PR's branch survives before deletion
 
-steps:
-  - checkout: none # this pipeline only calls the GitHub API -- no repo content needed
+# steps:
+#   - checkout: none # this pipeline only calls the GitHub API -- no repo content needed
 
-  - script: |
-      SLUG="$(GITHUB_REPO_SLUG)"
-      echo "##vso[task.setvariable variable=GITHUB_OWNER]${SLUG%%/*}"
-      echo "##vso[task.setvariable variable=GITHUB_REPO_NAME]${SLUG##*/}"
-    displayName: "Split GITHUB_REPO_SLUG into owner/repo"
+#   - script: |
+#       SLUG="$(GITHUB_REPO_SLUG)"
+#       echo "##vso[task.setvariable variable=GITHUB_OWNER]${SLUG%%/*}"
+#       echo "##vso[task.setvariable variable=GITHUB_REPO_NAME]${SLUG##*/}"
+#     displayName: "Split GITHUB_REPO_SLUG into owner/repo"
 
-  - task: create-github-app-token@1
-    name: githubAuth
-    inputs:
-      githubAppConnection: "TODO-your-github-app-service-connection-name"
-      owner: $(GITHUB_OWNER)
-      repositories: $(GITHUB_REPO_NAME)
-    displayName: "Get GitHub App installation token"
+#   - task: create-github-app-token@1
+#     name: githubAuth
+#     inputs:
+#       githubAppConnection: "TODO-your-github-app-service-connection-name"
+#       owner: $(GITHUB_OWNER)
+#       repositories: $(GITHUB_REPO_NAME)
+#     displayName: "Get GitHub App installation token"
 
-  - script: |
-      set -e
-      REPO="$(GITHUB_REPO_SLUG)"
-      CUTOFF=$(date -u -d "-$(CLEANUP_GRACE_DAYS) days" +%s)
+#   - script: |
+#       set -e
+#       REPO="$(GITHUB_REPO_SLUG)"
+#       CUTOFF=$(date -u -d "-$(CLEANUP_GRACE_DAYS) days" +%s)
 
-      gh pr list --repo "$REPO" --state closed --limit 500 \
-        --json number,headRefName,closedAt,mergedAt,isCrossRepository \
-        --jq '.[] | select(.mergedAt == null) | select(.isCrossRepository == false) | select(.headRefName | startswith("plugin/")) | [.number, .headRefName, .closedAt] | @tsv' \
-        > closed_unmerged.tsv
+#       gh pr list --repo "$REPO" --state closed --limit 500 \
+#         --json number,headRefName,closedAt,mergedAt,isCrossRepository \
+#         --jq '.[] | select(.mergedAt == null) | select(.isCrossRepository == false) | select(.headRefName | startswith("plugin/")) | [.number, .headRefName, .closedAt] | @tsv' \
+#         > closed_unmerged.tsv
 
-      while IFS=$'\t' read -r PR_NUM BRANCH CLOSED_AT; do
-        [ -z "$BRANCH" ] && continue
-        CLOSED_TS=$(date -u -d "$CLOSED_AT" +%s)
-        if [ "$CLOSED_TS" -le "$CUTOFF" ]; then
-          if [ "$(DRY_RUN)" = "true" ]; then
-            echo "[DRY RUN] Would delete stale branch '$BRANCH' (PR #$PR_NUM closed $CLOSED_AT, never merged) -- DRY_RUN is true, not actually deleting"
-          else
-            echo "Deleting stale branch '$BRANCH' (PR #$PR_NUM closed $CLOSED_AT, never merged)"
-            gh api --method DELETE "repos/$REPO/git/refs/heads/$BRANCH" || echo "  -- already gone or couldn't delete, skipping"
-          fi
-        else
-          echo "Keeping '$BRANCH' (PR #$PR_NUM) -- still inside the $(CLEANUP_GRACE_DAYS)-day grace period"
-        fi
-      done < closed_unmerged.tsv
-    displayName: "Delete stale rejected-submission branches"
-    env:
-      GH_TOKEN: $(githubAuth.installationToken)
+#       while IFS=$'\t' read -r PR_NUM BRANCH CLOSED_AT; do
+#         [ -z "$BRANCH" ] && continue
+#         CLOSED_TS=$(date -u -d "$CLOSED_AT" +%s)
+#         if [ "$CLOSED_TS" -le "$CUTOFF" ]; then
+#           echo "Deleting stale branch '$BRANCH' (PR #$PR_NUM closed $CLOSED_AT, never merged)"
+#           gh api --method DELETE "repos/$REPO/git/refs/heads/$BRANCH" || echo "  -- already gone or couldn't delete, skipping"
+#         else
+#           echo "Keeping '$BRANCH' (PR #$PR_NUM) -- still inside the $(CLEANUP_GRACE_DAYS)-day grace period"
+#         fi
+#       done < closed_unmerged.tsv
+#     displayName: "Delete stale rejected-submission branches"
+#     env:
+#       GH_TOKEN: $(githubAuth.installationToken)

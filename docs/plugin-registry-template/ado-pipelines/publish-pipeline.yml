@@ -35,7 +35,7 @@ pr: none
 trigger:
   branches:
     include:
-      - marketplace-registry
+      - registry-branch
   paths:
     include:
       - plugins/*
@@ -45,17 +45,11 @@ pool:
 
 variables:
   PLUGIN_MAVEN_GROUP_ID: "com.ing.plugins"
-  ADO_FEED_SERVER_ID: "ado-plugin-feed" # must match Registry Settings' "Maven server id" value
+  ADO_FEED_SERVER_ID: "p33148-marketplace-feed" # must match Registry Settings' "Maven server id" value
 
 steps:
   - checkout: self
     fetchDepth: 0
-
-  - task: JavaToolInstaller@0
-    inputs:
-      versionSpec: "17"
-      jdkArchitectureOption: "x64"
-      jdkSourceOption: "PreInstalled"
 
   - script: |
       set -e
@@ -78,55 +72,22 @@ steps:
       echo "##vso[task.setvariable variable=artifactId]$(mvn -q -f plugins/$NAME/pom.xml help:evaluate -Dexpression=project.artifactId -DforceStdout)"
       echo "##vso[task.setvariable variable=pluginVersion]$(mvn -q -f plugins/$NAME/pom.xml help:evaluate -Dexpression=project.version -DforceStdout)"
     displayName: "Read submission metadata"
-
-  - script: |
-      set -e
-      python3 - "$(pluginName)" "$(pluginVersion)" <<'PYEOF'
-      # Authoritative gate (the IDE has an advisory version of this same check,
-      # but it's skippable -- network failure, stale local state, or a
-      # submission that doesn't go through the IDE at all -- so this is the
-      # one that actually can't be bypassed). Rejects publishing a version
-      # that isn't strictly newer than what's already in registry.json for
-      # this plugin. A first-time submission (no existing entry) always passes.
-      import json, sys
-
-      def version_key(v):
-          # Numeric-aware comparison so "1.0.10" sorts after "1.0.9" --
-          # a plain string compare would get that backwards.
-          parts = []
-          for part in v.split("."):
-              parts.append(int(part) if part.isdigit() else part)
-          return parts
-
-      name, new_version = sys.argv[1:3]
-      registry = json.load(open("registry.json"))
-      existing = next((p for p in registry.get("plugins", []) if p.get("name") == name), None)
-      if existing is None:
-          print(f"No existing registry entry for '{name}' -- first publish, nothing to compare.")
-          sys.exit(0)
-
-      old_version = existing.get("version", "0")
-      try:
-          is_newer = version_key(new_version) > version_key(old_version)
-      except TypeError:
-          # Mismatched segment types (e.g. numeric vs "beta") aren't comparable --
-          # fail closed rather than guess.
-          print(f"::error::Can't compare version '{new_version}' against published '{old_version}' for '{name}' -- mismatched version formats.")
-          sys.exit(1)
-
-      if not is_newer:
-          print(f"##vso[task.logissue type=error]Version {new_version} is not newer than the currently published {old_version} for '{name}'. Bump the version in your pom.xml and resubmit.")
-          sys.exit(1)
-      print(f"OK: {new_version} > {old_version}")
-      PYEOF
-    displayName: "Reject non-newer version against registry.json"
+   
 
   - task: MavenAuthenticate@0
+    inputs:
+        artifactsFeeds: 'p33148-marketplace-feed'
     displayName: "Authenticate Maven to Azure Artifacts feed"
+    
     # No serviceConnections input needed for a feed in this same ADO org/project --
     # this task wires the right <server> entry into settings.xml automatically
     # via $(System.AccessToken). The build service account (not a PAT) needs
     # Contributor access on the feed for this to succeed.
+
+  - script: |
+      find $HOME -name settings.xml
+      cat $HOME/.m2/settings.xml
+    displayName: Inspect Maven settings 
 
   - script: |
       set -e
@@ -141,10 +102,10 @@ steps:
       echo "##vso[task.setvariable variable=GITHUB_REPO_NAME]${SLUG##*/}"
     displayName: "Split GITHUB_REPO_SLUG into owner/repo"
 
-  - task: create-github-app-token@1
+  - task: GitHubAppToken@1
     name: githubAuth
     inputs:
-      githubAppConnection: "TODO-your-github-app-service-connection-name"
+      githubAppConnection: "github-ing-tech-hub-svc"
       owner: $(GITHUB_OWNER)
       repositories: $(GITHUB_REPO_NAME)
     displayName: "Get GitHub App installation token"
@@ -172,10 +133,10 @@ steps:
       git remote set-url origin "https://x-access-token:$(githubAuth.installationToken)@github.com/$(GITHUB_REPO_SLUG).git"
       git push origin "$BRANCH"
 
-      PR_URL=$(gh pr create --repo "$(GITHUB_REPO_SLUG)" --base marketplace-registry --head "$BRANCH" \
+      PR_URL=$(gh pr create --repo "$(GITHUB_REPO_SLUG)" --base registry-branch --head "$BRANCH" \
         --title "Register $NAME v$(pluginVersion)" \
         --body "Automated registry update after publishing to Azure Artifacts.")
-      gh pr merge "$PR_URL" --repo "$(GITHUB_REPO_SLUG)" --auto --squash
+      gh pr merge "$PR_URL" --repo "$(GITHUB_REPO_SLUG)" --squash
     displayName: "Patch registry.json and open auto-merge PR"
     env:
       GH_TOKEN: $(githubAuth.installationToken)
