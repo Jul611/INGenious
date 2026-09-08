@@ -15,11 +15,16 @@ import javax.swing.*;
 
 /**
  * "Publish" tab for the Plugin Manager. Plugin authors point at their plugin's
- * Maven source project, review metadata extracted from a local build, select
- * a README.md, and submit — this builds the jar locally to extract metadata,
+ * source — primarily a GitHub repo+branch they've already built and tested
+ * themselves, or a local folder for quick local iteration — review metadata
+ * extracted from a local build of that source, select a README.md, and
+ * submit. This still builds the source locally (whether cloned or browsed)
+ * purely to extract manifest metadata and discover actions via reflection,
  * then opens a pull request against the registry repo via git/gh. Nothing is
- * merged directly: a human reviewer approves, then CI builds the real
- * artifact, publishes it to Azure Artifacts, and updates the registry.
+ * merged directly: a human reviewer approves, then the marketplace's own CI
+ * independently re-validates and builds the real artifact regardless of
+ * whatever the contributor's own pipeline already checked, publishes it to
+ * Azure Artifacts, and updates the registry.
  */
 public class PluginManagerPublishUI extends JPanel {
     private static final Logger LOG = Logger.getLogger(PluginManagerPublishUI.class.getName());
@@ -29,6 +34,9 @@ public class PluginManagerPublishUI extends JPanel {
     private final Runnable onPublishCallback;
 
     private JLabel fileLabel;
+    private JTextField repoUrlField;
+    private JTextField repoBranchField;
+    private JButton fetchButton;
     private JLabel manifestEntryClassesLabel;
     private JLabel manifestNameLabel;
     private JLabel manifestVersionLabel;
@@ -47,6 +55,7 @@ public class PluginManagerPublishUI extends JPanel {
     private JButton submitButton;
 
     private File selectedSourceDir;
+    private File clonedSourceDir;
     private File builtJar;
     private File selectedReadme;
     private String extractedEntryClasses;
@@ -93,18 +102,56 @@ public class PluginManagerPublishUI extends JPanel {
         resetLabelGbc(gbc, row);
         gbc.gridwidth = 2;
         JLabel step1 = new JLabel(
-            "Step 1: Select your plugin's source project (folder with pom.xml)"
+            "Step 1: Point at your plugin's source (a repo you've already built and tested)"
         );
         step1.setFont(new Font("SansSerif", Font.BOLD, 14));
         mainPanel.add(step1, gbc);
         row++;
 
         resetLabelGbc(gbc, row);
-        JButton browseButton = new JButton("Browse...");
+        mainPanel.add(new JLabel("Repo URL:"), gbc);
+        resetValueGbc(gbc, row);
+        repoUrlField = new JTextField();
+        repoUrlField.putClientProperty(
+            "JTextField.placeholderText",
+            "https://github.com/owner/repo.git"
+        );
+        mainPanel.add(repoUrlField, gbc);
+        row++;
+
+        resetLabelGbc(gbc, row);
+        mainPanel.add(new JLabel("Branch:"), gbc);
+        resetValueGbc(gbc, row);
+        JPanel branchRow = new JPanel(new BorderLayout(8, 0));
+        branchRow.setOpaque(false);
+        repoBranchField = new JTextField("main", 12);
+        branchRow.add(repoBranchField, BorderLayout.WEST);
+        fetchButton = new JButton("Fetch");
+        fetchButton.addActionListener(this::fetchFromRepo);
+        branchRow.add(fetchButton, BorderLayout.EAST);
+        mainPanel.add(branchRow, gbc);
+        row++;
+
+        resetLabelGbc(gbc, row);
+        gbc.gridwidth = 2;
+        JLabel orLabel = new JLabel("— or, for local testing before you've pushed anywhere —");
+        orLabel.setFont(orLabel.getFont().deriveFont(Font.ITALIC, 11f));
+        Color mutedFg = UIManager.getColor("Label.disabledForeground");
+        if (mutedFg != null) orLabel.setForeground(mutedFg);
+        mainPanel.add(orLabel, gbc);
+        row++;
+
+        resetLabelGbc(gbc, row);
+        JButton browseButton = new JButton("Browse local folder...");
         browseButton.addActionListener(this::browseSourceDir);
         mainPanel.add(browseButton, gbc);
         resetValueGbc(gbc, row);
-        fileLabel = new JLabel("No folder selected");
+        row++;
+
+        resetLabelGbc(gbc, row);
+        mainPanel.add(new JLabel("Source:"), gbc);
+        resetValueGbc(gbc, row);
+        fileLabel = new JLabel("No source selected");
         fileLabel.setForeground(Color.GRAY);
         mainPanel.add(fileLabel, gbc);
         row++;
@@ -241,8 +288,11 @@ public class PluginManagerPublishUI extends JPanel {
         // Instructions at the bottom
         JPanel bottomPanel = new JPanel(new BorderLayout());
         JTextArea instructions = new JTextArea(
-            "Builds your plugin from source and opens a pull request against the registry repo.\n" +
-            "A reviewer approves and merges it; CI then builds the real artifact, publishes it to\n" +
+            "Point this at a repo+branch you've already built and tested yourself (a template\n" +
+            "pipeline for that is available separately). This still builds it once locally just\n" +
+            "to populate the fields below, then opens a pull request against the registry repo.\n" +
+            "A reviewer approves and merges it; the marketplace's own CI independently re-validates\n" +
+            "and builds the real artifact regardless of your own pipeline's result, publishes it to\n" +
             "Azure Artifacts, and updates the registry automatically. No PAT needed — this uses your\n" +
             "existing git/gh sign-in (run 'gh auth login --web' once if you haven't already)."
         );
@@ -312,11 +362,78 @@ public class PluginManagerPublishUI extends JPanel {
             );
             return;
         }
+        cleanupClonedSource();
         selectedSourceDir = dir;
         builtJar = null;
         fileLabel.setText(selectedSourceDir.getAbsolutePath());
         fileLabel.setForeground(Color.BLACK);
         buildAndPopulateMetadata();
+    }
+
+    private void fetchFromRepo(ActionEvent e) {
+        String repoUrl = repoUrlField.getText().trim();
+        if (repoUrl.isEmpty()) {
+            showError("Enter a repo URL first.");
+            return;
+        }
+        String branch = repoBranchField.getText().trim();
+        if (branch.isEmpty()) branch = "main";
+        final String branchFinal = branch;
+
+        cleanupClonedSource();
+        fetchButton.setEnabled(false);
+        fileLabel.setText("Cloning " + repoUrl + " (" + branchFinal + ")...");
+        fileLabel.setForeground(Color.GRAY);
+
+        SwingWorker<File, Void> worker = new SwingWorker<File, Void>() {
+
+            @Override
+            protected File doInBackground() throws Exception {
+                return cliService.cloneContributorSource(repoUrl, branchFinal, s -> {});
+            }
+
+            @Override
+            protected void done() {
+                fetchButton.setEnabled(true);
+                File cloned = null;
+                try {
+                    cloned = get();
+                    if (!new File(cloned, "pom.xml").exists()) {
+                        deleteQuietly(cloned);
+                        fileLabel.setText("No source selected");
+                        fileLabel.setForeground(Color.GRAY);
+                        showError(
+                            "No pom.xml found at the root of " +
+                            repoUrl +
+                            " (branch " +
+                            branchFinal +
+                            ")."
+                        );
+                        return;
+                    }
+                    clonedSourceDir = cloned;
+                    selectedSourceDir = cloned;
+                    builtJar = null;
+                    fileLabel.setText(repoUrl + " @ " + branchFinal);
+                    fileLabel.setForeground(Color.BLACK);
+                    buildAndPopulateMetadata();
+                } catch (Exception ex) {
+                    LOG.log(Level.WARNING, "Clone failed", ex);
+                    fileLabel.setText("No source selected");
+                    fileLabel.setForeground(Color.GRAY);
+                    showError("Could not fetch that repo:\n" + rootMessage(ex));
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    /** Deletes the temp clone from fetchFromRepo(), if any -- never touches a locally-browsed folder. */
+    private void cleanupClonedSource() {
+        if (clonedSourceDir != null) {
+            deleteQuietly(clonedSourceDir);
+            clonedSourceDir = null;
+        }
     }
 
     private void browseReadme(ActionEvent e) {
@@ -614,6 +731,7 @@ public class PluginManagerPublishUI extends JPanel {
                     LOG.log(Level.SEVERE, "Submission failed", ex);
                     showError("Submission failed: " + rootMessage(ex));
                 }
+                cleanupClonedSource(); // no-op if resetForm() already ran on the success path above
                 submitButton.setEnabled(true);
             }
         };
@@ -636,8 +754,10 @@ public class PluginManagerPublishUI extends JPanel {
 
     private void resetForm() {
         submitButton.setEnabled(false);
-        fileLabel.setText("No folder selected");
+        cleanupClonedSource();
+        fileLabel.setText("No source selected");
         fileLabel.setForeground(Color.GRAY);
+        repoUrlField.setText("");
         readmeFileLabel.setText("No file selected");
         readmeFileLabel.setForeground(Color.GRAY);
         selectedSourceDir = null;

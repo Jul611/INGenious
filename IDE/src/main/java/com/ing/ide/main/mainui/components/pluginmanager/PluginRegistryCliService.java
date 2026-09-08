@@ -338,6 +338,70 @@ public class PluginRegistryCliService {
     // ─── Publish (contributor submission) ────────────────────────────
 
     /**
+     * Shallow-clones a contributor's own plugin source repo+branch into a
+     * fresh temp directory, so the rest of the Publish flow ({@link
+     * #buildLocally}, metadata extraction, staging) can run unchanged
+     * against it exactly as it would against a locally-browsed folder.
+     * Read-only -- no push, no fork resolution, unlike {@link
+     * #submitPlugin}'s own clone of the registry repo.
+     */
+    public File cloneContributorSource(String repoUrl, String branch, Consumer<String> progress)
+        throws IOException {
+        progress.accept("Cloning " + repoUrl + " (" + branch + ")...");
+        File destDir;
+        try {
+            destDir = Files.createTempDirectory("ingenious-contributor-source-").toFile();
+        } catch (IOException e) {
+            throw new CliException(
+                "Could not create a temp folder to clone into: " + e.getMessage(),
+                -1,
+                ""
+            );
+        }
+        ProcResult result;
+        try {
+            result =
+                run(
+                    List.of(
+                        "git",
+                        "clone",
+                        "--depth",
+                        "1",
+                        "--branch",
+                        branch,
+                        "--single-branch",
+                        repoUrl,
+                        destDir.getAbsolutePath()
+                    ),
+                    null,
+                    CLONE_TIMEOUT_MS,
+                    GH_OWN_GIT_CREDENTIAL_ENV
+                );
+        } catch (IOException e) {
+            throw new CliException(
+                "git clone failed for " + repoUrl + ": " + e.getMessage(),
+                -1,
+                ""
+            );
+        }
+        if (result.exitCode != 0) {
+            deleteRecursive(destDir);
+            throw new CliException(
+                "Could not clone " +
+                repoUrl +
+                " (branch " +
+                branch +
+                "). Check the URL and branch name, and that you have read access " +
+                "(run 'gh auth status' to check your sign-in).",
+                result.exitCode,
+                result.output
+            );
+        }
+        progress.accept("Cloned successfully.");
+        return destDir;
+    }
+
+    /**
      * Builds the contributor's plugin source with Maven, so the existing
      * jar-manifest metadata extraction in {@code PluginManagerPublishUI} can
      * run unchanged against a freshly-built jar instead of a hand-picked one.
