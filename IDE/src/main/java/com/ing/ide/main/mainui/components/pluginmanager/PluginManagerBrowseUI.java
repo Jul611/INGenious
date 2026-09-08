@@ -562,7 +562,7 @@ public class PluginManagerBrowseUI extends JPanel {
 
                 @Override
                 protected String doInBackground() {
-                    return service.fetchReadme(plugin.getName());
+                    return service.fetchReadme(plugin);
                 }
 
                 @Override

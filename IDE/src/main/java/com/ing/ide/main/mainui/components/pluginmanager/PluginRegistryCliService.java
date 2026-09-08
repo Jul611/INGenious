@@ -446,6 +446,33 @@ public class PluginRegistryCliService {
     }
 
     /**
+     * Reads a plugin project's effective {@code groupId} via Maven itself, the same
+     * way both ado-pipelines/*.yml check it -- not a naive pom.xml text/XML read,
+     * since a groupId can come from a parent pom or a property placeholder that
+     * only Maven itself resolves correctly.
+     */
+    public String readPomGroupId(File sourceProjectDir) throws IOException {
+        List<String> cmd = List.of(
+            "mvn",
+            "-q",
+            "-f",
+            new File(sourceProjectDir, "pom.xml").getAbsolutePath(),
+            "org.apache.maven.plugins:maven-help-plugin:3.4.0:evaluate",
+            "-Dexpression=project.groupId",
+            "-DforceStdout"
+        );
+        ProcResult result = run(cmd, sourceProjectDir, MVN_TIMEOUT_MS);
+        if (result.exitCode != 0 || result.output == null || result.output.trim().isEmpty()) {
+            throw new CliException(
+                "Could not read groupId from " + sourceProjectDir.getName() + "'s pom.xml",
+                result.exitCode,
+                result.output
+            );
+        }
+        return result.output.trim();
+    }
+
+    /**
      * Forks-or-branches, copies {@code stagedContentDir}'s contents into
      * {@code plugins/{pluginName}/} on a new branch, commits, pushes, and
      * opens a pull request against the configured registry repo.
@@ -702,13 +729,21 @@ public class PluginRegistryCliService {
     }
 
     /**
-     * Reads {@code plugins/<pluginName>/README.md} from the registry repo, the
-     * same way {@link #fetchRegistryJsonRaw} reads registry.json. Returns
-     * {@code null} (rather than throwing) when the file simply doesn't exist --
-     * a missing README is an expected, non-error state for a plugin entry,
-     * not something to interrupt the user over.
+     * Reads a plugin's description file from {@code plugins/<pluginName>/} in the
+     * registry repo, the same way {@link #fetchRegistryJsonRaw} reads registry.json.
+     * {@code readmeFileName} should come from the plugin's registry entry
+     * ({@link PluginRegistryEntry#getReadmeFileName()}) -- it's whatever the
+     * contributor originally called their *.md file, not necessarily README.md.
+     * Falls back to README.md when null/blank, for entries published before this
+     * field existed. Returns {@code null} (rather than throwing) when the file
+     * simply doesn't exist -- a missing README is an expected, non-error state
+     * for a plugin entry, not something to interrupt the user over.
      */
-    public String fetchPluginReadmeRaw(String pluginName, Consumer<String> progress)
+    public String fetchPluginReadmeRaw(
+        String pluginName,
+        String readmeFileName,
+        Consumer<String> progress
+    )
         throws IOException {
         PluginRegistryConfig config = new PluginRegistryConfig();
         String registryRepo = config.getRegistryRepo();
@@ -719,6 +754,9 @@ public class PluginRegistryCliService {
                 ""
             );
         }
+        String fileName = readmeFileName == null || readmeFileName.trim().isEmpty()
+            ? "README.md"
+            : readmeFileName.trim();
         progress.accept("Loading README for " + pluginName + "...");
         List<String> cmd = List.of(
             "gh",
@@ -727,7 +765,9 @@ public class PluginRegistryCliService {
             registryRepo +
             "/contents/plugins/" +
             pluginName +
-            "/README.md?ref=" +
+            "/" +
+            fileName +
+            "?ref=" +
             config.getRegistryBranch(),
             "-H",
             "Accept: application/vnd.github.raw"

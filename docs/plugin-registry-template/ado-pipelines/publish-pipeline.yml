@@ -114,11 +114,17 @@ steps:
       set -e
       NAME="$(pluginName)"
       python3 - "$NAME" "$(artifactId)" "$(pluginVersion)" "$(PLUGIN_MAVEN_GROUP_ID)" <<'PYEOF'
-      import json, sys, datetime
+      import json, sys, datetime, glob, os
       name, artifact_id, version, group_id = sys.argv[1:5]
       entry = json.load(open(f"plugins/{name}/.submission.json"))
       entry.update(name=name, version=version, mavenGroupId=group_id, mavenArtifactId=artifact_id)
       entry.setdefault("dateAdded", datetime.date.today().isoformat())
+      # validate-pipeline.yml already required exactly one *.md here before this could
+      # merge; record its actual name (not required to be README.md) so Browse knows
+      # what to fetch without guessing.
+      md_files = glob.glob(f"plugins/{name}/*.md")
+      if md_files:
+          entry["readmeFileName"] = os.path.basename(md_files[0])
       registry = json.load(open("registry.json"))
       registry["plugins"] = [p for p in registry.get("plugins", []) if p.get("name") != name] + [entry]
       json.dump(registry, open("registry.json", "w"), indent=2)

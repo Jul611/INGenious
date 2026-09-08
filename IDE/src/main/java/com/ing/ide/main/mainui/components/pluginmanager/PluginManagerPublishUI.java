@@ -43,7 +43,6 @@ public class PluginManagerPublishUI extends JPanel {
     private JLabel manifestVersionLabel;
     private JLabel manifestAuthorLabel;
     private JLabel manifestActionsLabel;
-    private JLabel readmeFileLabel;
     private JTextArea progressArea;
 
     private JTextField pluginNameField;
@@ -253,26 +252,6 @@ public class PluginManagerPublishUI extends JPanel {
 
         separator(mainPanel, gbc, row++);
 
-        // Step 3: Select README.md
-        resetLabelGbc(gbc, row);
-        gbc.gridwidth = 2;
-        JLabel step3 = new JLabel("Step 3: Select a README.md file");
-        step3.setFont(new Font("SansSerif", Font.BOLD, 14));
-        mainPanel.add(step3, gbc);
-        row++;
-
-        resetLabelGbc(gbc, row);
-        JButton browseReadmeButton = new JButton("Browse...");
-        browseReadmeButton.addActionListener(this::browseReadme);
-        mainPanel.add(browseReadmeButton, gbc);
-        resetValueGbc(gbc, row);
-        readmeFileLabel = new JLabel("No file selected");
-        readmeFileLabel.setForeground(Color.GRAY);
-        mainPanel.add(readmeFileLabel, gbc);
-        row++;
-
-        separator(mainPanel, gbc, row++);
-
         // Submit button
         resetLabelGbc(gbc, row);
         gbc.gridwidth = 2;
@@ -379,6 +358,7 @@ public class PluginManagerPublishUI extends JPanel {
         builtJar = null;
         fileLabel.setText(selectedSourceDir.getAbsolutePath());
         fileLabel.setForeground(Color.BLACK);
+        loadReadmeFromSource();
         buildAndPopulateMetadata();
     }
 
@@ -452,6 +432,7 @@ public class PluginManagerPublishUI extends JPanel {
                     builtJar = null;
                     fileLabel.setText(locationDesc);
                     fileLabel.setForeground(Color.BLACK);
+                    loadReadmeFromSource();
                     buildAndPopulateMetadata();
                 } catch (Exception ex) {
                     LOG.log(Level.WARNING, "Clone failed", ex);
@@ -472,20 +453,29 @@ public class PluginManagerPublishUI extends JPanel {
         }
     }
 
-    private void browseReadme(ActionEvent e) {
-        File startIn = selectedSourceDir != null
-            ? selectedSourceDir
-            : new File(System.getProperty("user.dir"));
-        JFileChooser fc = new JFileChooser(startIn);
-        fc.setDialogTitle("Select README.md");
-        fc.setFileFilter(
-            new javax.swing.filechooser.FileNameExtensionFilter("Markdown files (*.md)", "md")
+    /**
+     * Picks up the plugin's description from the same folder as pom.xml -- no separate
+     * selection step, status display, or requirement on the filename: just that there's
+     * exactly one *.md file there. (The staging step that runs at submit time always writes
+     * it out as README.md regardless of what it was originally called, which is what the CI
+     * checks look for -- so nothing downstream cares about the source name either.)
+     */
+    private void loadReadmeFromSource() {
+        File[] mdFiles = selectedSourceDir.listFiles(
+            (dir, name) -> name.toLowerCase().endsWith(".md")
         );
-        int result = fc.showOpenDialog(this);
-        if (result != JFileChooser.APPROVE_OPTION) return;
-        selectedReadme = fc.getSelectedFile();
-        readmeFileLabel.setText(selectedReadme.getAbsolutePath());
-        readmeFileLabel.setForeground(Color.BLACK);
+        if (mdFiles != null && mdFiles.length == 1) {
+            selectedReadme = mdFiles[0];
+        } else if (mdFiles != null && mdFiles.length > 1) {
+            selectedReadme = null;
+            showError(
+                "Multiple .md files found in the source folder -- keep exactly one so it's " +
+                "unambiguous which is the plugin's description."
+            );
+        } else {
+            selectedReadme = null;
+            showError("No .md file found in the source folder -- a description is required.");
+        }
         checkReady();
     }
 
@@ -512,7 +502,21 @@ public class PluginManagerPublishUI extends JPanel {
 
             @Override
             protected File doInBackground() throws Exception {
-                return cliService.buildLocally(selectedSourceDir, s -> {});
+                File jar = cliService.buildLocally(selectedSourceDir, s -> {});
+                String requiredGroupId = new PluginRegistryConfig().getMavenGroupId();
+                if (requiredGroupId != null && !requiredGroupId.trim().isEmpty()) {
+                    String actualGroupId = cliService.readPomGroupId(selectedSourceDir);
+                    if (!requiredGroupId.trim().equals(actualGroupId)) {
+                        throw new IOException(
+                            "pom.xml groupId '" +
+                            actualGroupId +
+                            "' must be '" +
+                            requiredGroupId.trim() +
+                            "' -- see Registry Settings."
+                        );
+                    }
+                }
+                return jar;
             }
 
             @Override
@@ -523,7 +527,7 @@ public class PluginManagerPublishUI extends JPanel {
                 } catch (Exception ex) {
                     LOG.log(Level.WARNING, "Local build failed", ex);
                     manifestEntryClassesLabel.setText("BUILD FAILED — see error");
-                    showError("Build failed:\n" + rootMessage(ex));
+                    showError("Could not use this source:\n" + rootMessage(ex));
                 }
                 checkReady();
             }
@@ -703,7 +707,6 @@ public class PluginManagerPublishUI extends JPanel {
 
         progressArea.setText("");
         submitButton.setEnabled(false);
-        String readmeContentFinal = readmeContent;
 
         SwingWorker<PluginRegistryCliService.PrResult, String> worker = new SwingWorker<PluginRegistryCliService.PrResult, String>() {
             File stagingDir;
@@ -714,8 +717,7 @@ public class PluginManagerPublishUI extends JPanel {
                 service.checkVersionIsNewer(entry.getName(), entry.getVersion());
 
                 publish("Staging submission files...");
-                stagingDir =
-                    service.stagePluginSubmission(selectedSourceDir, entry, readmeContentFinal);
+                stagingDir = service.stagePluginSubmission(selectedSourceDir, entry);
                 try {
                     return cliService.submitPlugin(
                         stagingDir,
@@ -795,8 +797,6 @@ public class PluginManagerPublishUI extends JPanel {
         fileLabel.setForeground(Color.GRAY);
         repoUrlField.setText("");
         repoPathField.setText("");
-        readmeFileLabel.setText("No file selected");
-        readmeFileLabel.setForeground(Color.GRAY);
         selectedSourceDir = null;
         builtJar = null;
         selectedReadme = null;

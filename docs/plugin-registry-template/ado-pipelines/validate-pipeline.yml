@@ -71,17 +71,28 @@ steps:
       set -e
       NAME="$(pluginName)"
       test -f "plugins/$NAME/pom.xml" || { echo "##vso[task.logissue type=error]Missing pom.xml"; exit 1; }
-      test -f "plugins/$NAME/README.md" || { echo "##vso[task.logissue type=error]Missing README.md"; exit 1; }
       test -f "plugins/$NAME/.submission.json" || { echo "##vso[task.logissue type=error]Missing .submission.json"; exit 1; }
+      # Description file: no naming requirement, just exactly one *.md -- matches the
+      # Publish tab, which never renames it during staging, so whatever the contributor
+      # called it is what actually lands here.
+      MD_FILES=$(find "plugins/$NAME" -maxdepth 1 -iname '*.md')
+      MD_COUNT=$(echo "$MD_FILES" | grep -c . || true)
+      if [ "$MD_COUNT" -eq 0 ]; then
+        echo "##vso[task.logissue type=error]No .md file found in plugins/$NAME -- a description is required"
+        exit 1
+      elif [ "$MD_COUNT" -gt 1 ]; then
+        echo "##vso[task.logissue type=error]Multiple .md files found in plugins/$NAME -- keep exactly one so it's unambiguous which is the description"
+        exit 1
+      fi
+      echo "##vso[task.setvariable variable=descriptionFile]$MD_FILES"
     displayName: "Required files present"
     condition: ne(variables['pluginName'], '')
 
   - script: |
       set -e
-      NAME="$(pluginName)"
-      WORDS=$(wc -w < "plugins/$NAME/README.md")
-      [ "$WORDS" -ge 50 ] || { echo "##vso[task.logissue type=error]README.md has only $WORDS words (minimum 50)"; exit 1; }
-    displayName: "README has at least 50 words"
+      WORDS=$(wc -w < "$(descriptionFile)")
+      [ "$WORDS" -ge 50 ] || { echo "##vso[task.logissue type=error]$(descriptionFile) has only $WORDS words (minimum 50)"; exit 1; }
+    displayName: "Description has at least 50 words"
     condition: ne(variables['pluginName'], '')
 
   - script: |

@@ -34,7 +34,9 @@ public class PluginRegistryEntry {
     private String dateAdded;
     private boolean featured;
     private String githubRepo;
-    private String readmeUrl;
+
+    /** The actual filename of the plugin's description .md file in the registry repo -- not required to be README.md. */
+    private String readmeFileName;
 
     // For publishing: the pluginEntryClasses from the JAR manifest
     private String entryClasses;
@@ -227,12 +229,12 @@ public class PluginRegistryEntry {
         this.featured = featured;
     }
 
-    public String getReadmeUrl() {
-        return readmeUrl;
+    public String getReadmeFileName() {
+        return readmeFileName;
     }
 
-    public void setReadmeUrl(String readmeUrl) {
-        this.readmeUrl = readmeUrl;
+    public void setReadmeFileName(String readmeFileName) {
+        this.readmeFileName = readmeFileName;
     }
 
     public String getGithubRepo() {

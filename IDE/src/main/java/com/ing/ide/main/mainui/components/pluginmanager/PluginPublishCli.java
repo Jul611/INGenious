@@ -58,7 +58,6 @@ public final class PluginPublishCli {
         }
         File pom = new File(pluginDir, "pom.xml");
         File submissionFile = new File(pluginDir, ".submission.json");
-        File readmeFile = new File(pluginDir, "README.md");
         if (!pom.exists()) throw new IOException(
             "Missing pom.xml in " + pluginDir.getAbsolutePath()
         );
@@ -69,16 +68,30 @@ public final class PluginPublishCli {
                 " -- same file the contributor pipeline template requires; author it the same way."
             );
         }
-        if (!readmeFile.exists()) {
-            throw new IOException("Missing README.md in " + pluginDir.getAbsolutePath());
+
+        // Description file: no naming requirement, just exactly one *.md, same as the
+        // Publish tab's loadReadmeFromSource() -- staging keeps whatever it's called.
+        File[] mdFiles = pluginDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".md"));
+        if (mdFiles == null || mdFiles.length == 0) {
+            throw new IOException("No .md file found in " + pluginDir.getAbsolutePath());
         }
+        if (mdFiles.length > 1) {
+            throw new IOException(
+                "Multiple .md files found in " +
+                pluginDir.getAbsolutePath() +
+                " -- keep exactly one so it's unambiguous which is the description."
+            );
+        }
+        File readmeFile = mdFiles[0];
 
         String readmeContent = new String(Files.readAllBytes(readmeFile.toPath()), "UTF-8");
         int wordCount = readmeContent.trim().isEmpty()
             ? 0
             : readmeContent.trim().split("\\s+").length;
         if (wordCount < 50) {
-            throw new IOException("README.md must be at least 50 words, found " + wordCount + ".");
+            throw new IOException(
+                readmeFile.getName() + " must be at least 50 words, found " + wordCount + "."
+            );
         }
 
         ObjectMapper mapper = new ObjectMapper();
@@ -89,6 +102,20 @@ public final class PluginPublishCli {
         PluginRegistryCliService cliService = new PluginRegistryCliService();
 
         File jar = cliService.buildLocally(pluginDir, progress);
+
+        String requiredGroupId = new PluginRegistryConfig().getMavenGroupId();
+        if (requiredGroupId != null && !requiredGroupId.trim().isEmpty()) {
+            String actualGroupId = cliService.readPomGroupId(pluginDir);
+            if (!requiredGroupId.trim().equals(actualGroupId)) {
+                throw new IOException(
+                    "pom.xml groupId '" +
+                    actualGroupId +
+                    "' must be '" +
+                    requiredGroupId.trim() +
+                    "'."
+                );
+            }
+        }
 
         String manifestName = null, manifestVersion = null, entryClasses = null;
         try (JarFile jf = new JarFile(jar)) {
@@ -137,7 +164,7 @@ public final class PluginPublishCli {
         service.checkVersionIsNewer(entry.getName(), entry.getVersion());
 
         progress.accept("Staging submission files...");
-        File stagingDir = service.stagePluginSubmission(pluginDir, entry, readmeContent);
+        File stagingDir = service.stagePluginSubmission(pluginDir, entry);
         PluginRegistryCliService.PrResult result;
         try {
             result =

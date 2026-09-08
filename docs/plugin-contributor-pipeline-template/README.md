@@ -35,8 +35,10 @@ always re-validates and re-builds regardless of what happened here.
    unless that's changed) and, if their plugin's `pom.xml` isn't at the repo
    root, the right `PLUGIN_PATH` value to fill in.
 3. Their plugin needs a `.submission.json` at its root (or wherever
-   `PLUGIN_PATH` points) alongside `pom.xml` and `README.md` — this is the
-   metadata INGenious's Publish tab and the registry submission flow expect.
+   `PLUGIN_PATH` points) alongside `pom.xml` and a `.md` file describing the
+   plugin — this is the metadata INGenious's Publish tab and the registry
+   submission flow expect. The description file doesn't have to be named
+   `README.md` specifically, just be the only `.md` file there.
 
 No ADO credentials of any kind are needed for this template — it never
 talks to the Azure Artifacts feed.

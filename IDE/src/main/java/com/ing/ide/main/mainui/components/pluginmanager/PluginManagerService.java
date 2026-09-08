@@ -93,14 +93,18 @@ public class PluginManagerService {
      * is for optional detail display, not something worth interrupting the
      * user over.
      */
-    public String fetchReadme(String pluginName) {
+    public String fetchReadme(PluginRegistryEntry entry) {
         try {
-            return cliService.fetchPluginReadmeRaw(pluginName, s -> {});
+            return cliService.fetchPluginReadmeRaw(
+                entry.getName(),
+                entry.getReadmeFileName(),
+                s -> {}
+            );
         } catch (Exception e) {
             LOG.log(
                 Level.FINE,
                 "README fetch failed for {0}: {1}",
-                new Object[] { pluginName, e.getMessage() }
+                new Object[] { entry.getName(), e.getMessage() }
             );
             return null;
         }
@@ -325,19 +329,18 @@ public class PluginManagerService {
 
     /**
      * Copies the contributor's plugin source project into a fresh staging
-     * directory alongside a README and a {@code .submission.json} sidecar —
-     * everything {@link #entryToMap} already knows, minus what CI derives
-     * itself (name from the directory it lands in, version from the built
-     * POM, Maven coordinates/dateAdded/featured from the merge pipeline).
-     * {@link PluginRegistryCliService#submitPlugin} copies this directory's
-     * contents into a PR branch; the caller is responsible for deleting it
-     * once the submission completes.
+     * directory alongside a {@code .submission.json} sidecar — everything
+     * {@link #entryToMap} already knows, minus what CI derives itself (name
+     * from the directory it lands in, version from the built POM, Maven
+     * coordinates/dateAdded/featured from the merge pipeline). The
+     * description (*.md) file is whatever {@code sourceProjectDir} already
+     * has, copied as-is under its original name -- nothing renames it to
+     * README.md, so a contributor's own filename choice survives all the
+     * way into the registry repo. {@link PluginRegistryCliService#submitPlugin}
+     * copies this directory's contents into a PR branch; the caller is
+     * responsible for deleting it once the submission completes.
      */
-    public File stagePluginSubmission(
-        File sourceProjectDir,
-        PluginRegistryEntry entry,
-        String readmeContent
-    )
+    public File stagePluginSubmission(File sourceProjectDir, PluginRegistryEntry entry)
         throws IOException {
         File stagingDir = Files.createTempDirectory("ingenious-plugin-stage-").toFile();
         copyDirectory(
@@ -345,7 +348,6 @@ public class PluginManagerService {
             stagingDir,
             Set.of("target", ".git", ".idea", "node_modules")
         );
-        Files.write(new File(stagingDir, "README.md").toPath(), readmeContent.getBytes("UTF-8"));
         Map<String, Object> submission = entryToSubmissionMap(entry);
         mapper
             .writerWithDefaultPrettyPrinter()

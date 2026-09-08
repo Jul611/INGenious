@@ -58,15 +58,27 @@ steps:
   - script: |
       set -e
       test -f "$(PLUGIN_PATH)/pom.xml" || { echo "##vso[task.logissue type=error]Missing pom.xml"; exit 1; }
-      test -f "$(PLUGIN_PATH)/README.md" || { echo "##vso[task.logissue type=error]Missing README.md"; exit 1; }
       test -f "$(PLUGIN_PATH)/.submission.json" || { echo "##vso[task.logissue type=error]Missing .submission.json"; exit 1; }
+      # Description file: no naming requirement, just exactly one *.md in PLUGIN_PATH --
+      # matches the Publish tab, which reads whatever single .md file is there and always
+      # writes it out as README.md during staging, regardless of what it was called here.
+      MD_FILES=$(find "$(PLUGIN_PATH)" -maxdepth 1 -iname '*.md')
+      MD_COUNT=$(echo "$MD_FILES" | grep -c . || true)
+      if [ "$MD_COUNT" -eq 0 ]; then
+        echo "##vso[task.logissue type=error]No .md file found in $(PLUGIN_PATH) -- a description is required"
+        exit 1
+      elif [ "$MD_COUNT" -gt 1 ]; then
+        echo "##vso[task.logissue type=error]Multiple .md files found in $(PLUGIN_PATH) -- keep exactly one so it's unambiguous which is the description"
+        exit 1
+      fi
+      echo "##vso[task.setvariable variable=descriptionFile]$MD_FILES"
     displayName: "Required files present"
 
   - script: |
       set -e
-      WORDS=$(wc -w < "$(PLUGIN_PATH)/README.md")
-      [ "$WORDS" -ge 50 ] || { echo "##vso[task.logissue type=error]README.md has only $WORDS words (minimum 50)"; exit 1; }
-    displayName: "README has at least 50 words"
+      WORDS=$(wc -w < "$(descriptionFile)")
+      [ "$WORDS" -ge 50 ] || { echo "##vso[task.logissue type=error]$(descriptionFile) has only $WORDS words (minimum 50)"; exit 1; }
+    displayName: "Description has at least 50 words"
 
   - script: |
       set -e
