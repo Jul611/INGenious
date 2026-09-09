@@ -1,10 +1,19 @@
 package com.ing.ide.main.mainui.components.pluginmanager;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 /**
  * Data model for a plugin entry in the marketplace registry.json.
+ * <p>
+ * {@code @JsonIgnoreProperties(ignoreUnknown = true)} matters here specifically:
+ * registry.json is written by publish-pipeline.yml over time, so already-published
+ * entries can carry fields this class no longer declares (e.g. a removed {@code
+ * license} field) -- without this, Jackson's default strict deserialization throws
+ * on the very first unrecognized property and the entire registry fetch fails,
+ * not just that one field.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PluginRegistryEntry {
     private String name;
     private String displayName;
