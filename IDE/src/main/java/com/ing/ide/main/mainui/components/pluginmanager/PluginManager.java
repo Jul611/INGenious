@@ -2,22 +2,24 @@ package com.ing.ide.main.mainui.components.pluginmanager;
 
 import com.ing.ide.main.mainui.AppMainFrame;
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import javax.swing.*;
 
 /**
- * Main Plugin Manager tab component.
- * Contains a JTabbedPane with Browse (Marketplace), Installed, and Publish tabs.
- * <p>
- * For the PoC, this is self-contained and reads from a local registry.json.
- * In production, it would fetch from a remote GitHub/Azure DevOps URL.
- * </p>
+ * Main Marketplace window -- Browse, Installed, and Publish tabs, covering both plugins and
+ * Reusable Components. Browse and Publish host both artifact types (Browse merges both into
+ * one filterable list; Publish swaps between two separate forms via a type selector);
+ * Installed stays plugin-only, since a Reusable Component's installed state already lives in
+ * Test Design's own Shared Reusable Components tree.
  */
 public class PluginManager extends JPanel {
     private final AppMainFrame mainFrame;
     private final PluginManagerService service;
+    private final ReusableComponentService reusableComponentService;
     private final PluginManagerBrowseUI browseUI;
     private final PluginManagerInstalledUI installedUI;
     private final PluginManagerPublishUI publishUI;
+    private final ReusableComponentPublishUI reusableComponentPublishUI;
     private final JLabel statusLabel;
     private final JButton installFromFileButton;
     private final JButton registrySettingsButton;
@@ -31,23 +33,27 @@ public class PluginManager extends JPanel {
     public PluginManager(AppMainFrame mainFrame) {
         this.mainFrame = mainFrame;
         this.service = new PluginManagerService();
+        this.reusableComponentService = new ReusableComponentService();
 
         setLayout(new BorderLayout());
 
         // Tabbed pane
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        // Browse tab
-        this.browseUI = new PluginManagerBrowseUI(service, this::refreshInstalled);
+        // Browse tab -- plugins and Reusable Components together, filterable by type
+        this.browseUI =
+            new PluginManagerBrowseUI(service, reusableComponentService, this::refreshInstalled);
         tabbedPane.addTab("Browse", browseUI);
 
-        // Installed tab
+        // Installed tab -- plugins only; a Reusable Component's "installed" state is
+        // already visible in Test Design's own Shared Reusable Components tree
         this.installedUI = new PluginManagerInstalledUI(service, this::refreshInstalled);
         tabbedPane.addTab("Installed", installedUI);
 
-        // Publish tab
+        // Publish tab -- one tab, a type selector swaps which form is showing
         this.publishUI = new PluginManagerPublishUI(service, this::refreshInstalled);
-        tabbedPane.addTab("Publish", publishUI);
+        this.reusableComponentPublishUI = new ReusableComponentPublishUI();
+        tabbedPane.addTab("Publish", buildCombinedPublishTab());
 
         add(tabbedPane, BorderLayout.CENTER);
 
@@ -94,6 +100,36 @@ public class PluginManager extends JPanel {
      */
     private void refreshInstalled() {
         installedUI.loadData();
+    }
+
+    /**
+     * One Publish tab, a type selector at top swaps which form is showing via CardLayout --
+     * the two forms stay fully separate ({@link PluginManagerPublishUI} vs. {@link
+     * ReusableComponentPublishUI}, no shared/conditional fields), only the container is
+     * unified.
+     */
+    private JPanel buildCombinedPublishTab() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JPanel selectorRow = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 8));
+        selectorRow.add(new JLabel("Publish a:"));
+        JComboBox<String> typeSelector = new JComboBox<>(
+            new String[] { "Plugin", "Reusable Component" }
+        );
+        selectorRow.add(typeSelector);
+        panel.add(selectorRow, BorderLayout.NORTH);
+
+        CardLayout cardLayout = new CardLayout();
+        JPanel cards = new JPanel(cardLayout);
+        cards.add(publishUI, "Plugin");
+        cards.add(reusableComponentPublishUI, "Reusable Component");
+        panel.add(cards, BorderLayout.CENTER);
+
+        typeSelector.addActionListener(
+            e -> cardLayout.show(cards, (String) typeSelector.getSelectedItem())
+        );
+
+        return panel;
     }
 
     /**

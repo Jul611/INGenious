@@ -17,24 +17,37 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
 /**
- * Browse tab for the Plugin Manager marketplace.
- * Shows available plugins from the registry as an expandable card list, each
- * with an Install button. Includes pre-install conflict detection and
- * version compatibility checks.
+ * Browse tab for the marketplace -- plugins and Reusable Components together in one
+ * expandable card list, filterable by type (each has a completely different install
+ * mechanism -- Maven artifact resolution vs. a direct file copy -- so they stay two card
+ * shapes even though they share one list and one search box). Includes pre-install conflict
+ * detection and version compatibility checks for plugins.
  */
 public class PluginManagerBrowseUI extends JPanel {
     private static final Logger LOG = Logger.getLogger(PluginManagerBrowseUI.class.getName());
+    private static final String FILTER_ALL = "All";
+    private static final String FILTER_PLUGINS = "Plugins";
+    private static final String FILTER_COMPONENTS = "Reusable Components";
 
     private final PluginManagerService service;
+    private final ReusableComponentService reusableComponentService;
     private final Runnable onInstallCallback;
     private List<PluginRegistryEntry> plugins;
-    private final List<PluginCard> cards = new ArrayList<>();
+    private List<ReusableComponentEntry> components;
+    private final List<PluginCard> pluginCardList = new ArrayList<>();
+    private final List<ReusableComponentCard> componentCardList = new ArrayList<>();
     private JPanel cardsContainer;
     private JLabel statusLabel;
     private JTextField searchField;
+    private JComboBox<String> typeFilter;
 
-    public PluginManagerBrowseUI(PluginManagerService service, Runnable onInstallCallback) {
+    public PluginManagerBrowseUI(
+        PluginManagerService service,
+        ReusableComponentService reusableComponentService,
+        Runnable onInstallCallback
+    ) {
         this.service = service;
+        this.reusableComponentService = reusableComponentService;
         this.onInstallCallback = onInstallCallback;
         setLayout(new BorderLayout());
         initUI();
@@ -74,9 +87,15 @@ public class PluginManagerBrowseUI extends JPanel {
             );
         headerPanel.add(searchField, BorderLayout.CENTER);
 
+        JPanel eastControls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        typeFilter =
+            new JComboBox<>(new String[] { FILTER_ALL, FILTER_PLUGINS, FILTER_COMPONENTS });
+        typeFilter.addActionListener(e -> filterCards());
+        eastControls.add(typeFilter);
         JButton refreshButton = new JButton("Refresh");
         refreshButton.addActionListener(e -> loadData());
-        headerPanel.add(refreshButton, BorderLayout.EAST);
+        eastControls.add(refreshButton);
+        headerPanel.add(eastControls, BorderLayout.EAST);
 
         add(headerPanel, BorderLayout.NORTH);
 
@@ -93,7 +112,7 @@ public class PluginManagerBrowseUI extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         // Status bar
-        statusLabel = new JLabel("Loading plugins...");
+        statusLabel = new JLabel("Loading...");
         statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 12, 8, 12));
         Color disabledFg = UIManager.getColor("Label.disabledForeground");
         if (disabledFg != null) statusLabel.setForeground(disabledFg);
@@ -101,12 +120,13 @@ public class PluginManagerBrowseUI extends JPanel {
     }
 
     public void loadData() {
-        statusLabel.setText("Loading plugins...");
+        statusLabel.setText("Loading...");
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
             @Override
             protected Void doInBackground() {
                 plugins = service.fetchRegistry();
+                components = reusableComponentService.fetchRegistry();
                 return null;
             }
 
@@ -118,13 +138,39 @@ public class PluginManagerBrowseUI extends JPanel {
         worker.execute();
     }
 
+    /** Just enough of a common shape to sort plugins and Reusable Components into one list together. */
+    private static final class BrowseItem {
+        final String displayName;
+        final boolean featured;
+        final Object entry;
+
+        BrowseItem(String displayName, boolean featured, Object entry) {
+            this.displayName = displayName;
+            this.featured = featured;
+            this.entry = entry;
+        }
+    }
+
     private void populateCards() {
         cardsContainer.removeAll();
-        cards.clear();
+        pluginCardList.clear();
+        componentCardList.clear();
 
-        if (plugins == null || plugins.isEmpty()) {
+        List<BrowseItem> items = new ArrayList<>();
+        if (plugins != null) {
+            for (PluginRegistryEntry p : plugins) {
+                items.add(new BrowseItem(p.getDisplayName(), p.isFeatured(), p));
+            }
+        }
+        if (components != null) {
+            for (ReusableComponentEntry c : components) {
+                items.add(new BrowseItem(c.getDisplayName(), c.isFeatured(), c));
+            }
+        }
+
+        if (items.isEmpty()) {
             statusLabel.setText(
-                "No plugins found. If this is unexpected, run 'gh auth status' -- " +
+                "Nothing published yet. If this is unexpected, run 'gh auth status' -- " +
                 "if that's fine too, the marketplace may be misconfigured; contact your administrator."
             );
             cardsContainer.revalidate();
@@ -132,34 +178,60 @@ public class PluginManagerBrowseUI extends JPanel {
             return;
         }
 
-        plugins.sort(
+        items.sort(
             (a, b) -> {
-                if (a.isFeatured() != b.isFeatured()) {
-                    return a.isFeatured() ? -1 : 1;
-                }
-                return a.getDisplayName().compareToIgnoreCase(b.getDisplayName());
+                if (a.featured != b.featured) return a.featured ? -1 : 1;
+                return a.displayName.compareToIgnoreCase(b.displayName);
             }
         );
 
-        for (PluginRegistryEntry plugin : plugins) {
-            PluginCard card = new PluginCard(plugin);
-            cards.add(card);
-            cardsContainer.add(card);
+        for (BrowseItem item : items) {
+            if (item.entry instanceof PluginRegistryEntry) {
+                PluginCard card = new PluginCard((PluginRegistryEntry) item.entry);
+                pluginCardList.add(card);
+                cardsContainer.add(card);
+            } else {
+                ReusableComponentCard card = new ReusableComponentCard(
+                    (ReusableComponentEntry) item.entry
+                );
+                componentCardList.add(card);
+                cardsContainer.add(card);
+            }
         }
-        statusLabel.setText(plugins.size() + " plugin(s) available");
+        statusLabel.setText(items.size() + " item(s) available");
         cardsContainer.revalidate();
         cardsContainer.repaint();
     }
 
     private void filterCards() {
         String query = searchField.getText().trim().toLowerCase();
-        for (PluginCard card : cards) {
+        String type = (String) typeFilter.getSelectedItem();
+        boolean showPlugins = !FILTER_COMPONENTS.equals(type);
+        boolean showComponents = !FILTER_PLUGINS.equals(type);
+
+        for (PluginCard card : pluginCardList) {
             boolean matches =
-                query.isEmpty() ||
-                card.plugin.getDisplayName().toLowerCase().contains(query) ||
+                showPlugins &&
                 (
-                    card.plugin.getAuthor() != null &&
-                    card.plugin.getAuthor().toLowerCase().contains(query)
+                    query.isEmpty() ||
+                    card.plugin.getDisplayName().toLowerCase().contains(query) ||
+                    (
+                        card.plugin.getAuthor() != null &&
+                        card.plugin.getAuthor().toLowerCase().contains(query)
+                    )
+                );
+            card.setVisible(matches);
+        }
+        for (ReusableComponentCard card : componentCardList) {
+            boolean matches =
+                showComponents &&
+                (
+                    query.isEmpty() ||
+                    card.component.getDisplayName().toLowerCase().contains(query) ||
+                    (
+                        card.component.getAuthor() != null &&
+                        card.component.getAuthor().toLowerCase().contains(query)
+                    )
                 );
             card.setVisible(matches);
         }
@@ -359,6 +431,43 @@ public class PluginManagerBrowseUI extends JPanel {
         worker.execute();
     }
 
+    private void installComponent(ReusableComponentEntry entry, JButton button) {
+        button.setEnabled(false);
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                reusableComponentService.installComponent(entry, s -> {});
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                button.setEnabled(true);
+                try {
+                    get();
+                    JOptionPane.showMessageDialog(
+                        PluginManagerBrowseUI.this,
+                        "Installed \"" +
+                        entry.getDisplayName() +
+                        "\" into your Shared Reusable Components.",
+                        "Installed",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                } catch (Exception e) {
+                    LOG.log(Level.WARNING, "Component install failed", e);
+                    JOptionPane.showMessageDialog(
+                        PluginManagerBrowseUI.this,
+                        "Install failed:\n" + rootMessage(e),
+                        "Install Failed",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        };
+        worker.execute();
+    }
+
     private static String rootMessage(Throwable t) {
         Throwable cur = t;
         while (cur.getCause() != null && cur.getCause() != cur) cur = cur.getCause();
@@ -429,6 +538,14 @@ public class PluginManagerBrowseUI extends JPanel {
             return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
         }
 
+        private JLabel buildTypeBadge(String text, Color fg) {
+            JLabel badge = new JLabel(text);
+            badge.setFont(badge.getFont().deriveFont(Font.BOLD, 10f));
+            badge.setForeground(fg);
+            badge.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+            return badge;
+        }
+
         private JPanel buildSummaryRow() {
             JPanel row = new JPanel(new BorderLayout(10, 0));
             row.setOpaque(false);
@@ -440,6 +557,7 @@ public class PluginManagerBrowseUI extends JPanel {
             JPanel titleLine = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             titleLine.setOpaque(false);
             titleLine.add(chevron);
+            titleLine.add(buildTypeBadge("PLUGIN", TableColor.ING_PURPLE));
             if (plugin.isFeatured()) {
                 JLabel star = new JLabel("★ ");
                 star.setForeground(TableColor.ING_ORANGE);
@@ -606,6 +724,98 @@ public class PluginManagerBrowseUI extends JPanel {
                 }
             };
             worker.execute();
+        }
+    }
+
+    /** One Reusable Component's row -- simpler than a plugin card, no build/manifest/README fetch, just the metadata already in the registry. */
+    private class ReusableComponentCard extends JPanel {
+        private final ReusableComponentEntry component;
+
+        ReusableComponentCard(ReusableComponentEntry component) {
+            this.component = component;
+            setLayout(new BorderLayout(10, 4));
+            setAlignmentX(Component.LEFT_ALIGNMENT);
+            setBackground(UIManager.getColor("Panel.background"));
+            Color border = UIManager.getColor("Component.borderColor");
+            setBorder(
+                BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(
+                        0,
+                        0,
+                        1,
+                        0,
+                        border != null ? border : Color.GRAY
+                    ),
+                    BorderFactory.createEmptyBorder(10, 12, 10, 12)
+                )
+            );
+
+            JPanel textColumn = new JPanel();
+            textColumn.setOpaque(false);
+            textColumn.setLayout(new BoxLayout(textColumn, BoxLayout.Y_AXIS));
+
+            JPanel titleLine = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            titleLine.setOpaque(false);
+            JLabel badge = new JLabel("REUSABLE COMPONENT");
+            badge.setFont(badge.getFont().deriveFont(Font.BOLD, 10f));
+            badge.setForeground(TableColor.ING_ORANGE);
+            badge.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+            titleLine.add(badge);
+            if (component.isFeatured()) {
+                JLabel star = new JLabel("★ ");
+                star.setForeground(TableColor.ING_ORANGE);
+                titleLine.add(star);
+            }
+            JLabel nameLabel = new JLabel(component.getDisplayName());
+            nameLabel.setFont(nameLabel.getFont().deriveFont(Font.BOLD, 13f));
+            titleLine.add(nameLabel);
+            textColumn.add(titleLine);
+
+            String author = component.getAuthor() != null && !component.getAuthor().isEmpty()
+                ? component.getAuthor()
+                : "Unknown author";
+            JLabel metaLabel = new JLabel(author);
+            metaLabel.setFont(metaLabel.getFont().deriveFont(11f));
+            Color disabledFg = UIManager.getColor("Label.disabledForeground");
+            if (disabledFg != null) metaLabel.setForeground(disabledFg);
+            metaLabel.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
+            textColumn.add(metaLabel);
+
+            if (component.getDescription() != null && !component.getDescription().isEmpty()) {
+                JTextArea description = new JTextArea(component.getDescription());
+                description.setEditable(false);
+                description.setLineWrap(true);
+                description.setWrapStyleWord(true);
+                description.setOpaque(false);
+                description.setFont(description.getFont().deriveFont(12f));
+                description.setAlignmentX(Component.LEFT_ALIGNMENT);
+                textColumn.add(Box.createVerticalStrut(6));
+                textColumn.add(description);
+            }
+
+            if (component.getTags() != null && !component.getTags().isEmpty()) {
+                JLabel tagsLabel = new JLabel(
+                    "<html><small>" + String.join(", ", component.getTags()) + "</small></html>"
+                );
+                textColumn.add(Box.createVerticalStrut(4));
+                textColumn.add(tagsLabel);
+            }
+
+            add(textColumn, BorderLayout.CENTER);
+
+            JButton installButton = new JButton("Install");
+            installButton.setBackground(TableColor.ING_PURPLE);
+            installButton.setForeground(Color.WHITE);
+            installButton.setFocusPainted(false);
+            installButton.setOpaque(true);
+            installButton.setBorderPainted(false);
+            installButton.addActionListener(e -> installComponent(component, installButton));
+            add(installButton, BorderLayout.EAST);
+        }
+
+        @Override
+        public Dimension getMaximumSize() {
+            return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
         }
     }
 }

@@ -4,7 +4,7 @@ import com.ing.datalib.component.Project;
 import com.ing.datalib.component.Scenario;
 import com.ing.datalib.component.TestCase;
 import com.ing.datalib.exception.TestCaseConversionException;
-import com.ing.ide.main.mainui.components.pluginmanager.ReusableComponentManagerUI;
+import com.ing.ide.main.mainui.components.pluginmanager.ReusableComponentPublishUI;
 import com.ing.ide.main.mainui.components.testdesign.TestDesign;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.GroupNode;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.ScenarioNode;
@@ -1170,7 +1170,7 @@ public class SharedReusableTree extends ProjectTree {
                 );
                 return;
             }
-            ReusableComponentManagerUI.openPublishDialog(
+            ReusableComponentPublishUI.openInDialog(
                 SharedReusableTree.this.getTree(),
                 node.getScenario().getName()
             );
