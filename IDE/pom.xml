@@ -45,6 +45,12 @@
 			<version>${project.version}</version>
 			<type>jar</type>
 		</dependency>
+		<!-- Renders plugin READMEs as HTML in the Marketplace Browse tab, instead of raw Markdown text -->
+		<dependency>
+			<groupId>org.commonmark</groupId>
+			<artifactId>commonmark</artifactId>
+			<version>${commonmark.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>com.ing</groupId>
 			<artifactId>ingenious-datalib</artifactId>

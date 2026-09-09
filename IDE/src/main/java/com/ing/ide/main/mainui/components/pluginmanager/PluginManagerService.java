@@ -458,7 +458,6 @@ public class PluginManagerService {
         m.put("actionCount", entry.getActions() != null ? entry.getActions().size() : 0);
         m.put("actions", entry.getActions() != null ? entry.getActions() : new ArrayList<>());
         m.put("homepageUrl", entry.getHomepageUrl() != null ? entry.getHomepageUrl() : "");
-        m.put("license", entry.getLicense() != null ? entry.getLicense() : "MIT");
         m.put("releaseNotes", entry.getReleaseNotes() != null ? entry.getReleaseNotes() : "");
         m.put(
             "dateAdded",

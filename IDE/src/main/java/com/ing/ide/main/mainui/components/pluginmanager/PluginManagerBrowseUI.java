@@ -12,6 +12,9 @@ import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.html.HTMLDocument;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 
 /**
  * Browse tab for the Plugin Manager marketplace.
@@ -121,8 +124,8 @@ public class PluginManagerBrowseUI extends JPanel {
 
         if (plugins == null || plugins.isEmpty()) {
             statusLabel.setText(
-                "No plugins found. If this is unexpected, run 'gh auth status' and check the " +
-                "registry repo in Registry Settings."
+                "No plugins found. If this is unexpected, run 'gh auth status' -- " +
+                "if that's fine too, the marketplace may be misconfigured; contact your administrator."
             );
             cardsContainer.revalidate();
             cardsContainer.repaint();
@@ -367,7 +370,7 @@ public class PluginManagerBrowseUI extends JPanel {
         private final PluginRegistryEntry plugin;
         private final JLabel chevron;
         private final JPanel detailPanel;
-        private final JTextArea readmeArea;
+        private final JEditorPane readmeArea;
         private boolean expanded = false;
         private boolean readmeRequested = false;
 
@@ -398,12 +401,11 @@ public class PluginManagerBrowseUI extends JPanel {
             add(buildSummaryRow(), BorderLayout.NORTH);
 
             detailPanel = buildDetailPanel();
-            readmeArea = new JTextArea();
+            readmeArea = new JEditorPane();
+            readmeArea.setContentType("text/html");
             readmeArea.setEditable(false);
-            readmeArea.setLineWrap(true);
-            readmeArea.setWrapStyleWord(true);
             readmeArea.setOpaque(false);
-            readmeArea.setFont(readmeArea.getFont().deriveFont(12f));
+            styleReadmeArea();
 
             detailPanel.setVisible(false);
             add(detailPanel, BorderLayout.CENTER);
@@ -500,9 +502,6 @@ public class PluginManagerBrowseUI extends JPanel {
             }
 
             StringBuilder meta = new StringBuilder();
-            if (plugin.getLicense() != null && !plugin.getLicense().isEmpty()) {
-                meta.append("License: ").append(plugin.getLicense()).append("   ");
-            }
             if (plugin.getMinEngineVersion() != null && !plugin.getMinEngineVersion().isEmpty()) {
                 meta.append("Min engine: ").append(plugin.getMinEngineVersion()).append("   ");
             }
@@ -555,6 +554,24 @@ public class PluginManagerBrowseUI extends JPanel {
             cardsContainer.repaint();
         }
 
+        /** Keeps the HTML view's font/color matching the current Swing theme, since JEditorPane doesn't pick that up on its own. */
+        private void styleReadmeArea() {
+            Font base = readmeArea.getFont();
+            Color fg = UIManager.getColor("Label.foreground");
+            HTMLDocument doc = (HTMLDocument) readmeArea.getDocument();
+            doc
+                .getStyleSheet()
+                .addRule(
+                    "body { font-family: " +
+                    base.getFamily() +
+                    "; font-size: " +
+                    base.getSize() +
+                    "pt; color: " +
+                    (fg != null ? String.format("#%06x", fg.getRGB() & 0xFFFFFF) : "inherit") +
+                    "; } p { margin: 4px 0; } h1, h2, h3 { margin: 8px 0 4px; }"
+                );
+        }
+
         private void loadReadmeAsync() {
             readmeArea.setText("Loading README...");
             detailPanel.add(readmeArea);
@@ -569,11 +586,14 @@ public class PluginManagerBrowseUI extends JPanel {
                 protected void done() {
                     try {
                         String readme = get();
-                        readmeArea.setText(
-                            readme != null && !readme.isEmpty()
-                                ? readme
-                                : "No README available for this plugin."
-                        );
+                        if (readme != null && !readme.isEmpty()) {
+                            Parser parser = Parser.builder().build();
+                            HtmlRenderer renderer = HtmlRenderer.builder().build();
+                            readmeArea.setText(renderer.render(parser.parse(readme)));
+                            styleReadmeArea();
+                        } else {
+                            readmeArea.setText("No README available for this plugin.");
+                        }
                     } catch (Exception e) {
                         readmeArea.setText("Couldn't load README: " + rootMessage(e));
                     }

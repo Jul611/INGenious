@@ -276,22 +276,25 @@ public class PluginManagerPublishUI extends JPanel {
         progressScroll.setBorder(BorderFactory.createTitledBorder("Progress"));
         mainPanel.add(progressScroll, gbc);
 
-        // Instructions at the bottom
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        JTextArea instructions = new JTextArea(
-            "Point this at a repo+branch you've already built and tested yourself (a template\n" +
-            "pipeline for that is available separately). This still builds it once locally just\n" +
-            "to populate the fields below, then opens a pull request against the registry repo.\n" +
-            "A reviewer approves and merges it; the marketplace's own CI independently re-validates\n" +
-            "and builds the real artifact regardless of your own pipeline's result, publishes it to\n" +
-            "Azure Artifacts, and updates the registry automatically. No PAT needed — this uses your\n" +
-            "existing git/gh sign-in (run 'gh auth login --web' once if you haven't already)."
+        // Instructions, tucked behind an info button instead of always taking up space
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        JButton infoButton = new JButton("ⓘ How publishing works");
+        infoButton.addActionListener(
+            e ->
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Point this at a repo+branch you've already built and tested yourself (a template\n" +
+                    "pipeline for that is available separately). This still builds it once locally just\n" +
+                    "to populate the fields below, then opens a pull request against the registry repo.\n" +
+                    "A reviewer approves and merges it; the marketplace's own CI independently re-validates\n" +
+                    "and builds the real artifact regardless of your own pipeline's result, publishes it to\n" +
+                    "Azure Artifacts, and updates the registry automatically. No PAT needed — this uses your\n" +
+                    "existing git/gh sign-in (run 'gh auth login --web' once if you haven't already).",
+                    "How Publishing Works",
+                    JOptionPane.INFORMATION_MESSAGE
+                )
         );
-        instructions.setEditable(false);
-        instructions.setBackground(getBackground());
-        instructions.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        instructions.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        bottomPanel.add(instructions, BorderLayout.CENTER);
+        bottomPanel.add(infoButton);
 
         JPanel outerPanel = new JPanel(new BorderLayout());
         JScrollPane scrollPane = new JScrollPane(mainPanel);
@@ -512,7 +515,7 @@ public class PluginManagerPublishUI extends JPanel {
                             actualGroupId +
                             "' must be '" +
                             requiredGroupId.trim() +
-                            "' -- see Registry Settings."
+                            "'."
                         );
                     }
                 }
@@ -693,7 +696,6 @@ public class PluginManagerPublishUI extends JPanel {
         entry.setMinEngineVersion(minEngineField.getText().trim());
         entry.setMaxEngineVersion(maxEngineField.getText().trim());
         entry.setObjectTypes(java.util.Collections.singletonList("General"));
-        entry.setLicense("MIT");
         entry.setReleaseNotes("");
         if (extractedActions != null && !extractedActions.isEmpty()) {
             entry.setActions(

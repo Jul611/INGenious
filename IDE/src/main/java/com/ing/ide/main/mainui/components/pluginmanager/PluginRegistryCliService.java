@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  * submissions as GitHub pull requests and to resolve published plugin
  * artifacts from the Azure Artifacts feed. GitHub credentials are never
  * read, stored, or handled here — git/gh manage their own. Maven-against-ADO
- * uses a PAT the user pastes once into Registry Settings; this class writes
+ * uses a PAT the user pastes once into ADO Credential Setup; this class writes
  * it straight into the user's real {@code ~/.m2/settings.xml} (preserving
  * anything else already there) so nobody has to hand-edit that file.
  */
@@ -204,7 +204,7 @@ public class PluginRegistryCliService {
      * Writes (or replaces) a <server> entry for the ADO feed in the user's
      * real ~/.m2/settings.xml, preserving anything else already in that
      * file -- this is what lets a contributor just paste a PAT into
-     * Registry Settings instead of hand-editing XML themselves.
+     * ADO Credential Setup instead of hand-editing XML themselves.
      */
     public void saveAdoCredential(String serverId, String pat) throws IOException {
         File settingsFile = adoSettingsFile();
@@ -312,7 +312,7 @@ public class PluginRegistryCliService {
                 repo +
                 " on GitHub as " +
                 authUser +
-                ". Check the registry repo configured in Registry Settings.",
+                ". This may mean the marketplace's registry repo is misconfigured -- contact your administrator.",
                 perm.exitCode,
                 perm.output
             );
@@ -490,7 +490,7 @@ public class PluginRegistryCliService {
         String registryRepo = config.getRegistryRepo();
         if (registryRepo == null) {
             throw new CliException(
-                "No plugin registry repo configured. Set one in Registry Settings.",
+                "No plugin registry repo configured. This build of the Plugin Manager isn't set up yet -- contact your administrator.",
                 -1,
                 ""
             );
@@ -697,7 +697,7 @@ public class PluginRegistryCliService {
         String registryRepo = config.getRegistryRepo();
         if (registryRepo == null) {
             throw new CliException(
-                "No plugin registry repo configured. Set one in Registry Settings.",
+                "No plugin registry repo configured. This build of the Plugin Manager isn't set up yet -- contact your administrator.",
                 -1,
                 ""
             );
@@ -749,7 +749,7 @@ public class PluginRegistryCliService {
         String registryRepo = config.getRegistryRepo();
         if (registryRepo == null) {
             throw new CliException(
-                "No plugin registry repo configured. Set one in Registry Settings.",
+                "No plugin registry repo configured. This build of the Plugin Manager isn't set up yet -- contact your administrator.",
                 -1,
                 ""
             );
@@ -834,7 +834,7 @@ public class PluginRegistryCliService {
                 " from the Azure Artifacts feed. Check that ~/.m2/settings.xml has a <server> " +
                 "with id '" +
                 config.getAdoFeedServerId() +
-                "' and a valid, read-scoped ADO PAT -- set one via Registry Settings.",
+                "' and a valid, read-scoped ADO PAT -- set one via ADO Credential Setup.",
                 getResult.exitCode,
                 getResult.output
             );

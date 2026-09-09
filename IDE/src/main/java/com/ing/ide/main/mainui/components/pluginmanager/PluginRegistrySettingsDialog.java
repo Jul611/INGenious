@@ -18,15 +18,13 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 /**
- * Modal dialog for the Plugin Marketplace's per-user setup. There's exactly
- * one real marketplace, so the registry repo and Azure Artifacts feed
- * location ({@link PluginRegistryConfig}) are fixed constants, not something
- * a user configures -- this dialog shows them read-only, purely so a user
- * (or whoever's helping them debug) can see what they're actually pointed
- * at. The one thing a user genuinely has to provide is their own ADO PAT:
- * that field is write-only, writing straight into their real
- * ~/.m2/settings.xml (via PluginRegistryCliService.saveAdoCredential) so
- * nobody has to hand-edit that file, and it's never redisplayed once saved.
+ * Modal dialog for the one thing a Plugin Marketplace user actually has to
+ * provide: their own ADO PAT. There's exactly one real marketplace, so where
+ * the registry repo and Azure Artifacts feed live ({@link PluginRegistryConfig})
+ * is a fixed constant, not something shown or configured here. The PAT field
+ * is write-only, writing straight into the user's real ~/.m2/settings.xml
+ * (via PluginRegistryCliService.saveAdoCredential) so nobody has to hand-edit
+ * that file, and it's never redisplayed once saved.
  */
 public final class PluginRegistrySettingsDialog {
 
@@ -36,7 +34,7 @@ public final class PluginRegistrySettingsDialog {
         Window owner = SwingUtilities.getWindowAncestor(parent);
         JDialog dialog = new JDialog(
             owner,
-            "Plugin Registry Settings",
+            "ADO Credential Setup",
             JDialog.ModalityType.APPLICATION_MODAL
         );
 
@@ -47,33 +45,6 @@ public final class PluginRegistrySettingsDialog {
         c.anchor = GridBagConstraints.WEST;
         c.fill = GridBagConstraints.HORIZONTAL;
         int row = 0;
-
-        JLabel repoHeader = new JLabel("GitHub registry repo");
-        repoHeader.setFont(repoHeader.getFont().deriveFont(Font.BOLD));
-        c.gridx = 0;
-        c.gridy = row++;
-        c.gridwidth = 2;
-        form.add(repoHeader, c);
-        c.gridwidth = 1;
-
-        row = addInfoRow(form, c, row, "Repo:", config.getRegistryRepo());
-        row = addInfoRow(form, c, row, "Branch:", config.getRegistryBranch());
-        row = addInfoRow(form, c, row, "registry.json path:", config.getRegistryPath());
-        row = addInfoRow(form, c, row, "Plugin Maven groupId:", config.getMavenGroupId());
-
-        JLabel adoHeader = new JLabel("Azure DevOps Artifacts feed");
-        adoHeader.setFont(adoHeader.getFont().deriveFont(Font.BOLD));
-        c.gridx = 0;
-        c.gridy = row++;
-        c.gridwidth = 2;
-        c.insets = new Insets(14, 4, 4, 4);
-        form.add(adoHeader, c);
-        c.gridwidth = 1;
-        c.insets = new Insets(4, 4, 4, 4);
-
-        row = addInfoRow(form, c, row, "Organization:", config.getAdoOrganization());
-        row = addInfoRow(form, c, row, "Project:", config.getAdoProject());
-        row = addInfoRow(form, c, row, "Feed name:", config.getAdoFeedName());
 
         JPasswordField adoPatField = new JPasswordField(28);
         row =
@@ -87,7 +58,7 @@ public final class PluginRegistrySettingsDialog {
 
         JLabel patHint = new JLabel(
             "<html><small>Pasting a PAT here writes it into ~/.m2/settings.xml for you --" +
-            " nothing to hand-edit. This is the only thing you need to set here.</small></html>"
+            " nothing to hand-edit.</small></html>"
         );
         c.gridx = 0;
         c.gridy = row++;
@@ -171,24 +142,6 @@ public final class PluginRegistrySettingsDialog {
         c.gridx = 1;
         c.weightx = 1;
         panel.add(field, c);
-        return row + 1;
-    }
-
-    private static int addInfoRow(
-        JPanel panel,
-        GridBagConstraints c,
-        int row,
-        String label,
-        String value
-    ) {
-        c.gridx = 0;
-        c.gridy = row;
-        c.weightx = 0;
-        panel.add(new JLabel(label), c);
-        c.gridx = 1;
-        c.weightx = 1;
-        JLabel valueLabel = new JLabel(value == null || value.isEmpty() ? "(blank)" : value);
-        panel.add(valueLabel, c);
         return row + 1;
     }
 

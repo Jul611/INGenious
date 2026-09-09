@@ -62,9 +62,9 @@ public class PluginManager extends JPanel {
         installFromFileButton.setToolTipText("Install a plugin from a local JAR file");
         installFromFileButton.addActionListener(e -> importFromFile());
 
-        registrySettingsButton = new JButton("Registry Settings...");
+        registrySettingsButton = new JButton("ADO Credential Setup...");
         registrySettingsButton.setToolTipText(
-            "Configure the registry repo and Azure Artifacts feed this Plugin Manager talks to"
+            "Set your Azure DevOps PAT so installs can resolve plugins from the Artifacts feed"
         );
         registrySettingsButton.addActionListener(
             e -> PluginRegistrySettingsDialog.show(PluginManager.this, registryConfig)

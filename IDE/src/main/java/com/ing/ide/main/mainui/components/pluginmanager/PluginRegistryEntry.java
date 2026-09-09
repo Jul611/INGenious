@@ -29,7 +29,6 @@ public class PluginRegistryEntry {
     private int actionCount;
     private List<String> actions;
     private String homepageUrl;
-    private String license;
     private String releaseNotes;
     private String dateAdded;
     private boolean featured;
@@ -195,14 +194,6 @@ public class PluginRegistryEntry {
 
     public void setHomepageUrl(String homepageUrl) {
         this.homepageUrl = homepageUrl;
-    }
-
-    public String getLicense() {
-        return license;
-    }
-
-    public void setLicense(String license) {
-        this.license = license;
     }
 
     public String getReleaseNotes() {

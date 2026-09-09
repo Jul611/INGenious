@@ -26,6 +26,7 @@
         <jcsv.version>1.4.0</jcsv.version>
         <javafx.version>17.0.14</javafx.version>
         <jackson.version>2.18.9</jackson.version>
+        <commonmark.version>0.24.0</commonmark.version>
         <commonscsv.version>1.10.0</commonscsv.version>
         <commons-codec.version>1.16.0</commons-codec.version>
         <commons-io.version>2.15.0</commons-io.version>
