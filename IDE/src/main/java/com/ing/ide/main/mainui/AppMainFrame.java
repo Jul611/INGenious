@@ -23,7 +23,7 @@ import com.ing.ide.main.fx.FXStatusBar;
 import com.ing.ide.main.fx.FXToolBar;
 import com.ing.ide.main.mainui.components.aichat.AICopilot;
 import com.ing.ide.main.mainui.components.apitester.APITester;
-import com.ing.ide.main.mainui.components.pluginmanager.PluginManager;
+import com.ing.ide.main.mainui.components.pluginmanager.MarketplaceManager;
 import com.ing.ide.main.mainui.components.testdesign.TestDesign;
 import com.ing.ide.main.mainui.components.testexecution.TestExecution;
 import com.ing.ide.main.shr.SHR;
@@ -86,7 +86,7 @@ public class AppMainFrame extends JFrame {
 
     private final AICopilot aiCopilot;
 
-    private final PluginManager pluginManager;
+    private final MarketplaceManager pluginManager;
 
     private final FXDashBoard dashBoard;
 
@@ -140,7 +140,7 @@ public class AppMainFrame extends JFrame {
         apiTester = new APITester(this);
         progressed(52);
         aiCopilot = new AICopilot(this);
-        pluginManager = new PluginManager(this);
+        pluginManager = new MarketplaceManager(this);
         dashBoard = new FXDashBoard(testExecution);
         progressed(60);
         dashBoardManager = new DashBoardManager(this);

@@ -30,7 +30,7 @@ public class PluginManagerPublishUI extends JPanel {
     private static final Logger LOG = Logger.getLogger(PluginManagerPublishUI.class.getName());
 
     private final PluginManagerService service;
-    private final PluginRegistryCliService cliService = new PluginRegistryCliService();
+    private final MarketplaceCliService cliService = new MarketplaceCliService();
     private final Runnable onPublishCallback;
 
     private JLabel fileLabel;
@@ -506,7 +506,7 @@ public class PluginManagerPublishUI extends JPanel {
             @Override
             protected File doInBackground() throws Exception {
                 File jar = cliService.buildLocally(selectedSourceDir, s -> {});
-                String requiredGroupId = new PluginRegistryConfig().getMavenGroupId();
+                String requiredGroupId = new MarketplaceConfig().getMavenGroupId();
                 if (requiredGroupId != null && !requiredGroupId.trim().isEmpty()) {
                     String actualGroupId = cliService.readPomGroupId(selectedSourceDir);
                     if (!requiredGroupId.trim().equals(actualGroupId)) {
@@ -710,11 +710,11 @@ public class PluginManagerPublishUI extends JPanel {
         progressArea.setText("");
         submitButton.setEnabled(false);
 
-        SwingWorker<PluginRegistryCliService.PrResult, String> worker = new SwingWorker<PluginRegistryCliService.PrResult, String>() {
+        SwingWorker<MarketplaceCliService.PrResult, String> worker = new SwingWorker<MarketplaceCliService.PrResult, String>() {
             File stagingDir;
 
             @Override
-            protected PluginRegistryCliService.PrResult doInBackground() throws Exception {
+            protected MarketplaceCliService.PrResult doInBackground() throws Exception {
                 publish("Checking published version...");
                 service.checkVersionIsNewer(entry.getName(), entry.getVersion());
 
@@ -744,7 +744,7 @@ public class PluginManagerPublishUI extends JPanel {
             @Override
             protected void done() {
                 try {
-                    PluginRegistryCliService.PrResult result = get();
+                    MarketplaceCliService.PrResult result = get();
                     progressArea.append("Pull request opened: " + result.url + "\n");
                     try {
                         service.publishPlugin(builtJar, entry);

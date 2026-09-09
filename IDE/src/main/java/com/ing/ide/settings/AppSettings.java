@@ -38,7 +38,7 @@ public class AppSettings {
         AI_GITHUB_CLIENT_ID("githubOAuthClientId", "");
 
         // Plugin Marketplace registry/ADO settings used to live here, but there's exactly one
-        // real marketplace -- they're now fixed constants in PluginRegistryConfig instead of
+        // real marketplace -- they're now fixed constants in MarketplaceConfig instead of
         // a per-user setting.
 
         private final String key;

@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 /**
  * Core service for plugin registry fetching, installation, and management.
  * Registry reads and pull-request submission go through
- * {@link PluginRegistryCliService} (git/gh/mvn), never a stored token —
+ * {@link MarketplaceCliService} (git/gh/mvn), never a stored token —
  * this class owns file-tree assembly and local bookkeeping only.
  */
 public class PluginManagerService {
@@ -23,7 +23,7 @@ public class PluginManagerService {
     private static final String PLUGIN_INFO_FILE = ".plugininfo";
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final PluginRegistryCliService cliService = new PluginRegistryCliService();
+    private final MarketplaceCliService cliService = new MarketplaceCliService();
 
     // ─── Registry fetching ────────────────────────────────────────────
 
@@ -68,7 +68,7 @@ public class PluginManagerService {
         }
     }
 
-    /** Same numeric dotted-version comparison approach as PluginManagerBrowseUI's engine-version check. */
+    /** Same numeric dotted-version comparison approach as MarketplaceBrowseUI's engine-version check. */
     private int compareVersions(String a, String b) {
         return Integer.compare(parseVersion(a), parseVersion(b));
     }
@@ -336,7 +336,7 @@ public class PluginManagerService {
      * description (*.md) file is whatever {@code sourceProjectDir} already
      * has, copied as-is under its original name -- nothing renames it to
      * README.md, so a contributor's own filename choice survives all the
-     * way into the registry repo. {@link PluginRegistryCliService#submitPlugin}
+     * way into the registry repo. {@link MarketplaceCliService#submitPlugin}
      * copies this directory's contents into a PR branch; the caller is
      * responsible for deleting it once the submission completes.
      */

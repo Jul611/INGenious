@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  * it straight into the user's real {@code ~/.m2/settings.xml} (preserving
  * anything else already there) so nobody has to hand-edit that file.
  */
-public class PluginRegistryCliService {
+public class MarketplaceCliService {
     private static final long TOOL_CHECK_TIMEOUT_MS = 10_000;
     private static final long DEFAULT_TIMEOUT_MS = 30_000;
     private static final long CLONE_TIMEOUT_MS = 60_000;
@@ -546,7 +546,7 @@ public class PluginRegistryCliService {
         Consumer<String> progress
     )
         throws IOException {
-        PluginRegistryConfig config = new PluginRegistryConfig();
+        MarketplaceConfig config = new MarketplaceConfig();
         String registryRepo = config.getRegistryRepo();
         if (registryRepo == null) {
             throw new CliException(
@@ -763,7 +763,7 @@ public class PluginRegistryCliService {
     // ─── Registry read (browse) ──────────────────────────────────────
 
     public String fetchRegistryJsonRaw(Consumer<String> progress) throws IOException {
-        PluginRegistryConfig config = new PluginRegistryConfig();
+        MarketplaceConfig config = new MarketplaceConfig();
         return fetchFileFromRegistry(config.getRegistryPath(), progress);
     }
 
@@ -773,7 +773,7 @@ public class PluginRegistryCliService {
      * reading registry.json (plugins) and reusable-components.json (Reusable Components).
      */
     public String fetchFileFromRegistry(String path, Consumer<String> progress) throws IOException {
-        PluginRegistryConfig config = new PluginRegistryConfig();
+        MarketplaceConfig config = new MarketplaceConfig();
         String registryRepo = config.getRegistryRepo();
         if (registryRepo == null) {
             throw new CliException(
@@ -816,7 +816,7 @@ public class PluginRegistryCliService {
      */
     public String listRegistryDirectoryRaw(String path, Consumer<String> progress)
         throws IOException {
-        PluginRegistryConfig config = new PluginRegistryConfig();
+        MarketplaceConfig config = new MarketplaceConfig();
         String registryRepo = config.getRegistryRepo();
         if (registryRepo == null) {
             throw new CliException(
@@ -859,7 +859,7 @@ public class PluginRegistryCliService {
         Consumer<String> progress
     )
         throws IOException {
-        PluginRegistryConfig config = new PluginRegistryConfig();
+        MarketplaceConfig config = new MarketplaceConfig();
         String registryRepo = config.getRegistryRepo();
         if (registryRepo == null) {
             throw new CliException(
@@ -910,7 +910,7 @@ public class PluginRegistryCliService {
         Consumer<String> progress
     )
         throws IOException {
-        PluginRegistryConfig config = new PluginRegistryConfig();
+        MarketplaceConfig config = new MarketplaceConfig();
         progress.accept(
             "Resolving " + groupId + ":" + artifactId + ":" + version + " from Azure Artifacts..."
         );
@@ -1019,7 +1019,7 @@ public class PluginRegistryCliService {
         Consumer<String> progress
     )
         throws IOException {
-        PluginRegistryConfig config = new PluginRegistryConfig();
+        MarketplaceConfig config = new MarketplaceConfig();
         progress.accept("Resolving dependencies for " + artifactId + "...");
         File shimDir = null;
         try {

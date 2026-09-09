@@ -20,17 +20,17 @@ import javax.swing.SwingWorker;
 /**
  * Modal dialog for the one thing a Plugin Marketplace user actually has to
  * provide: their own ADO PAT. There's exactly one real marketplace, so where
- * the registry repo and Azure Artifacts feed live ({@link PluginRegistryConfig})
+ * the registry repo and Azure Artifacts feed live ({@link MarketplaceConfig})
  * is a fixed constant, not something shown or configured here. The PAT field
  * is write-only, writing straight into the user's real ~/.m2/settings.xml
- * (via PluginRegistryCliService.saveAdoCredential) so nobody has to hand-edit
+ * (via MarketplaceCliService.saveAdoCredential) so nobody has to hand-edit
  * that file, and it's never redisplayed once saved.
  */
 public final class PluginRegistrySettingsDialog {
 
     private PluginRegistrySettingsDialog() {}
 
-    public static void show(Component parent, PluginRegistryConfig config) {
+    public static void show(Component parent, MarketplaceConfig config) {
         Window owner = SwingUtilities.getWindowAncestor(parent);
         JDialog dialog = new JDialog(
             owner,
@@ -95,7 +95,7 @@ public final class PluginRegistrySettingsDialog {
                 java.util.Arrays.fill(patChars, ' ');
                 if (!pat.isEmpty()) {
                     try {
-                        new PluginRegistryCliService()
+                        new MarketplaceCliService()
                         .saveAdoCredential(config.getAdoFeedServerId(), pat);
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(
@@ -157,11 +157,11 @@ public final class PluginRegistrySettingsDialog {
 
             @Override
             protected String doInBackground() {
-                PluginRegistryCliService cli = new PluginRegistryCliService();
-                PluginRegistryCliService.ToolStatus git = cli.checkGitInstalled();
-                PluginRegistryCliService.ToolStatus gh = cli.checkGhInstalled();
-                PluginRegistryCliService.ToolStatus mvn = cli.checkMvnInstalled();
-                PluginRegistryCliService.AuthStatus auth = gh.installed
+                MarketplaceCliService cli = new MarketplaceCliService();
+                MarketplaceCliService.ToolStatus git = cli.checkGitInstalled();
+                MarketplaceCliService.ToolStatus gh = cli.checkGhInstalled();
+                MarketplaceCliService.ToolStatus mvn = cli.checkMvnInstalled();
+                MarketplaceCliService.AuthStatus auth = gh.installed
                     ? cli.checkGhAuthStatus()
                     : null;
                 boolean adoConfigured = cli.isAdoMavenServerConfigured(adoServerId);
@@ -199,7 +199,7 @@ public final class PluginRegistrySettingsDialog {
         worker.execute();
     }
 
-    private static String toolLine(String name, PluginRegistryCliService.ToolStatus status) {
+    private static String toolLine(String name, MarketplaceCliService.ToolStatus status) {
         return status.installed
             ? name + ": " + status.version + "<br>"
             : name + ": not found on PATH<br>";

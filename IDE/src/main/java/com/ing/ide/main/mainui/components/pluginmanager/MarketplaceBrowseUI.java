@@ -23,8 +23,8 @@ import org.commonmark.renderer.html.HtmlRenderer;
  * shapes even though they share one list and one search box). Includes pre-install conflict
  * detection and version compatibility checks for plugins.
  */
-public class PluginManagerBrowseUI extends JPanel {
-    private static final Logger LOG = Logger.getLogger(PluginManagerBrowseUI.class.getName());
+public class MarketplaceBrowseUI extends JPanel {
+    private static final Logger LOG = Logger.getLogger(MarketplaceBrowseUI.class.getName());
     private static final String FILTER_ALL = "All";
     private static final String FILTER_PLUGINS = "Plugins";
     private static final String FILTER_COMPONENTS = "Reusable Components";
@@ -41,7 +41,7 @@ public class PluginManagerBrowseUI extends JPanel {
     private JTextField searchField;
     private JComboBox<String> typeFilter;
 
-    public PluginManagerBrowseUI(
+    public MarketplaceBrowseUI(
         PluginManagerService service,
         ReusableComponentService reusableComponentService,
         Runnable onInstallCallback
@@ -396,7 +396,7 @@ public class PluginManagerBrowseUI extends JPanel {
                 try {
                     get();
                     int choice = JOptionPane.showConfirmDialog(
-                        PluginManagerBrowseUI.this,
+                        MarketplaceBrowseUI.this,
                         "Plugin \"" +
                         plugin.getDisplayName() +
                         "\" installed successfully.\n" +
@@ -419,7 +419,7 @@ public class PluginManagerBrowseUI extends JPanel {
                 } catch (Exception e) {
                     LOG.log(Level.SEVERE, "Failed to install plugin", e);
                     JOptionPane.showMessageDialog(
-                        PluginManagerBrowseUI.this,
+                        MarketplaceBrowseUI.this,
                         "Failed to install plugin: " + rootMessage(e),
                         "Install Error",
                         JOptionPane.ERROR_MESSAGE
@@ -447,7 +447,7 @@ public class PluginManagerBrowseUI extends JPanel {
                 try {
                     get();
                     JOptionPane.showMessageDialog(
-                        PluginManagerBrowseUI.this,
+                        MarketplaceBrowseUI.this,
                         "Installed \"" +
                         entry.getDisplayName() +
                         "\" into your Shared Reusable Components.",
@@ -457,7 +457,7 @@ public class PluginManagerBrowseUI extends JPanel {
                 } catch (Exception e) {
                     LOG.log(Level.WARNING, "Component install failed", e);
                     JOptionPane.showMessageDialog(
-                        PluginManagerBrowseUI.this,
+                        MarketplaceBrowseUI.this,
                         "Install failed:\n" + rootMessage(e),
                         "Install Failed",
                         JOptionPane.ERROR_MESSAGE

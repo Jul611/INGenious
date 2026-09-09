@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * from a terminal/CI step than the Swing UI. Runs the exact same sequence
  * {@link PluginManagerPublishUI#submitForReview} does — build, extract
  * manifest/actions, version-gate, stage, open the PR — against
- * {@link PluginManagerService} / {@link PluginRegistryCliService} directly,
+ * {@link PluginManagerService} / {@link MarketplaceCliService} directly,
  * so nothing about the submission logic itself is reimplemented here.
  *
  * Unlike the Publish tab, source is always a local folder (no repo+branch
@@ -99,11 +99,11 @@ public final class PluginPublishCli {
 
         Consumer<String> progress = System.out::println;
         PluginManagerService service = new PluginManagerService();
-        PluginRegistryCliService cliService = new PluginRegistryCliService();
+        MarketplaceCliService cliService = new MarketplaceCliService();
 
         File jar = cliService.buildLocally(pluginDir, progress);
 
-        String requiredGroupId = new PluginRegistryConfig().getMavenGroupId();
+        String requiredGroupId = new MarketplaceConfig().getMavenGroupId();
         if (requiredGroupId != null && !requiredGroupId.trim().isEmpty()) {
             String actualGroupId = cliService.readPomGroupId(pluginDir);
             if (!requiredGroupId.trim().equals(actualGroupId)) {
@@ -165,7 +165,7 @@ public final class PluginPublishCli {
 
         progress.accept("Staging submission files...");
         File stagingDir = service.stagePluginSubmission(pluginDir, entry);
-        PluginRegistryCliService.PrResult result;
+        MarketplaceCliService.PrResult result;
         try {
             result =
                 cliService.submitPlugin(

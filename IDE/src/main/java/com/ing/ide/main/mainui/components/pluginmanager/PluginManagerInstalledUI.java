@@ -11,7 +11,7 @@ import javax.swing.table.DefaultTableModel;
 /**
  * Installed tab for the Plugin Manager.
  * Shows locally installed plugins with Uninstall buttons.
- * Uses MouseListener for button clicks (same reliable pattern as PluginManagerBrowseUI).
+ * Uses MouseListener for button clicks (same reliable pattern as MarketplaceBrowseUI).
  */
 public class PluginManagerInstalledUI extends JPanel {
     private static final String[] COLUMNS = { "Plugin", "Version", "Actions", "" };
@@ -19,14 +19,21 @@ public class PluginManagerInstalledUI extends JPanel {
     private static final int UNINSTALL_COL = 3;
 
     private final PluginManagerService service;
+    private final ReusableComponentService reusableComponentService;
     private final Runnable onUninstallCallback;
     private JTable table;
     private DefaultTableModel tableModel;
     private List<PluginInstalledEntry> installedPlugins;
-    private JLabel statusLabel;
+    private JLabel pluginCountLabel;
+    private JLabel componentCountLabel;
 
-    public PluginManagerInstalledUI(PluginManagerService service, Runnable onUninstallCallback) {
+    public PluginManagerInstalledUI(
+        PluginManagerService service,
+        ReusableComponentService reusableComponentService,
+        Runnable onUninstallCallback
+    ) {
         this.service = service;
+        this.reusableComponentService = reusableComponentService;
         this.onUninstallCallback = onUninstallCallback;
         setLayout(new BorderLayout());
         initUI();
@@ -37,7 +44,7 @@ public class PluginManagerInstalledUI extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-        JLabel titleLabel = new JLabel("Installed Plugins");
+        JLabel titleLabel = new JLabel("Installed");
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
@@ -125,24 +132,31 @@ public class PluginManagerInstalledUI extends JPanel {
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         add(scrollPane, BorderLayout.CENTER);
 
-        // Status bar
-        statusLabel = new JLabel("No plugins installed.");
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
-        add(statusLabel, BorderLayout.SOUTH);
+        // Status bar -- two separate counts, nothing else (no paths, no other detail)
+        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 0));
+        statusPanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        pluginCountLabel = new JLabel("0 plugin(s) installed");
+        componentCountLabel = new JLabel("0 reusable component(s)");
+        statusPanel.add(pluginCountLabel);
+        statusPanel.add(componentCountLabel);
+        add(statusPanel, BorderLayout.SOUTH);
     }
 
     public void loadData() {
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            private int componentCount;
 
             @Override
             protected Void doInBackground() {
                 installedPlugins = service.getInstalledPlugins();
+                componentCount = reusableComponentService.listLocalSharedComponents().size();
                 return null;
             }
 
             @Override
             protected void done() {
                 populateTable();
+                componentCountLabel.setText(componentCount + " reusable component(s)");
             }
         };
         worker.execute();
@@ -151,7 +165,7 @@ public class PluginManagerInstalledUI extends JPanel {
     private void populateTable() {
         tableModel.setRowCount(0);
         if (installedPlugins == null || installedPlugins.isEmpty()) {
-            statusLabel.setText("No plugins installed.");
+            pluginCountLabel.setText("0 plugin(s) installed");
             return;
         }
 
@@ -163,7 +177,7 @@ public class PluginManagerInstalledUI extends JPanel {
                 new Object[] { plugin.getDisplayName(), plugin.getVersion(), actions, "Uninstall" }
             );
         }
-        statusLabel.setText(installedPlugins.size() + " plugin(s) installed");
+        pluginCountLabel.setText(installedPlugins.size() + " plugin(s) installed");
     }
 
     private void uninstallPlugin(int modelRow) {

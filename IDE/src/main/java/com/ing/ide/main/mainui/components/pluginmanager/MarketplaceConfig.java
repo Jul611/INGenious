@@ -13,7 +13,7 @@ package com.ing.ide.main.mainui.components.pluginmanager;
  * ever a credential either way -- auth is handled entirely by {@code git}/{@code gh}/{@code mvn}
  * themselves.
  */
-public final class PluginRegistryConfig {
+public final class MarketplaceConfig {
     private static final String REGISTRY_REPO = "ing-tech-hub/p33148-ingenious-marketplace";
     private static final String REGISTRY_BRANCH = "registry-branch";
     private static final String REGISTRY_PATH = "registry.json";
