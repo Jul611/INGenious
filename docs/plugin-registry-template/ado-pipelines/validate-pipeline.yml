@@ -115,3 +115,28 @@ steps:
       unzip -p "$JAR" META-INF/MANIFEST.MF | tr -d '\r' | grep -q '^pluginEntryClasses' || { echo "##vso[task.logissue type=error]$JAR missing pluginEntryClasses"; exit 1; }
     displayName: "Manifest has pluginEntryClasses"
     condition: ne(variables['pluginName'], '')
+
+  - script: |
+      set -e
+      NAME="$(pluginName)"
+      python3 - "$NAME" <<'PYEOF'
+      import json, sys
+      name = sys.argv[1]
+      submission = json.load(open(f"plugins/{name}/.submission.json"))
+      new_actions = set(submission.get("actions", []))
+      if not new_actions:
+          sys.exit(0)
+      registry = json.load(open("registry.json"))
+      conflicts = []
+      for p in registry.get("plugins", []):
+          if p.get("name") == name:
+              continue
+          overlap = new_actions & set(p.get("actions", []))
+          if overlap:
+              conflicts.append(f"{sorted(overlap)} already used by '{p.get('displayName', p.get('name'))}'")
+      if conflicts:
+          print("##vso[task.logissue type=error]Action name conflict(s): " + "; ".join(conflicts))
+          sys.exit(1)
+      PYEOF
+    displayName: "No action-name conflicts with existing plugins"
+    condition: ne(variables['pluginName'], '')

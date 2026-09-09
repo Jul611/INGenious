@@ -14,18 +14,19 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 /**
- * Modal dialog for pointing the Plugin Marketplace at a registry repo and
- * Azure Artifacts feed. This is the one place all of that lives -- swapping
- * from a personal setup to the real company org/feed later means changing
- * the values here, not touching code. The ADO PAT field is write-only: it
- * writes straight into the user's real ~/.m2/settings.xml (via
- * PluginRegistryCliService.saveAdoCredential) so nobody has to hand-edit
- * that file, and it's never redisplayed once saved.
+ * Modal dialog for the Plugin Marketplace's per-user setup. There's exactly
+ * one real marketplace, so the registry repo and Azure Artifacts feed
+ * location ({@link PluginRegistryConfig}) are fixed constants, not something
+ * a user configures -- this dialog shows them read-only, purely so a user
+ * (or whoever's helping them debug) can see what they're actually pointed
+ * at. The one thing a user genuinely has to provide is their own ADO PAT:
+ * that field is write-only, writing straight into their real
+ * ~/.m2/settings.xml (via PluginRegistryCliService.saveAdoCredential) so
+ * nobody has to hand-edit that file, and it's never redisplayed once saved.
  */
 public final class PluginRegistrySettingsDialog {
 
@@ -55,14 +56,10 @@ public final class PluginRegistrySettingsDialog {
         form.add(repoHeader, c);
         c.gridwidth = 1;
 
-        JTextField repoField = new JTextField(config.getRegistryRepo(), 28);
-        row = addField(form, c, row, "Repo (owner/repo):", repoField);
-        JTextField branchField = new JTextField(config.getRegistryBranch(), 28);
-        row = addField(form, c, row, "Branch:", branchField);
-        JTextField pathField = new JTextField(config.getRegistryPath(), 28);
-        row = addField(form, c, row, "registry.json path:", pathField);
-        JTextField groupIdField = new JTextField(config.getMavenGroupId(), 28);
-        row = addField(form, c, row, "Plugin Maven groupId:", groupIdField);
+        row = addInfoRow(form, c, row, "Repo:", config.getRegistryRepo());
+        row = addInfoRow(form, c, row, "Branch:", config.getRegistryBranch());
+        row = addInfoRow(form, c, row, "registry.json path:", config.getRegistryPath());
+        row = addInfoRow(form, c, row, "Plugin Maven groupId:", config.getMavenGroupId());
 
         JLabel adoHeader = new JLabel("Azure DevOps Artifacts feed");
         adoHeader.setFont(adoHeader.getFont().deriveFont(Font.BOLD));
@@ -74,14 +71,9 @@ public final class PluginRegistrySettingsDialog {
         c.gridwidth = 1;
         c.insets = new Insets(4, 4, 4, 4);
 
-        JTextField adoOrgField = new JTextField(config.getAdoOrganization(), 28);
-        row = addField(form, c, row, "Organization:", adoOrgField);
-        JTextField adoProjectField = new JTextField(config.getAdoProject(), 28);
-        row = addField(form, c, row, "Project (blank if org-scoped):", adoProjectField);
-        JTextField adoFeedField = new JTextField(config.getAdoFeedName(), 28);
-        row = addField(form, c, row, "Feed name:", adoFeedField);
-        JTextField adoServerIdField = new JTextField(config.getAdoFeedServerId(), 28);
-        row = addField(form, c, row, "Maven server id (internal label):", adoServerIdField);
+        row = addInfoRow(form, c, row, "Organization:", config.getAdoOrganization());
+        row = addInfoRow(form, c, row, "Project:", config.getAdoProject());
+        row = addInfoRow(form, c, row, "Feed name:", config.getAdoFeedName());
 
         JPasswordField adoPatField = new JPasswordField(28);
         row =
@@ -95,7 +87,7 @@ public final class PluginRegistrySettingsDialog {
 
         JLabel patHint = new JLabel(
             "<html><small>Pasting a PAT here writes it into ~/.m2/settings.xml for you --" +
-            " nothing to hand-edit.</small></html>"
+            " nothing to hand-edit. This is the only thing you need to set here.</small></html>"
         );
         c.gridx = 0;
         c.gridy = row++;
@@ -119,35 +111,25 @@ public final class PluginRegistrySettingsDialog {
         form.add(statusLabel, c);
 
         JButton recheckButton = new JButton("Re-check");
-        JButton saveButton = new JButton("Save");
+        JButton saveButton = new JButton("Save PAT");
         JButton closeButton = new JButton("Close");
 
         recheckButton.addActionListener(
-            e -> runStatusCheck(statusLabel, recheckButton, adoServerIdField.getText().trim())
+            e -> runStatusCheck(statusLabel, recheckButton, config.getAdoFeedServerId())
         );
         saveButton.addActionListener(
             e -> {
-                config.setRegistryRepo(repoField.getText().trim());
-                config.setRegistryBranch(branchField.getText().trim());
-                config.setRegistryPath(pathField.getText().trim());
-                config.setMavenGroupId(groupIdField.getText().trim());
-                config.setAdoOrganization(adoOrgField.getText().trim());
-                config.setAdoProject(adoProjectField.getText().trim());
-                config.setAdoFeedName(adoFeedField.getText().trim());
-                config.setAdoFeedServerId(adoServerIdField.getText().trim());
-
                 char[] patChars = adoPatField.getPassword();
                 String pat = new String(patChars).trim();
                 java.util.Arrays.fill(patChars, ' ');
                 if (!pat.isEmpty()) {
                     try {
                         new PluginRegistryCliService()
-                        .saveAdoCredential(adoServerIdField.getText().trim(), pat);
+                        .saveAdoCredential(config.getAdoFeedServerId(), pat);
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(
                             dialog,
-                            "Saved the other settings, but could not update ~/.m2/settings.xml:\n" +
-                            ex.getMessage(),
+                            "Could not update ~/.m2/settings.xml:\n" + ex.getMessage(),
                             "ADO Credential Not Saved",
                             JOptionPane.WARNING_MESSAGE
                         );
@@ -180,7 +162,7 @@ public final class PluginRegistrySettingsDialog {
         GridBagConstraints c,
         int row,
         String label,
-        JTextField field
+        JPasswordField field
     ) {
         c.gridx = 0;
         c.gridy = row;
@@ -189,6 +171,24 @@ public final class PluginRegistrySettingsDialog {
         c.gridx = 1;
         c.weightx = 1;
         panel.add(field, c);
+        return row + 1;
+    }
+
+    private static int addInfoRow(
+        JPanel panel,
+        GridBagConstraints c,
+        int row,
+        String label,
+        String value
+    ) {
+        c.gridx = 0;
+        c.gridy = row;
+        c.weightx = 0;
+        panel.add(new JLabel(label), c);
+        c.gridx = 1;
+        c.weightx = 1;
+        JLabel valueLabel = new JLabel(value == null || value.isEmpty() ? "(blank)" : value);
+        panel.add(valueLabel, c);
         return row + 1;
     }
 

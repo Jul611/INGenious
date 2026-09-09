@@ -1,106 +1,61 @@
 package com.ing.ide.main.mainui.components.pluginmanager;
 
-import com.ing.ide.settings.AppSettings;
-import com.ing.ide.settings.AppSettings.APP_SETTINGS;
-
 /**
- * Typed wrapper over {@link AppSettings} for everything the Plugin Marketplace
- * needs to know about *where* the registry repo and Azure Artifacts feed live.
+ * Where the Plugin Marketplace's registry repo and Azure Artifacts feed live.
  * <p>
- * Every value here is environment-specific (a personal account today, the
- * company org once GitHub migration lands) and none of it is ever a
- * credential — auth is handled entirely by {@code git}/{@code gh}/{@code mvn}
- * themselves. Swapping environments should only ever mean changing these
- * values, never touching code.
+ * There's exactly one real marketplace, so every value here is a fixed constant,
+ * not a per-user setting -- ordinary users never see or touch any of this;
+ * {@code PluginRegistrySettingsDialog} only asks them for their own ADO PAT.
+ * None of it is ever a credential either way -- auth is handled entirely by
+ * {@code git}/{@code gh}/{@code mvn} themselves.
+ * <p>
+ * {@code REGISTRY_REPO}, {@code ADO_ORGANIZATION}, {@code ADO_PROJECT}, and
+ * {@code ADO_FEED_NAME} below are still placeholders -- fill in the real
+ * values for the marketplace's actual repo/org/project/feed before shipping.
+ * The other four are already the real, established values used throughout
+ * this project's pipelines and examples.
  */
 public final class PluginRegistryConfig {
+    private static final String REGISTRY_REPO = "ing-tech-hub/p33148-ingenious-marketplace";
+    private static final String REGISTRY_BRANCH = "registry-branch";
+    private static final String REGISTRY_PATH = "registry.json";
+    private static final String MAVEN_GROUP_ID = "com.ing.plugins";
+    private static final String ADO_ORGANIZATION = "INGCDaaS";
+    private static final String ADO_PROJECT = "IngOne";
+    private static final String ADO_FEED_NAME = "p33148-marketplace-feed";
+    private static final String ADO_FEED_SERVER_ID = "p33148-marketplace-feed";
 
     /** Returns the configured {@code owner/repo} slug for the registry repo, or {@code null} if unset. */
     public String getRegistryRepo() {
-        return blankToNull(AppSettings.get(APP_SETTINGS.PLUGIN_REGISTRY_REPO.getKey()));
-    }
-
-    public void setRegistryRepo(String value) {
-        AppSettings.set(
-            APP_SETTINGS.PLUGIN_REGISTRY_REPO.getKey(),
-            value == null ? "" : value.trim()
-        );
-        AppSettings.store("Plugin registry repo updated");
+        return blankToNull(REGISTRY_REPO);
     }
 
     public String getRegistryBranch() {
-        return AppSettings.get(APP_SETTINGS.PLUGIN_REGISTRY_BRANCH.getKey());
-    }
-
-    public void setRegistryBranch(String value) {
-        AppSettings.set(
-            APP_SETTINGS.PLUGIN_REGISTRY_BRANCH.getKey(),
-            value == null ? "" : value.trim()
-        );
-        AppSettings.store("Plugin registry branch updated");
+        return REGISTRY_BRANCH;
     }
 
     public String getRegistryPath() {
-        return AppSettings.get(APP_SETTINGS.PLUGIN_REGISTRY_PATH.getKey());
-    }
-
-    public void setRegistryPath(String value) {
-        AppSettings.set(
-            APP_SETTINGS.PLUGIN_REGISTRY_PATH.getKey(),
-            value == null ? "" : value.trim()
-        );
-        AppSettings.store("Plugin registry path updated");
+        return REGISTRY_PATH;
     }
 
     public String getMavenGroupId() {
-        return AppSettings.get(APP_SETTINGS.PLUGIN_MAVEN_GROUP_ID.getKey());
-    }
-
-    public void setMavenGroupId(String value) {
-        AppSettings.set(
-            APP_SETTINGS.PLUGIN_MAVEN_GROUP_ID.getKey(),
-            value == null ? "" : value.trim()
-        );
-        AppSettings.store("Plugin Maven groupId updated");
+        return MAVEN_GROUP_ID;
     }
 
     public String getAdoOrganization() {
-        return AppSettings.get(APP_SETTINGS.ADO_ORGANIZATION.getKey());
-    }
-
-    public void setAdoOrganization(String value) {
-        AppSettings.set(APP_SETTINGS.ADO_ORGANIZATION.getKey(), value == null ? "" : value.trim());
-        AppSettings.store("ADO organization updated");
+        return ADO_ORGANIZATION;
     }
 
     public String getAdoProject() {
-        return AppSettings.get(APP_SETTINGS.ADO_PROJECT.getKey());
-    }
-
-    public void setAdoProject(String value) {
-        AppSettings.set(APP_SETTINGS.ADO_PROJECT.getKey(), value == null ? "" : value.trim());
-        AppSettings.store("ADO project updated");
+        return ADO_PROJECT;
     }
 
     public String getAdoFeedName() {
-        return AppSettings.get(APP_SETTINGS.ADO_FEED_NAME.getKey());
-    }
-
-    public void setAdoFeedName(String value) {
-        AppSettings.set(APP_SETTINGS.ADO_FEED_NAME.getKey(), value == null ? "" : value.trim());
-        AppSettings.store("ADO feed name updated");
+        return ADO_FEED_NAME;
     }
 
     public String getAdoFeedServerId() {
-        return AppSettings.get(APP_SETTINGS.ADO_FEED_SERVER_ID.getKey());
-    }
-
-    public void setAdoFeedServerId(String value) {
-        AppSettings.set(
-            APP_SETTINGS.ADO_FEED_SERVER_ID.getKey(),
-            value == null ? "" : value.trim()
-        );
-        AppSettings.store("ADO feed server id updated");
+        return ADO_FEED_SERVER_ID;
     }
 
     /**
