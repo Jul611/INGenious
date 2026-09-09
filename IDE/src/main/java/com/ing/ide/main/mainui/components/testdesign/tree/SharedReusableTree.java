@@ -4,6 +4,7 @@ import com.ing.datalib.component.Project;
 import com.ing.datalib.component.Scenario;
 import com.ing.datalib.component.TestCase;
 import com.ing.datalib.exception.TestCaseConversionException;
+import com.ing.ide.main.mainui.components.pluginmanager.ReusableComponentManagerUI;
 import com.ing.ide.main.mainui.components.testdesign.TestDesign;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.GroupNode;
 import com.ing.ide.main.mainui.components.testdesign.tree.model.ScenarioNode;
@@ -25,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -1133,6 +1135,9 @@ public class SharedReusableTree extends ProjectTree {
      * Context menu for the shared reusable tree with group-specific actions and [Shared] scope indicator.
      */
     class SharedReusablePopupMenu extends ProjectPopupMenu {
+        private final JMenuItem publishToMarketplaceItem = new JMenuItem(
+            "Publish to Marketplace..."
+        );
 
         /**
          * Constructs a new SharedReusablePopupMenu and initializes menu items.
@@ -1150,6 +1155,25 @@ public class SharedReusableTree extends ProjectTree {
             toggleTestCase.setVisible(false);
             toggleProjectReusable.setVisible(false);
             toggleSharedReusable.setVisible(false);
+            addSeparator();
+            publishToMarketplaceItem.addActionListener(e -> publishSelectedToMarketplace());
+            publishToMarketplaceItem.setVisible(false);
+            add(publishToMarketplaceItem);
+        }
+
+        /** Whole-scenario action -- a Reusable Component is one Scenario's worth of test cases. */
+        private void publishSelectedToMarketplace() {
+            ScenarioNode node = getSelectedScenarioNodeSafe();
+            if (node == null) {
+                Notification.showWarning(
+                    "Select a single Shared Reusable Component (scenario) to publish."
+                );
+                return;
+            }
+            ReusableComponentManagerUI.openPublishDialog(
+                SharedReusableTree.this.getTree(),
+                node.getScenario().getName()
+            );
         }
 
         /**
@@ -1161,6 +1185,7 @@ public class SharedReusableTree extends ProjectTree {
             toggleTestCase.setEnabled(true);
             toggleProjectReusable.setEnabled(true);
             toggleSharedReusable.setEnabled(false);
+            publishToMarketplaceItem.setVisible(false);
         }
 
         /**
@@ -1174,6 +1199,7 @@ public class SharedReusableTree extends ProjectTree {
             toggleSharedReusable.setEnabled(false);
             // Hide group items - grouping is not supported in Shared Reusable Components
             setGroupItemsVisible(false, false, false, false);
+            publishToMarketplaceItem.setVisible(true);
         }
 
         /**
@@ -1187,6 +1213,7 @@ public class SharedReusableTree extends ProjectTree {
             toggleSharedReusable.setEnabled(false);
             // Hide group items - grouping is not supported in Shared Reusable Components
             setGroupItemsVisible(false, false, false, false);
+            publishToMarketplaceItem.setVisible(false);
         }
 
         /**
@@ -1200,6 +1227,7 @@ public class SharedReusableTree extends ProjectTree {
             toggleSharedReusable.setEnabled(false);
             // Hide group items - grouping is not supported in Shared Reusable Components
             setGroupItemsVisible(false, false, false, false);
+            publishToMarketplaceItem.setVisible(false);
         }
     }
 }

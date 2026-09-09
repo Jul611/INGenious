@@ -1,24 +1,24 @@
 package com.ing.ide.main.mainui.components.pluginmanager;
 
 /**
- * Where the Plugin Marketplace's registry repo and Azure Artifacts feed live.
+ * Where the marketplace's registry repo lives -- shared by both Plugins and Reusable
+ * Components, since they're published into the same repo (different sub-paths, different
+ * registry files: {@code registry.json} for plugins, {@code reusable-components.json} for
+ * Reusable Components). The Azure Artifacts feed values are plugin-only -- Reusable Components
+ * are GitHub-repo-only, no build, no feed.
  * <p>
- * There's exactly one real marketplace, so every value here is a fixed constant,
- * not a per-user setting -- ordinary users never see or touch any of this;
- * {@code PluginRegistrySettingsDialog} only asks them for their own ADO PAT.
- * None of it is ever a credential either way -- auth is handled entirely by
- * {@code git}/{@code gh}/{@code mvn} themselves.
- * <p>
- * {@code REGISTRY_REPO}, {@code ADO_ORGANIZATION}, {@code ADO_PROJECT}, and
- * {@code ADO_FEED_NAME} below are still placeholders -- fill in the real
- * values for the marketplace's actual repo/org/project/feed before shipping.
- * The other four are already the real, established values used throughout
- * this project's pipelines and examples.
+ * Every value here is a fixed constant, not a per-user setting -- ordinary users never see or
+ * touch any of this; {@code PluginRegistrySettingsDialog} only asks them for their own ADO PAT
+ * (which is itself plugin-only, for install; Reusable Components never need it). None of it is
+ * ever a credential either way -- auth is handled entirely by {@code git}/{@code gh}/{@code mvn}
+ * themselves.
  */
 public final class PluginRegistryConfig {
     private static final String REGISTRY_REPO = "ing-tech-hub/p33148-ingenious-marketplace";
     private static final String REGISTRY_BRANCH = "registry-branch";
     private static final String REGISTRY_PATH = "registry.json";
+    private static final String REUSABLE_COMPONENTS_REGISTRY_PATH = "reusable-components.json";
+    private static final String REUSABLE_COMPONENTS_SUB_PATH = "reusable-components";
     private static final String MAVEN_GROUP_ID = "com.ing.plugins";
     private static final String ADO_ORGANIZATION = "INGCDaaS";
     private static final String ADO_PROJECT = "IngOne";
@@ -36,6 +36,16 @@ public final class PluginRegistryConfig {
 
     public String getRegistryPath() {
         return REGISTRY_PATH;
+    }
+
+    /** Path to the Reusable Components registry file, in the same repo/branch as {@link #getRegistryPath()}. */
+    public String getReusableComponentsRegistryPath() {
+        return REUSABLE_COMPONENTS_REGISTRY_PATH;
+    }
+
+    /** Sub-path a submitted Reusable Component's files land under, parallel to {@code "plugins"} for plugins. */
+    public String getReusableComponentsSubPath() {
+        return REUSABLE_COMPONENTS_SUB_PATH;
     }
 
     public String getMavenGroupId() {

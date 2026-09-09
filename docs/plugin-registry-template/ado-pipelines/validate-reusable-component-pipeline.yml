@@ -1,0 +1,104 @@
+# Validate Reusable Component Submission (Azure Pipelines)
+#
+# Same shape and same reasoning as validate-pipeline.yml (the plugin one) -- runs on every PR
+# against the registry branch, not path-filtered, for the identical required-status-check
+# reason that file's own header explains: a path-filtered required check never fires (and so
+# never resolves) on a PR that doesn't touch that path. So this pipeline also runs on every PR
+# and passes through cleanly when there's nothing reusable-components/**-related to check.
+#
+# Deliberately no build step and no publish-pipeline.yml equivalent: a Reusable Component is
+# just data (test-case/scenario YAML), never compiled, and there's no Azure Artifacts feed for
+# it -- it's GitHub-repo-only. Because of that, there's also no merge-time bot pipeline to patch
+# reusable-components.json the way publish-pipeline.yml does for registry.json -- the
+# contributor's own PR has to carry that update, which is exactly why the last check here
+# exists: to make sure a self-supplied registry diff only touches the submitter's own entry.
+#
+# Uses no secrets and no ADO feed credentials -- safe to run against an untrusted fork PR's
+# source, same intent as validate-pipeline.yml.
+
+trigger: none
+
+pr:
+  branches:
+    include:
+      - registry-branch
+
+pool:
+  vmImage: "ubuntu-latest" # TODO: replace with your org's pool name if Microsoft-hosted agents aren't allowed
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+    persistCredentials: true # needed so the git fetch/show below can authenticate
+
+  - script: |
+      set -e
+      TARGET_BRANCH=$(echo "$(System.PullRequest.TargetBranch)" | sed 's#refs/heads/##')
+      echo "##vso[task.setvariable variable=targetBranch]$TARGET_BRANCH"
+      git fetch origin "$TARGET_BRANCH"
+      CHANGED=$(git diff --name-only "origin/$TARGET_BRANCH...HEAD" -- 'reusable-components/*' | awk -F/ '{print $2}' | sort -u)
+      COUNT=$(echo "$CHANGED" | grep -c . || true)
+      if [ "$COUNT" -gt 1 ]; then
+        echo "##vso[task.logissue type=error]At most one reusable-components/<name>/ directory may change per PR (found: $CHANGED)"
+        exit 1
+      fi
+      if [ "$COUNT" -eq 0 ]; then
+        echo "No reusable-components/** changes in this PR -- nothing to validate here, passing through."
+        echo "##vso[task.setvariable variable=componentName]"
+      else
+        echo "##vso[task.setvariable variable=componentName]$CHANGED"
+      fi
+    displayName: "Determine changed component directory"
+
+  - script: |
+      set -e
+      NAME="$(componentName)"
+      test -f "reusable-components/$NAME/.component.json" || { echo "##vso[task.logissue type=error]Missing .component.json"; exit 1; }
+      YAML_COUNT=$(find "reusable-components/$NAME" -maxdepth 1 -iname '*.yaml' -o -iname '*.yml' | grep -c . || true)
+      if [ "$YAML_COUNT" -eq 0 ]; then
+        echo "##vso[task.logissue type=error]No test-case YAML file found in reusable-components/$NAME"
+        exit 1
+      fi
+    displayName: "Required files present"
+    condition: ne(variables['componentName'], '')
+
+  - script: |
+      set -e
+      NAME="$(componentName)"
+      python3 -c "import json; json.load(open('reusable-components/$NAME/.component.json'))" \
+        || { echo "##vso[task.logissue type=error].component.json is not valid JSON"; exit 1; }
+      NAME_FIELD=$(python3 -c "import json; print(json.load(open('reusable-components/$NAME/.component.json')).get('name',''))")
+      [ "$NAME_FIELD" = "$NAME" ] || { echo "##vso[task.logissue type=error].component.json's name ('$NAME_FIELD') must match its directory ('$NAME')"; exit 1; }
+      for f in "reusable-components/$NAME"/*.yaml "reusable-components/$NAME"/*.yml; do
+        [ -f "$f" ] || continue
+        grep -q "schemaVersion" "$f" || { echo "##vso[task.logissue type=error]$f doesn't look like a test-case YAML (no schemaVersion key)"; exit 1; }
+      done
+    displayName: "Metadata and test-case YAML sanity"
+    condition: ne(variables['componentName'], '')
+
+  - script: |
+      set -e
+      NAME="$(componentName)"
+      git show "origin/$(targetBranch):reusable-components.json" > /tmp/old-reusable-components.json 2>/dev/null \
+        || echo '{"components": []}' > /tmp/old-reusable-components.json
+      python3 - "$NAME" <<'PYEOF'
+      import json, sys
+      name = sys.argv[1]
+      old = json.load(open("/tmp/old-reusable-components.json"))
+      new = json.load(open("reusable-components.json"))
+      old_by_name = {c["name"]: c for c in old.get("components", [])}
+      new_by_name = {c["name"]: c for c in new.get("components", [])}
+      if name not in new_by_name:
+          print(f"##vso[task.logissue type=error]reusable-components.json has no entry named '{name}'")
+          sys.exit(1)
+      for n, c in new_by_name.items():
+          if n != name and old_by_name.get(n) != c:
+              print(f"##vso[task.logissue type=error]This PR's reusable-components.json diff touches '{n}', not just '{name}'")
+              sys.exit(1)
+      for n in old_by_name:
+          if n != name and n not in new_by_name:
+              print(f"##vso[task.logissue type=error]This PR's reusable-components.json diff removes '{n}'")
+              sys.exit(1)
+      PYEOF
+    displayName: "reusable-components.json diff only touches the submitter's own entry"
+    condition: ne(variables['componentName'], '')

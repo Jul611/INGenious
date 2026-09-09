@@ -486,6 +486,66 @@ public class PluginRegistryCliService {
         Consumer<String> progress
     )
         throws IOException {
+        return submitToRegistry(
+            stagedContentDir,
+            "plugins/" + pluginName,
+            "plugin/" + pluginName + "/v" + pluginVersion,
+            "Add " + pluginName + " v" + pluginVersion,
+            prTitle,
+            prBody,
+            progress
+        );
+    }
+
+    /**
+     * Forks-or-branches, copies {@code stagedContentDir}'s contents into {@code targetSubPath}
+     * on a new branch, commits, pushes, and opens a pull request against the configured
+     * registry repo -- the actual submission mechanism, shared by anything that submits into
+     * this repo (plugins today, Reusable Components too). Doesn't care what's inside
+     * {@code stagedContentDir} or where under the repo root it lands.
+     */
+    public PrResult submitToRegistry(
+        File stagedContentDir,
+        String targetSubPath,
+        String branchName,
+        String commitMessage,
+        String prTitle,
+        String prBody,
+        Consumer<String> progress
+    )
+        throws IOException {
+        return submitToRegistry(
+            stagedContentDir,
+            targetSubPath,
+            Map.of(),
+            branchName,
+            commitMessage,
+            prTitle,
+            prBody,
+            progress
+        );
+    }
+
+    /**
+     * Same as {@link #submitToRegistry(File, String, String, String, String, String,
+     * Consumer)}, plus {@code additionalFiles}: repo-root-relative path -&gt; local file whose
+     * content should also be committed at that path in the same branch/PR. Reusable Components
+     * need this to update {@code reusable-components.json} (a repo-root sibling of {@code
+     * reusable-components/}, outside {@code targetSubPath}) in the same PR as the component's
+     * own files -- there's no merge-time bot pipeline for this artifact type to patch the
+     * registry afterward, so the update has to travel with the submission itself.
+     */
+    public PrResult submitToRegistry(
+        File stagedContentDir,
+        String targetSubPath,
+        Map<String, File> additionalFiles,
+        String branchName,
+        String commitMessage,
+        String prTitle,
+        String prBody,
+        Consumer<String> progress
+    )
+        throws IOException {
         PluginRegistryConfig config = new PluginRegistryConfig();
         String registryRepo = config.getRegistryRepo();
         if (registryRepo == null) {
@@ -525,7 +585,6 @@ public class PluginRegistryCliService {
             progress.accept("Cloning " + work.owner + "/" + work.repo + "...");
             cloneWithRetry(work, branch, cloneDir, progress);
 
-            String branchName = "plugin/" + pluginName + "/v" + pluginVersion;
             progress.accept("Creating branch " + branchName + "...");
             runOrThrow(
                 List.of("git", "checkout", "-b", branchName),
@@ -533,15 +592,26 @@ public class PluginRegistryCliService {
                 "Failed to create branch"
             );
 
-            File targetPluginDir = new File(cloneDir, "plugins" + File.separator + pluginName);
-            progress.accept("Copying plugin files...");
-            copyDirectoryContents(stagedContentDir, targetPluginDir);
+            File targetDir = new File(cloneDir, targetSubPath);
+            progress.accept("Copying files...");
+            copyDirectoryContents(stagedContentDir, targetDir);
 
-            runOrThrow(
-                List.of("git", "add", "plugins/" + pluginName),
-                cloneDir,
-                "Failed to stage files"
-            );
+            List<String> addPaths = new ArrayList<>();
+            addPaths.add(targetSubPath);
+            for (Map.Entry<String, File> additional : additionalFiles.entrySet()) {
+                Files.copy(
+                    additional.getValue().toPath(),
+                    new File(cloneDir, additional.getKey()).toPath(),
+                    StandardCopyOption.REPLACE_EXISTING
+                );
+                addPaths.add(additional.getKey());
+            }
+
+            List<String> addCmd = new ArrayList<>();
+            addCmd.add("git");
+            addCmd.add("add");
+            addCmd.addAll(addPaths);
+            runOrThrow(addCmd, cloneDir, "Failed to stage files");
             runOrThrow(
                 List.of(
                     "git",
@@ -551,7 +621,7 @@ public class PluginRegistryCliService {
                     "user.email=ingenious@local",
                     "commit",
                     "-m",
-                    "Add " + pluginName + " v" + pluginVersion
+                    commitMessage
                 ),
                 cloneDir,
                 "Failed to commit"
@@ -694,6 +764,16 @@ public class PluginRegistryCliService {
 
     public String fetchRegistryJsonRaw(Consumer<String> progress) throws IOException {
         PluginRegistryConfig config = new PluginRegistryConfig();
+        return fetchFileFromRegistry(config.getRegistryPath(), progress);
+    }
+
+    /**
+     * Reads one file from the configured registry repo/branch via {@code gh api
+     * .../contents/<path>} -- doesn't care what's at that path, so this is shared between
+     * reading registry.json (plugins) and reusable-components.json (Reusable Components).
+     */
+    public String fetchFileFromRegistry(String path, Consumer<String> progress) throws IOException {
+        PluginRegistryConfig config = new PluginRegistryConfig();
         String registryRepo = config.getRegistryRepo();
         if (registryRepo == null) {
             throw new CliException(
@@ -702,25 +782,59 @@ public class PluginRegistryCliService {
                 ""
             );
         }
-        progress.accept("Reading registry from " + registryRepo + "...");
+        progress.accept("Reading " + path + " from " + registryRepo + "...");
         List<String> cmd = List.of(
             "gh",
             "api",
-            "repos/" +
-            registryRepo +
-            "/contents/" +
-            config.getRegistryPath() +
-            "?ref=" +
-            config.getRegistryBranch(),
+            "repos/" + registryRepo + "/contents/" + path + "?ref=" + config.getRegistryBranch(),
             "-H",
             "Accept: application/vnd.github.raw"
         );
         ProcResult result = run(cmd, null, DEFAULT_TIMEOUT_MS);
         if (result.exitCode != 0) {
             throw new CliException(
-                "Could not read the registry from " +
+                "Could not read " +
+                path +
+                " from " +
                 registryRepo +
                 ". Run 'gh auth status' to check your sign-in.",
+                result.exitCode,
+                result.output
+            );
+        }
+        return result.output;
+    }
+
+    /**
+     * Lists a directory in the configured registry repo/branch via {@code gh api
+     * .../contents/<path>} -- returns the raw JSON array GitHub's Contents API gives back for
+     * a directory (each entry has at least {@code name}/{@code path}/{@code type}), for the
+     * caller to parse. No Jackson dependency in this class, so this hands back raw JSON rather
+     * than a parsed type -- used by Reusable Components' install flow to discover which files
+     * a published component actually has, since (unlike a plugin's Maven artifact) there's no
+     * single resolvable coordinate for it.
+     */
+    public String listRegistryDirectoryRaw(String path, Consumer<String> progress)
+        throws IOException {
+        PluginRegistryConfig config = new PluginRegistryConfig();
+        String registryRepo = config.getRegistryRepo();
+        if (registryRepo == null) {
+            throw new CliException(
+                "No plugin registry repo configured. This build of the Plugin Manager isn't set up yet -- contact your administrator.",
+                -1,
+                ""
+            );
+        }
+        progress.accept("Listing " + path + " in " + registryRepo + "...");
+        List<String> cmd = List.of(
+            "gh",
+            "api",
+            "repos/" + registryRepo + "/contents/" + path + "?ref=" + config.getRegistryBranch()
+        );
+        ProcResult result = run(cmd, null, DEFAULT_TIMEOUT_MS);
+        if (result.exitCode != 0) {
+            throw new CliException(
+                "Could not list " + path + " in " + registryRepo + ".",
                 result.exitCode,
                 result.output
             );
