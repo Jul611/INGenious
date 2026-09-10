@@ -15,10 +15,22 @@
 # # delete head branches" setting (Settings -> General -> Pull Requests) --
 # # this pipeline only covers the case that setting doesn't: rejected PRs.
 # #
-# # Authenticates via create-github-app-token@1 (the org's installed GitHub
-# # App connection, exchanged for a short-lived installation token) rather
-# # than a standing GitHub PAT -- a PAT isn't allowed for this.
+# # Authenticates via GitHubAppToken@1 (the org's installed GitHub App
+# # connection, exchanged for a short-lived installation token) rather than
+# # a standing GitHub PAT -- a PAT isn't allowed for this. Same task and
+# # same githubAppConnection value as publish-pipeline.yml, which has since
+# # confirmed this task/connection pair actually works end to end.
 # # https://github.com/tspascoal/azure-pipelines-create-github-app-token-task
+# #
+# # Still deliberately disabled end-to-end (commented out below) -- holding
+# # off on enabling any branch-deletion pipeline until that's explicitly
+# # asked for. This pass only brings the dormant code current (task name,
+# # connection value) so it's ready to uncomment later without also needing
+# # a rewrite at that point.
+# #
+# # Required pipeline variable before ever enabling this (Pipelines -> Edit
+# # -> Variables): GITHUB_REPO_SLUG, same value and same externally-set
+# # convention as publish-pipeline.yml -- deliberately not hardcoded here.
 
 # trigger: none
 # pr: none
@@ -35,7 +47,6 @@
 #   vmImage: "ubuntu-latest"
 
 # variables:
-#   GITHUB_REPO_SLUG: "" # TODO: fill in, e.g. "your-org/your-registry-repo" -- same value as publish-pipeline.yml, consider a shared variable group
 #   CLEANUP_GRACE_DAYS: 7 # how long a rejected PR's branch survives before deletion
 
 # steps:
@@ -47,10 +58,10 @@
 #       echo "##vso[task.setvariable variable=GITHUB_REPO_NAME]${SLUG##*/}"
 #     displayName: "Split GITHUB_REPO_SLUG into owner/repo"
 
-#   - task: create-github-app-token@1
+#   - task: GitHubAppToken@1
 #     name: githubAuth
 #     inputs:
-#       githubAppConnection: "TODO-your-github-app-service-connection-name"
+#       githubAppConnection: "github-ing-tech-hub-svc"
 #       owner: $(GITHUB_OWNER)
 #       repositories: $(GITHUB_REPO_NAME)
 #     displayName: "Get GitHub App installation token"

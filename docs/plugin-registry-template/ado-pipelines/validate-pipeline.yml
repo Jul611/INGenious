@@ -11,6 +11,20 @@
 # Uses no secrets and no ADO feed credentials -- safe to run against an
 # untrusted fork PR's source, same intent as the GitHub Actions version.
 #
+# That's this file's own design, but it also depends on Azure Pipelines'
+# fork-PR handling actually withholding what it claims to. Confirmed against
+# Microsoft's own docs (learn.microsoft.com/azure/devops/pipelines/security/
+# secure-access-to-repos, "Forked GitHub repositories"): fork PR builds get
+# secrets withheld and restricted permissions by default -- "Make secrets
+# available to builds of forks" and "Make fork builds have the same
+# permissions as regular builds" are both opt-in and off by default, which
+# is functionally equivalent to GitHub Actions' pull_request (not
+# pull_request_target) trigger semantics. That's a project/org-level ADO
+# setting under Project Settings -> Pipelines -> Settings -> Triggers, not
+# something this YAML controls -- worth a one-time check that nobody has
+# flipped it on org-wide, since that would silently widen what a fork PR
+# build can reach regardless of what's written here.
+#
 # Deliberately NOT path-filtered to plugins/**, even though only that path
 # is ever actually validated: this check is meant to be marked "required"
 # on the branch ruleset, and a required check that's path-filtered never
@@ -49,7 +63,7 @@ stages:
     jobs:
       - job: ValidatePlugin
         pool:
-          vmImage: "ubuntu-latest" # TODO: replace with your org's pool name if Microsoft-hosted agents aren't allowed
+          vmImage: "ubuntu-latest"
         steps:
           - checkout: self
             fetchDepth: 0
@@ -164,10 +178,11 @@ stages:
     jobs:
       - job: CheckmarxScan
         pool:
-          vmImage: "ubuntu-latest" # TODO: replace with your org's pool name if Microsoft-hosted agents aren't allowed
+          vmImage: "ubuntu-latest"
         steps:
           - checkout: self
             fetchDepth: 0
+            persistCredentials: true # same reason as the Validate stage above -- needed so the git fetch origin right below can authenticate
 
           - script: |
               set -e
@@ -183,24 +198,74 @@ stages:
               fi
             displayName: "Determine changed plugin directory"
 
-          # Confirmed against an existing working pipeline in this org: the task is
-          # CheckmarxAST@3 (the "Checkmarx AST" extension, for Checkmarx One). The task
-          # name itself is real -- but the exact input field names below are my best
-          # understanding of that task's schema, not copied from the working example, so
-          # TODO: cross-check every input here (names, casing, and the service connection
-          # name) against that other pipeline before trusting this to actually run.
+          # Cross-checked directly against a real working pipeline in the same ADO
+          # project (P33148 -- the same project prefix already used for
+          # ADO_FEED_SERVER_ID in publish-pipeline.yml, so this is the org's actual
+          # Checkmarx One service connection for this project, not just a same-shaped
+          # example from somewhere else) and against the task's own source
+          # (github.com/Checkmarx/ast-azure-plugin, cxAstScan/task.json). That
+          # cross-check caught two real bugs:
+          #   - The input is CheckmarxService, capital C -- not the lowercase
+          #     checkmarxService this file had before. A wrong input name is silently
+          #     ignored by the task rather than erroring, so this would have quietly
+          #     no-op'd instead of failing loudly the first time it ran.
+          #   - scanTypes was never a real input either -- task.json lists exactly five
+          #     inputs (CheckmarxService, projectName, branchName, tenantName,
+          #     additionalParams) and scanTypes isn't one of them, the same silent-no-op
+          #     class of bug. There's no dedicated field for scan type or threshold at
+          #     all -- additionalParams is a raw passthrough of CLI flags to the
+          #     underlying `cx` CLI, so both now live there instead (see below).
+          #   - tenantName and branchName are required inputs this file was missing
+          #     entirely. tenantName is a fixed org-wide value, copied as-is. branchName
+          #     in the working example is a literal 'main' (that pipeline always scans
+          #     one fixed branch); this stage instead derives it from
+          #     System.PullRequest.SourceBranch the same way TARGET_BRANCH is already
+          #     derived just above in the Validate stage, since this pipeline scans
+          #     whatever branch a contributor's PR is actually from. That derivation is
+          #     this file's own inference, not something the working example covered (it
+          #     isn't a PR-validation pipeline) -- worth confirming on this stage's first
+          #     real run.
           #   - checkmarxService: name of this project's "Checkmarx One" service connection
-          #     (Project Settings -> Service connections) -- ask whoever set that up if it's
-          #     not obvious, same as githubAppConnection in publish-pipeline.yml.
+          #     (Project Settings -> Service connections) -- filled in below from the same
+          #     working pipeline.
           #   - projectName: the Checkmarx One project this scan's results should file under.
           #     Using the plugin's own name keeps each contributor's plugin as its own
           #     Checkmarx project rather than one project for the whole registry repo.
-          # Also still undecided: whether a finding at/above some severity should fail this
-          # stage (recommended) or only report -- decide that once this actually runs once.
+          #
+          # additionalParams sets two things via the CLI's own flags (Checkmarx One CLI
+          # docs, "scan create"): `--scan-types sast` keeps this stage SAST-only (Reusable
+          # Components are already out of scope entirely, and this stage has no reason to
+          # also run SCA/IaC/etc. against a single plugin submission), and `--threshold`
+          # fails the build on any Critical or High finding (zero tolerance) while leaving
+          # Medium/Low/Info as report-only, never blocking. Verified against the task's
+          # own source (services/TaskRunner.ts) that this is a real gate, not just a
+          # report: the task calls
+          # `taskLib.setResult(exitCode == 0 ? Succeeded : Failed, "")` on the CLI's exit
+          # code with no middle "succeeded with issues" outcome, and a `--threshold`
+          # breach is exactly what makes the CLI exit non-zero. Findings still get
+          # recorded in the Checkmarx One project regardless of severity -- the threshold
+          # only changes whether the task (and so this required PR check) fails, not
+          # whether something gets scanned or logged.
+          #
+          # Critical/High at zero tolerance is a starting point, not a permanent one --
+          # SAST on diverse third-party plugin code this project doesn't control the
+          # style of is going to have some false-positive rate, and Medium is left
+          # report-only for exactly that reason, rather than risking a maintainer just
+          # force-merging around a noisy check. Revisit once this has actually run
+          # against a batch of real submissions and the false-positive rate is known.
+          - script: |
+              set -e
+              SOURCE_BRANCH=$(echo "$(System.PullRequest.SourceBranch)" | sed 's#refs/heads/##')
+              echo "##vso[task.setvariable variable=sourceBranch]$SOURCE_BRANCH"
+            displayName: "Determine PR source branch"
+            condition: ne(variables['pluginName'], '')
+
           - task: CheckmarxAST@3
             inputs:
-              checkmarxService: "TODO-checkmarx-one-service-connection-name"
+              CheckmarxService: "P33148-CheckmarxOne-SVC"
               projectName: "plugin-$(pluginName)"
-              scanTypes: "sast"
+              branchName: "$(sourceBranch)"
+              tenantName: "ING"
+              additionalParams: '--scan-types sast --threshold "sast-critical=0;sast-high=0"'
             displayName: "Checkmarx scan"
             condition: ne(variables['pluginName'], '')

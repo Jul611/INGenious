@@ -41,7 +41,7 @@ trigger:
       - plugins/*
 
 pool:
-  vmImage: "ubuntu-latest" # TODO: replace with your org's pool name if Microsoft-hosted agents aren't allowed
+  vmImage: "ubuntu-latest"
 
 variables:
   PLUGIN_MAVEN_GROUP_ID: "com.ing.plugins"
@@ -83,11 +83,6 @@ steps:
     # this task wires the right <server> entry into settings.xml automatically
     # via $(System.AccessToken). The build service account (not a PAT) needs
     # Contributor access on the feed for this to succeed.
-
-  - script: |
-      find $HOME -name settings.xml
-      cat $HOME/.m2/settings.xml
-    displayName: Inspect Maven settings 
 
   - script: |
       set -e

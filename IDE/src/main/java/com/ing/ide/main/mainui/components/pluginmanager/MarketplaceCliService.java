@@ -643,6 +643,19 @@ public class MarketplaceCliService {
                 GH_OWN_GIT_CREDENTIAL_ENV
             );
 
+            // A resubmission reusing the same branchName is routine, not just an edge case --
+            // guaranteed every time for a Reusable Component, which (unlike a plugin's
+            // plugin/<name>/v<version>) has no version to make the branch name unique per
+            // submission. The force-push above already updated that branch's content whether
+            // or not a PR is still open on it; check for one before assuming we need to
+            // create a new one, so a routine "fix validation failure, submit again" doesn't
+            // get reported as a failure just because gh pr create refuses a duplicate head.
+            PrResult existingPr = findOpenPrForHead(owner, repo, branchName, progress);
+            if (existingPr != null) {
+                success = true;
+                return existingPr;
+            }
+
             progress.accept("Opening pull request...");
             List<String> prCmd = new ArrayList<>();
             prCmd.add("gh");
@@ -683,6 +696,52 @@ public class MarketplaceCliService {
                 );
             }
         }
+    }
+
+    /**
+     * Looks up an already-open PR for {@code headBranch} in {@code owner/repo}. Note this
+     * takes the bare branch name, not the {@code fork-owner:branch} form {@code gh pr
+     * create --head} accepts for a fork submission -- {@code gh pr list --head} doesn't
+     * support that colon syntax, it only matches on the branch name itself.
+     */
+    private PrResult findOpenPrForHead(
+        String owner,
+        String repo,
+        String headBranch,
+        Consumer<String> progress
+    )
+        throws IOException {
+        List<String> cmd = List.of(
+            "gh",
+            "pr",
+            "list",
+            "--repo",
+            owner + "/" + repo,
+            "--head",
+            headBranch,
+            "--state",
+            "open",
+            "--json",
+            "url",
+            "--jq",
+            ".[0].url"
+        );
+        ProcResult result = run(cmd, null, DEFAULT_TIMEOUT_MS, GH_OWN_GIT_CREDENTIAL_ENV);
+        if (result.exitCode != 0) {
+            throw new CliException(
+                "Failed to check for an existing pull request",
+                result.exitCode,
+                result.output
+            );
+        }
+        String output = result.output == null ? "" : result.output.trim();
+        if (output.isEmpty() || "null".equals(output)) {
+            return null;
+        }
+        progress.accept(
+            "An open pull request already exists for this branch -- updating it instead of opening a new one."
+        );
+        return parsePrResult(output);
     }
 
     private void cloneWithRetry(

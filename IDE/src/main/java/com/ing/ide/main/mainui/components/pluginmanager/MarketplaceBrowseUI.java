@@ -454,6 +454,9 @@ public class MarketplaceBrowseUI extends JPanel {
                         "Installed",
                         JOptionPane.INFORMATION_MESSAGE
                     );
+                    if (onInstallCallback != null) {
+                        onInstallCallback.run();
+                    }
                 } catch (Exception e) {
                     LOG.log(Level.WARNING, "Component install failed", e);
                     JOptionPane.showMessageDialog(

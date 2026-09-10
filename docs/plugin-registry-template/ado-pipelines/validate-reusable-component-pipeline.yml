@@ -24,7 +24,7 @@ pr:
       - registry-branch
 
 pool:
-  vmImage: "ubuntu-latest" # TODO: replace with your org's pool name if Microsoft-hosted agents aren't allowed
+  vmImage: "ubuntu-latest"
 
 steps:
   - checkout: self

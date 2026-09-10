@@ -439,7 +439,6 @@ public class ReusableComponentPublishUI extends JPanel {
                 try {
                     MarketplaceCliService.PrResult result = get();
                     progressArea.append("Pull request opened: " + result.url + "\n");
-                    cleanupClonedSource();
                     int choice = JOptionPane.showConfirmDialog(
                         ReusableComponentPublishUI.this,
                         "Pull request opened:\n" + result.url + "\n\nOpen it in your browser now?",
@@ -463,6 +462,10 @@ public class ReusableComponentPublishUI extends JPanel {
                         JOptionPane.ERROR_MESSAGE
                     );
                 }
+                // Unconditional, same as PluginManagerPublishUI's own pattern -- a failed
+                // submission (network/auth/PR-creation error) must not leak the temp clone
+                // from fetchFromRepo() either.
+                cleanupClonedSource();
             }
         };
         worker.execute();
