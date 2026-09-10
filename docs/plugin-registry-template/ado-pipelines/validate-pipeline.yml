@@ -19,6 +19,20 @@
 # one only touches registry.json). So this pipeline runs on every PR and
 # passes through cleanly when there's nothing plugins/**-related to check,
 # rather than silently never running at all.
+#
+# Two stages, deliberately on separate agents/jobs rather than one job:
+# - Validate: the original structural/build checks below. This stage runs
+#   `mvn clean package` directly against the contributor's own pom.xml,
+#   which can execute arbitrary Maven-plugin code -- that's fine today
+#   only because this stage truly holds no credentials at all.
+# - SecurityScan: Checkmarx, scanning the same submitted plugin source for
+#   vulnerabilities. Kept in its own stage (fresh agent, no shared process
+#   or environment with the step above) specifically so the Checkmarx
+#   service-connection credential is never resolvable from a job that also
+#   runs untrusted contributor build code. Not wired in yet -- see the TODO
+#   in that stage. Scoped to plugins only: Reusable Components never ship
+#   compiled/executable source, so there's nothing meaningful for a SAST
+#   scan to check there.
 
 trigger: none
 
@@ -27,116 +41,166 @@ pr:
     include:
       - registry-branch
 
-pool:
-  vmImage: "ubuntu-latest" # TODO: replace with your org's pool name if Microsoft-hosted agents aren't allowed
-
 variables:
   PLUGIN_MAVEN_GROUP_ID: "com.ing.plugins" # matches every plugin-examples/*/pom.xml groupId
 
-steps:
-  - checkout: self
-    fetchDepth: 0
-    persistCredentials: true # needed so the later `git fetch origin` below can authenticate -- without this, the checkout's own credential isn't retained for script-level git commands
+stages:
+  - stage: Validate
+    jobs:
+      - job: ValidatePlugin
+        pool:
+          vmImage: "ubuntu-latest" # TODO: replace with your org's pool name if Microsoft-hosted agents aren't allowed
+        steps:
+          - checkout: self
+            fetchDepth: 0
+            persistCredentials: true # needed so the later `git fetch origin` below can authenticate -- without this, the checkout's own credential isn't retained for script-level git commands
 
-  - task: JavaToolInstaller@0
-    inputs:
-      versionSpec: "17"
-      jdkArchitectureOption: "x64"
-      jdkSourceOption: "PreInstalled"
+          - task: JavaToolInstaller@0
+            inputs:
+              versionSpec: "17"
+              jdkArchitectureOption: "x64"
+              jdkSourceOption: "PreInstalled"
 
-  - script: |
-      set -e
-      TARGET_BRANCH=$(echo "$(System.PullRequest.TargetBranch)" | sed 's#refs/heads/##')
-      git fetch origin "$TARGET_BRANCH"
-      CHANGED=$(git diff --name-only "origin/$TARGET_BRANCH...HEAD" -- 'plugins/*' | awk -F/ '{print $2}' | sort -u)
-      COUNT=$(echo "$CHANGED" | grep -c . || true)
-      if [ "$COUNT" -gt 1 ]; then
-        echo "##vso[task.logissue type=error]At most one plugins/<name>/ directory may change per PR (found: $CHANGED)"
-        exit 1
-      fi
-      if [ "$COUNT" -eq 0 ]; then
-        echo "No plugins/** changes in this PR -- nothing to validate here, passing through. (Expected for the bot's own registry.json-only patch PR.)"
-        echo "##vso[task.setvariable variable=pluginName]"
-      else
-        echo "##vso[task.setvariable variable=pluginName]$CHANGED"
-      fi
-    displayName: "Determine changed plugin directory"
+          - script: |
+              set -e
+              TARGET_BRANCH=$(echo "$(System.PullRequest.TargetBranch)" | sed 's#refs/heads/##')
+              git fetch origin "$TARGET_BRANCH"
+              CHANGED=$(git diff --name-only "origin/$TARGET_BRANCH...HEAD" -- 'plugins/*' | awk -F/ '{print $2}' | sort -u)
+              COUNT=$(echo "$CHANGED" | grep -c . || true)
+              if [ "$COUNT" -gt 1 ]; then
+                echo "##vso[task.logissue type=error]At most one plugins/<name>/ directory may change per PR (found: $CHANGED)"
+                exit 1
+              fi
+              if [ "$COUNT" -eq 0 ]; then
+                echo "No plugins/** changes in this PR -- nothing to validate here, passing through. (Expected for the bot's own registry.json-only patch PR.)"
+                echo "##vso[task.setvariable variable=pluginName]"
+              else
+                echo "##vso[task.setvariable variable=pluginName]$CHANGED"
+              fi
+            displayName: "Determine changed plugin directory"
 
-  - script: |
-      mvn -B install:install-file -Dfile=ci/vendor/ingenious-api-3.0.jar -DgroupId=com.ing -DartifactId=ingenious-api -Dversion=3.0 -Dpackaging=jar
-    displayName: "Seed local repo with ingenious-api"
-    condition: ne(variables['pluginName'], '')
+          - script: |
+              mvn -B install:install-file -Dfile=ci/vendor/ingenious-api-3.0.jar -DgroupId=com.ing -DartifactId=ingenious-api -Dversion=3.0 -Dpackaging=jar
+            displayName: "Seed local repo with ingenious-api"
+            condition: ne(variables['pluginName'], '')
 
-  - script: |
-      set -e
-      NAME="$(pluginName)"
-      test -f "plugins/$NAME/pom.xml" || { echo "##vso[task.logissue type=error]Missing pom.xml"; exit 1; }
-      test -f "plugins/$NAME/.submission.json" || { echo "##vso[task.logissue type=error]Missing .submission.json"; exit 1; }
-      # Description file: no naming requirement, just exactly one *.md -- matches the
-      # Publish tab, which never renames it during staging, so whatever the contributor
-      # called it is what actually lands here.
-      MD_FILES=$(find "plugins/$NAME" -maxdepth 1 -iname '*.md')
-      MD_COUNT=$(echo "$MD_FILES" | grep -c . || true)
-      if [ "$MD_COUNT" -eq 0 ]; then
-        echo "##vso[task.logissue type=error]No .md file found in plugins/$NAME -- a description is required"
-        exit 1
-      elif [ "$MD_COUNT" -gt 1 ]; then
-        echo "##vso[task.logissue type=error]Multiple .md files found in plugins/$NAME -- keep exactly one so it's unambiguous which is the description"
-        exit 1
-      fi
-      echo "##vso[task.setvariable variable=descriptionFile]$MD_FILES"
-    displayName: "Required files present"
-    condition: ne(variables['pluginName'], '')
+          - script: |
+              set -e
+              NAME="$(pluginName)"
+              test -f "plugins/$NAME/pom.xml" || { echo "##vso[task.logissue type=error]Missing pom.xml"; exit 1; }
+              test -f "plugins/$NAME/.submission.json" || { echo "##vso[task.logissue type=error]Missing .submission.json"; exit 1; }
+              # Description file: no naming requirement, just exactly one *.md -- matches the
+              # Publish tab, which never renames it during staging, so whatever the contributor
+              # called it is what actually lands here.
+              MD_FILES=$(find "plugins/$NAME" -maxdepth 1 -iname '*.md')
+              MD_COUNT=$(echo "$MD_FILES" | grep -c . || true)
+              if [ "$MD_COUNT" -eq 0 ]; then
+                echo "##vso[task.logissue type=error]No .md file found in plugins/$NAME -- a description is required"
+                exit 1
+              elif [ "$MD_COUNT" -gt 1 ]; then
+                echo "##vso[task.logissue type=error]Multiple .md files found in plugins/$NAME -- keep exactly one so it's unambiguous which is the description"
+                exit 1
+              fi
+              echo "##vso[task.setvariable variable=descriptionFile]$MD_FILES"
+            displayName: "Required files present"
+            condition: ne(variables['pluginName'], '')
 
-  - script: |
-      set -e
-      WORDS=$(wc -w < "$(descriptionFile)")
-      [ "$WORDS" -ge 50 ] || { echo "##vso[task.logissue type=error]$(descriptionFile) has only $WORDS words (minimum 50)"; exit 1; }
-    displayName: "Description has at least 50 words"
-    condition: ne(variables['pluginName'], '')
+          - script: |
+              set -e
+              WORDS=$(wc -w < "$(descriptionFile)")
+              [ "$WORDS" -ge 50 ] || { echo "##vso[task.logissue type=error]$(descriptionFile) has only $WORDS words (minimum 50)"; exit 1; }
+            displayName: "Description has at least 50 words"
+            condition: ne(variables['pluginName'], '')
 
-  - script: |
-      set -e
-      NAME="$(pluginName)"
-      GROUP_ID=$(mvn -q -f "plugins/$NAME/pom.xml" help:evaluate -Dexpression=project.groupId -DforceStdout)
-      [ "$GROUP_ID" = "$(PLUGIN_MAVEN_GROUP_ID)" ] || { echo "##vso[task.logissue type=error]groupId '$GROUP_ID' must be '$(PLUGIN_MAVEN_GROUP_ID)'"; exit 1; }
-    displayName: "pom.xml groupId matches required namespace"
-    condition: ne(variables['pluginName'], '')
+          - script: |
+              set -e
+              NAME="$(pluginName)"
+              GROUP_ID=$(mvn -q -f "plugins/$NAME/pom.xml" help:evaluate -Dexpression=project.groupId -DforceStdout)
+              [ "$GROUP_ID" = "$(PLUGIN_MAVEN_GROUP_ID)" ] || { echo "##vso[task.logissue type=error]groupId '$GROUP_ID' must be '$(PLUGIN_MAVEN_GROUP_ID)'"; exit 1; }
+            displayName: "pom.xml groupId matches required namespace"
+            condition: ne(variables['pluginName'], '')
 
-  - script: |
-      mvn -B -f "plugins/$(pluginName)/pom.xml" clean package
-    displayName: "Build plugin from source"
-    condition: ne(variables['pluginName'], '')
+          - script: |
+              mvn -B -f "plugins/$(pluginName)/pom.xml" clean package
+            displayName: "Build plugin from source"
+            condition: ne(variables['pluginName'], '')
 
-  - script: |
-      set -e
-      NAME="$(pluginName)"
-      JAR=$(find "plugins/$NAME/target" -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' | head -1)
-      unzip -p "$JAR" META-INF/MANIFEST.MF | tr -d '\r' | grep -q '^pluginEntryClasses' || { echo "##vso[task.logissue type=error]$JAR missing pluginEntryClasses"; exit 1; }
-    displayName: "Manifest has pluginEntryClasses"
-    condition: ne(variables['pluginName'], '')
+          - script: |
+              set -e
+              NAME="$(pluginName)"
+              JAR=$(find "plugins/$NAME/target" -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' | head -1)
+              unzip -p "$JAR" META-INF/MANIFEST.MF | tr -d '\r' | grep -q '^pluginEntryClasses' || { echo "##vso[task.logissue type=error]$JAR missing pluginEntryClasses"; exit 1; }
+            displayName: "Manifest has pluginEntryClasses"
+            condition: ne(variables['pluginName'], '')
 
-  - script: |
-      set -e
-      NAME="$(pluginName)"
-      python3 - "$NAME" <<'PYEOF'
-      import json, sys
-      name = sys.argv[1]
-      submission = json.load(open(f"plugins/{name}/.submission.json"))
-      new_actions = set(submission.get("actions", []))
-      if not new_actions:
-          sys.exit(0)
-      registry = json.load(open("registry.json"))
-      conflicts = []
-      for p in registry.get("plugins", []):
-          if p.get("name") == name:
-              continue
-          overlap = new_actions & set(p.get("actions", []))
-          if overlap:
-              conflicts.append(f"{sorted(overlap)} already used by '{p.get('displayName', p.get('name'))}'")
-      if conflicts:
-          print("##vso[task.logissue type=error]Action name conflict(s): " + "; ".join(conflicts))
-          sys.exit(1)
-      PYEOF
-    displayName: "No action-name conflicts with existing plugins"
-    condition: ne(variables['pluginName'], '')
+          - script: |
+              set -e
+              NAME="$(pluginName)"
+              python3 - "$NAME" <<'PYEOF'
+              import json, sys
+              name = sys.argv[1]
+              submission = json.load(open(f"plugins/{name}/.submission.json"))
+              new_actions = set(submission.get("actions", []))
+              if not new_actions:
+                  sys.exit(0)
+              registry = json.load(open("registry.json"))
+              conflicts = []
+              for p in registry.get("plugins", []):
+                  if p.get("name") == name:
+                      continue
+                  overlap = new_actions & set(p.get("actions", []))
+                  if overlap:
+                      conflicts.append(f"{sorted(overlap)} already used by '{p.get('displayName', p.get('name'))}'")
+              if conflicts:
+                  print("##vso[task.logissue type=error]Action name conflict(s): " + "; ".join(conflicts))
+                  sys.exit(1)
+              PYEOF
+            displayName: "No action-name conflicts with existing plugins"
+            condition: ne(variables['pluginName'], '')
+
+  - stage: SecurityScan
+    dependsOn: Validate
+    condition: succeeded()
+    jobs:
+      - job: CheckmarxScan
+        pool:
+          vmImage: "ubuntu-latest" # TODO: replace with your org's pool name if Microsoft-hosted agents aren't allowed
+        steps:
+          - checkout: self
+            fetchDepth: 0
+
+          - script: |
+              set -e
+              TARGET_BRANCH=$(echo "$(System.PullRequest.TargetBranch)" | sed 's#refs/heads/##')
+              git fetch origin "$TARGET_BRANCH"
+              CHANGED=$(git diff --name-only "origin/$TARGET_BRANCH...HEAD" -- 'plugins/*' | awk -F/ '{print $2}' | sort -u)
+              COUNT=$(echo "$CHANGED" | grep -c . || true)
+              if [ "$COUNT" -eq 0 ]; then
+                echo "No plugins/** changes in this PR -- nothing to scan, passing through."
+                echo "##vso[task.setvariable variable=pluginName]"
+              else
+                echo "##vso[task.setvariable variable=pluginName]$CHANGED"
+              fi
+            displayName: "Determine changed plugin directory"
+
+          # Confirmed against an existing working pipeline in this org: the task is
+          # CheckmarxAST@3 (the "Checkmarx AST" extension, for Checkmarx One). The task
+          # name itself is real -- but the exact input field names below are my best
+          # understanding of that task's schema, not copied from the working example, so
+          # TODO: cross-check every input here (names, casing, and the service connection
+          # name) against that other pipeline before trusting this to actually run.
+          #   - checkmarxService: name of this project's "Checkmarx One" service connection
+          #     (Project Settings -> Service connections) -- ask whoever set that up if it's
+          #     not obvious, same as githubAppConnection in publish-pipeline.yml.
+          #   - projectName: the Checkmarx One project this scan's results should file under.
+          #     Using the plugin's own name keeps each contributor's plugin as its own
+          #     Checkmarx project rather than one project for the whole registry repo.
+          # Also still undecided: whether a finding at/above some severity should fail this
+          # stage (recommended) or only report -- decide that once this actually runs once.
+          - task: CheckmarxAST@3
+            inputs:
+              checkmarxService: "TODO-checkmarx-one-service-connection-name"
+              projectName: "plugin-$(pluginName)"
+              scanTypes: "sast"
+            displayName: "Checkmarx scan"
+            condition: ne(variables['pluginName'], '')

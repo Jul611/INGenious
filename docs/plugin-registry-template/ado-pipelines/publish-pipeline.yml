@@ -137,7 +137,11 @@ steps:
       git add registry.json
       git commit -m "Register $NAME v$(pluginVersion)"
       git remote set-url origin "https://x-access-token:$(githubAuth.installationToken)@github.com/$(GITHUB_REPO_SLUG).git"
-      git push origin "$BRANCH"
+      # --force: BRANCH is deterministic (name+version), so a retry after this step
+      # previously failed partway (push ok, gh pr create/merge not) would otherwise fail
+      # non-fast-forward against the leftover branch from the earlier attempt. Same
+      # reasoning as submitPlugin()'s own force-push, for the same class of problem.
+      git push --force origin "$BRANCH"
 
       PR_URL=$(gh pr create --repo "$(GITHUB_REPO_SLUG)" --base registry-branch --head "$BRANCH" \
         --title "Register $NAME v$(pluginVersion)" \

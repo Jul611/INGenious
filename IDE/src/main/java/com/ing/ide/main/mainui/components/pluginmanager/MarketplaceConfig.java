@@ -30,10 +30,12 @@ public final class MarketplaceConfig {
         return blankToNull(REGISTRY_REPO);
     }
 
+    /** Branch of the registry repo that everything (plugins and Reusable Components) is submitted against. */
     public String getRegistryBranch() {
         return REGISTRY_BRANCH;
     }
 
+    /** Path to registry.json (the plugin registry) within the registry repo. */
     public String getRegistryPath() {
         return REGISTRY_PATH;
     }
@@ -48,22 +50,33 @@ public final class MarketplaceConfig {
         return REUSABLE_COMPONENTS_SUB_PATH;
     }
 
+    /** Required Maven {@code groupId} namespace every plugin's pom.xml must use. */
     public String getMavenGroupId() {
         return MAVEN_GROUP_ID;
     }
 
+    /** Azure DevOps organization the Artifacts feed lives in. */
     public String getAdoOrganization() {
         return ADO_ORGANIZATION;
     }
 
+    /** Azure DevOps project the Artifacts feed is scoped to, or blank if the feed is org-scoped. */
     public String getAdoProject() {
         return ADO_PROJECT;
     }
 
+    /** The real Azure Artifacts feed name -- what {@code MavenAuthenticate@0}'s {@code artifactsFeeds} input authenticates against in publish-pipeline.yml. */
     public String getAdoFeedName() {
         return ADO_FEED_NAME;
     }
 
+    /**
+     * Purely local {@code <server>} id used to match the generated shim pom's
+     * {@code <repository><id>} against a {@code <server><id>} in the user's own
+     * {@code ~/.m2/settings.xml} -- not required to equal the real feed name (see
+     * {@link #getAdoFeedName()}), though publish-pipeline.yml's own value is kept identical
+     * to it by convention so there's one string to remember instead of two.
+     */
     public String getAdoFeedServerId() {
         return ADO_FEED_SERVER_ID;
     }

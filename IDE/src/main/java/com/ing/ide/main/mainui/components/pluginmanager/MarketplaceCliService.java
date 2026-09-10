@@ -15,15 +15,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
- * Shells out to {@code git}, {@code gh}, and {@code mvn} to publish plugin
- * submissions as GitHub pull requests and to resolve published plugin
- * artifacts from the Azure Artifacts feed. GitHub credentials are never
- * read, stored, or handled here — git/gh manage their own. Maven-against-ADO
- * uses a PAT the user pastes once into ADO Credential Setup; this class writes
- * it straight into the user's real {@code ~/.m2/settings.xml} (preserving
- * anything else already there) so nobody has to hand-edit that file.
+ * Shells out to {@code git}, {@code gh}, and {@code mvn} for both marketplaces this app has
+ * (Plugins and Reusable Components): PR submission, registry reads, and -- plugins only --
+ * Maven artifact/dependency resolution from the Azure Artifacts feed. GitHub credentials are
+ * never read, stored, or handled here — git/gh manage their own. Maven-against-ADO uses a PAT
+ * the user pastes once into ADO Credential Setup; this class writes it straight into the
+ * user's real {@code ~/.m2/settings.xml} (preserving anything else already there) so nobody
+ * has to hand-edit that file.
  */
 public class MarketplaceCliService {
     private static final long TOOL_CHECK_TIMEOUT_MS = 10_000;
@@ -133,14 +142,17 @@ public class MarketplaceCliService {
 
     // ─── Tool detection & auth ───────────────────────────────────────
 
+    /** Whether {@code git} is on PATH, and its reported version if so. */
     public ToolStatus checkGitInstalled() {
         return detectTool(List.of("git", "--version"));
     }
 
+    /** Whether the GitHub CLI ({@code gh}) is on PATH, and its reported version if so. */
     public ToolStatus checkGhInstalled() {
         return detectTool(List.of("gh", "--version"));
     }
 
+    /** Whether {@code mvn} is on PATH, and its reported version if so. */
     public ToolStatus checkMvnInstalled() {
         return detectTool(List.of("mvn", "--version"));
     }
@@ -159,6 +171,7 @@ public class MarketplaceCliService {
         return status;
     }
 
+    /** Whether {@code gh} is signed in, and as whom -- the credential every network git/gh op in this class relies on. */
     public AuthStatus checkGhAuthStatus() {
         AuthStatus status = new AuthStatus();
         try {
@@ -210,52 +223,47 @@ public class MarketplaceCliService {
         File settingsFile = adoSettingsFile();
         settingsFile.getParentFile().mkdirs();
         try {
-            javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory.newInstance();
-            org.w3c.dom.Document doc;
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            Document doc;
             if (settingsFile.exists()) {
                 doc = dbf.newDocumentBuilder().parse(settingsFile);
             } else {
                 doc = dbf.newDocumentBuilder().newDocument();
                 doc.appendChild(doc.createElement("settings"));
             }
-            org.w3c.dom.Element root = doc.getDocumentElement();
-            org.w3c.dom.NodeList serversList = root.getElementsByTagName("servers");
-            org.w3c.dom.Element serversEl;
+            Element root = doc.getDocumentElement();
+            NodeList serversList = root.getElementsByTagName("servers");
+            Element serversEl;
             if (serversList.getLength() == 0) {
                 serversEl = doc.createElement("servers");
                 root.appendChild(serversEl);
             } else {
-                serversEl = (org.w3c.dom.Element) serversList.item(0);
+                serversEl = (Element) serversList.item(0);
             }
-            org.w3c.dom.NodeList serverNodes = serversEl.getElementsByTagName("server");
+            NodeList serverNodes = serversEl.getElementsByTagName("server");
             for (int i = serverNodes.getLength() - 1; i >= 0; i--) {
-                org.w3c.dom.Element serverEl = (org.w3c.dom.Element) serverNodes.item(i);
-                org.w3c.dom.NodeList idNodes = serverEl.getElementsByTagName("id");
+                Element serverEl = (Element) serverNodes.item(i);
+                NodeList idNodes = serverEl.getElementsByTagName("id");
                 if (idNodes.getLength() > 0 && serverId.equals(idNodes.item(0).getTextContent())) {
                     serversEl.removeChild(serverEl);
                 }
             }
-            org.w3c.dom.Element newServer = doc.createElement("server");
-            org.w3c.dom.Element idEl = doc.createElement("id");
+            Element newServer = doc.createElement("server");
+            Element idEl = doc.createElement("id");
             idEl.setTextContent(serverId);
-            org.w3c.dom.Element userEl = doc.createElement("username");
+            Element userEl = doc.createElement("username");
             userEl.setTextContent("ado");
-            org.w3c.dom.Element passEl = doc.createElement("password");
+            Element passEl = doc.createElement("password");
             passEl.setTextContent(pat);
             newServer.appendChild(idEl);
             newServer.appendChild(userEl);
             newServer.appendChild(passEl);
             serversEl.appendChild(newServer);
 
-            javax.xml.transform.Transformer transformer = javax
-                .xml.transform.TransformerFactory.newInstance()
-                .newTransformer();
-            transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            transformer.transform(
-                new javax.xml.transform.dom.DOMSource(doc),
-                new javax.xml.transform.stream.StreamResult(settingsFile)
-            );
+            transformer.transform(new DOMSource(doc), new StreamResult(settingsFile));
         } catch (Exception e) {
             throw new IOException(
                 "Could not update " + settingsFile.getAbsolutePath() + ": " + e.getMessage(),
@@ -762,6 +770,7 @@ public class MarketplaceCliService {
 
     // ─── Registry read (browse) ──────────────────────────────────────
 
+    /** Reads registry.json (the plugin registry) from the configured repo/branch. */
     public String fetchRegistryJsonRaw(Consumer<String> progress) throws IOException {
         MarketplaceConfig config = new MarketplaceConfig();
         return fetchFileFromRegistry(config.getRegistryPath(), progress);
@@ -902,6 +911,12 @@ public class MarketplaceCliService {
 
     // ─── Artifact resolution (install) ───────────────────────────────
 
+    /**
+     * Resolves one plugin jar from the Azure Artifacts feed and copies it into {@code
+     * destDir} -- via {@code dependency:get} + a manual copy, not {@code dependency:copy}
+     * directly, since {@code copy} silently ignores {@code -DremoteRepositories} when run
+     * without a project pom (see the inline comments below).
+     */
     public File resolvePluginArtifact(
         String groupId,
         String artifactId,
